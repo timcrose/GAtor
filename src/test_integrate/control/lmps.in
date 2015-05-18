@@ -1,0 +1,58 @@
+#Input Lammps file for Glycine Crystal
+
+units           real
+dimension	3
+boundary	p p p 
+
+atom_style      full
+bond_style      harmonic
+angle_style	harmonic
+
+pair_style      lj/charmm/coul/charmm 9.0 10.0
+#pair_style     lj/charmm/coul/long 9.0 10.0 10.0
+#kspace_style    pppm 0.0001
+
+
+#Read geometry file and then define pair and bond coefficients
+read_data	geo.dat
+
+pair_coeff 1 1 0.1094 1.9080
+pair_coeff 2 2 0.0860 1.9080
+pair_coeff 3 3 0.1700 1.8750
+pair_coeff 4 4 0.2100 0.2100
+pair_coeff 5 5 0.0157 0.6000
+pair_coeff 6 6 0.0157 1.3870
+pair_modify	mix arithmetic
+
+bond_coeff	1 656.00     1.2500
+bond_coeff	2 317.00     1.5220
+bond_coeff	3 340.00     1.0900
+bond_coeff	4 367.00     1.4710
+bond_coeff	5 434.00     1.0100
+special_bonds   amber
+
+#angle_coeff	1 35.00     109.50
+#angle_coeff	2 80.00     126.00
+#angle_coeff	3 35.00     109.50
+#angle_coeff	4 80.00     111.20
+#angle_coeff	5 70.00     117.00
+#angle_coeff	6 50.00     109.50
+#angle_coeff	7 50.00     109.50
+#angle_coeff	8 50.00     109.50
+ 
+####RELAXATION######
+reset_timestep 0
+
+#tri allows any xy xz yz to be relaxed (allows angles to vary)
+fix 1 all box/relax tri 0.0
+
+#iso keeps angles of simulation box fixed
+#fix 1 all box/relax iso 0.0 
+thermo 200
+thermo_style custom step etotal lx ly lz xy xz yz vol
+
+#min_style cg
+dump            1 all xyz 2000 dump.xyz
+#dump            1 all custom 4000 dump.xyz  x y z 
+
+minimize 1.0e-10 1.0e-10 10000 20000

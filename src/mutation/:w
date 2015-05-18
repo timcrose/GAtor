@@ -1,0 +1,293 @@
+'''
+Created on May 1, 2015
+
+@authors: farren
+'''
+from __future__ import division
+
+from copy import deepcopy
+import numpy as np
+import random
+import time
+
+from core import user_input
+from structures.structure import Structure
+
+def main(struct, r_stoic, replica):
+    '''
+    Every mutation module must have a method named "main" that will take
+    as arguments one Structure and a target stoichiometry (in the form of
+    a StoicDict). It must return a single Structure with defined geometry
+    or return False if the mutation fails and a new Structure is needed.
+    '''
+    # deepcopy makes copy of data instead of altering the obect being referenced
+    input_structure = deepcopy(struct)
+    replica_stoic = deepcopy(r_stoic)
+    
+    # decides what type of mutation to execute with a weighted random
+    mutate_object = select_mutator(input_structure, replica_stoic, replica)
+    return mutate_object.mutate()
+#    return input_structure
+
+def select_mutator(input_structure, replica_stoic, replica):
+    '''
+    In this mutation implementation, there are several classes, each performing a 
+    different mutation. This method is responsible for reading the preferences set
+    by the user and selecting which mutation to empoly, or no mutation at all.
+    Expects: Structure, target_stoic
+    Returns: Class
+    '''
+    #1 Nothing, 2 Random Translation of Mols
+    mutation_list = ["No", "Trans_mol", "Rot_mol"]
+    mutation_list2 = ["No", "Trans_mol", "Rot_mol", "Rot_COM", "Swap_lat", "Swap_mol", "Strain"]	 
+    mut_choice = np.random.choice(mutation_list)	        
+    mutator = object 	
+    print "Mutation_Choice: ", mut_choice	
+
+    if mut_choice == "No":
+    	mutator = NoMutation(input_structure, replica_stoic, replica)
+    elif mut_choice == "Trans_mol":
+	mutator = RandomTranslationMutation(input_structure, replica_stoic, replica)
+    elif mut_choice == "Rot_mol":
+	mutator = RandomRotationMolMutation(input_structure, replica_stoic, replica)
+    return mutator	
+
+###########################################################################################    
+class NoMutation(object):
+    '''
+     This class leaves the geometry un-mutilated
+    '''
+    def __init__(self, input_structure, target_stoic, replica):
+        self.geometry = deepcopy(input_structure.get_geometry())
+	self.input_structure = input_structure	
+    def mutate(self):
+        new_struct = Structure()
+        new_struct.build_geo_whole(self.geometry)
+        new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
+        new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
+        new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
+        new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
+        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
+        new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
+        new_struct.set_property('beta', self.input_structure.get_property('beta'))
+        new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
+        return new_struct
+
+####################################################################################################
+class RandomTranslationMutation(object):
+    '''
+     This mutation gives a random translation to the COM of one or more of the molecules in the unit cell.
+    '''
+    def __init__(self, input_structure, target_stoic, replica):
+        self.geometry = deepcopy(input_structure.get_geometry())
+        self.ui = user_input.get_config()
+        self.input_structure = input_structure
+	self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
+    	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_trans')
+    
+    def mutate(self):
+        return self.random_translation()  
+
+    def random_translation(self):
+        ''' 
+        make a random translation within reasonable bounds and returns Structure
+        '''
+        temp_geo = self.center_geometry(deepcopy(self.geometry))  # center the geometry
+	atom_num_per_mol = int(len(temp_geo)/self.num_mols)
+	mol_list = [temp_geo[x:x+atom_num_per_mol] for x in range(0, len(temp_geo), atom_num_per_mol)]
+ 
+	#Displace molecules (CHANGE FOR >2 mols)
+	displace_mol1 = self.displace_center_geometry(mol_list[0], self.st_dev)
+	displace_mol2 = self.displace_center_geometry(mol_list[1], self.st_dev)
+	return_geo =  np.concatenate((displace_mol1, displace_mol2), axis=0)
+
+	#Set new structure
+        new_struct = Structure()
+        new_struct.build_geo_whole(return_geo)
+        new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
+        new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
+        new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
+        new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
+        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
+        new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
+        new_struct.set_property('beta', self.input_structure.get_property('beta'))
+        new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
+
+	return new_struct
+
+    def displace_center_geometry(self, geometry, st_dev):
+        '''
+        randomly displaces the COM of a molecule within gaussian dist
+        '''
+   	rand_disp = np.random.standard_normal(3) * st_dev
+        print rand_disp	
+        for atom in geometry:
+	    atom[0] = atom[0] - rand_disp[0]
+	    atom[1] = atom[1] - rand_disp[1]
+	    atom[2] = atom[2] - rand_disp[2]		
+        return geometry
+    
+    def center_geometry(self, geometry):
+        '''
+        the centers the origin in relation to the max and min of each axis
+        '''
+        for i in range(2):  # x, y, and z
+            coordinate_sum = 0
+            counter = 0
+            for atom in geometry:
+                coordinate_sum += atom[i]
+                counter += 1
+            # average axis value
+            average = coordinate_sum / counter 
+            for atom in geometry:
+                # shift all towards center
+                atom[i] = atom[i] - average 
+        return geometry
+
+############################################################################################
+class RandomRotationMolMutation(object):
+    '''
+     This mutation gives a random rotation to the COM of one or more of the molecules in the unit cell.
+    '''
+    def __init__(self, input_structure, target_stoic, replica):
+        self.geometry = deepcopy(input_structure.get_geometry())
+        self.ui = user_input.get_config()
+        self.input_structure = input_structure
+        self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+
+    def mutate(self):
+        return self.random_rotation()
+
+    def random_rotation(self):
+        '''
+        make a random translation within reasonable bounds and returns Structure
+        '''
+	#Center the geometry and makes lists of the molecules and atom types
+        temp_geo = self.center_geometry(deepcopy(self.geometry))  # center the geometry
+        atom_num_per_mol = int(len(temp_geo)/self.num_mols)
+        mol_list = [temp_geo[x:x+atom_num_per_mol] for x in range(0, len(temp_geo), atom_num_per_mol)]
+	atoms = [i for i in range(len(temp_geo))]
+	for i in range(len(temp_geo)):
+        	atoms[i] = temp_geo[i][3] 
+
+        #Rotate molecules (CHANGE FOR >2 mols)
+        rot_mol1 = self.rot_center_geometry(mol_list[0], self.st_dev)
+        rot_mol2 = self.rot_center_geometry(mol_list[1], self.st_dev)
+        return_geo =  self.center_geometry(np.concatenate((rot_mol1, rot_mol2), axis=0))
+
+        #Set new structure
+        new_struct = Structure()
+        for i in range(len(return_geo)):
+                 new_struct.build_geo_by_atom(float(return_geo[i][0]),
+                                                 float(return_geo[i][1]),
+                                                 float(return_geo[i][2]),
+                                                 atoms[i])
+
+#        new_struct.build_geo_whole(return_geo)
+        new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
+        new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
+        new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
+        new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
+        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
+        new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
+        new_struct.set_property('beta', self.input_structure.get_property('beta'))
+        new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
+
+        return new_struct
+
+    def rot_center_geometry(self, geometry, st_dev):
+        '''
+        randomly displaces the COM of a molecule within gaussian dist
+        '''
+	#Compute avg positions of atoms in Mol in cell
+        sumx=0; sumy=0; sumz=0; counter=0;
+	for atom in geometry:
+             sumx += atom[0]
+             sumy += atom[1]
+             sumz += atom[2]
+             counter += 1
+	averagex = sumx/counter
+        averagey = sumy/counter
+        averagez = sumz/counter
+	print "mol: ", geometry	
+	print "averages: ", averagex, averagey, averagez
+	
+	#Initialize and switch to COM frame of mol
+	xyz = [i for i in range(len(geometry))]
+	rot = [i for i in range(len(geometry))] 
+	sxyz = [i for i in range(len(geometry))]
+	shift_xyz =  list(self.center_geometry(geometry))
+	print shift_xyz[0]
+	
+	#Rotate the mol by randome angles with standard dev
+	rand_angles = np.random.standard_normal(3) * st_dev
+	for i in range(len(shift_xyz)):
+		xyz[i]= [shift_xyz[i][0],shift_xyz[i][1], shift_xyz[i][2]]
+		rot[i] = list(self.rotation_matrix(rand_angles) * np.matrix(xyz[i])))
+
+	#Switch back to cell COM
+	for i in range(len(rot)):
+		sxyz[i] =[rot[i][0]+averagex, rot[i][1]+averagey, rot[i][2]+averagez]
+
+
+	#Build Structure
+#	result_struct = Structure()
+#	for i in range(len(sxyz)):
+ #                self.result_struct.build_geo_by_atom(float(dump_array[i][0]),
+#                                                 float(dump_array[i][1]),
+#                                                 float(dump_array[i][2]),
+ #                                                dump_array[i][3])
+#
+#
+#	sxyz = 
+#	print "orig", geometry
+#	print "XYZ",xyz
+#	print "rot", list(rot)
+#	print "final", sxyz
+	result_struct = np.asarray(sxyz)	
+
+	return result_struct
+
+    def rotation_matrix(self, angles):
+	theta= (np.pi/180)*angles[0]
+        psi = (np.pi/180)*angles[1]     
+        phi= (np.pi/180)*angles[2]
+        Rxyz = np.matrix([ ((cos(theta) * cos(psi)),
+                             (-cos(phi) * sin(psi)) + (sin(phi) * sin(theta) * cos(psi)),
+                             (sin(phi) * sin(psi)) + (cos(phi) * sin(theta) * cos(psi))),
+
+                             ((cos(theta) * sin(psi)),
+                             (cos(phi) * cos(psi)) + (sin(phi) * sin(theta) * sin(psi)),
+                             (-sin(phi) * cos(psi)) + (cos(phi) * sin(theta) * sin(psi))),
+
+                             ((-sin(theta)),
+                             (sin(phi) * cos(theta)),
+                             (cos(phi) * cos(theta)))])
+    	return Rxyz
+
+    def rotation(self, angles):
+ 	tx= (np.pi/180)*angles[0]
+   	ty = (np.pi/180)*angles[1]	
+  	tz = (np.pi/180)*angles[2]	
+   	Rx = np.array([[1,0,0], [0, np.cos(tx), -np.sin(tx)], [0, np.sin(tx), np.cos(tx)]])
+   	Ry = np.array([[np.cos(ty), 0, -np.sin(ty)], [0, 1, 0], [np.sin(ty), 0, np.cos(ty)]])
+   	Rz = np.array([[np.cos(tz), -np.sin(tz), 0], [np.sin(tz), np.cos(tz), 0], [0,0,1]])
+	return np.dot(Rx, np.dot(Ry, Rz))
+
+    def center_geometry(self, geometry):
+        '''
+        the centers the origin in relation to the max and min of each axis
+        '''
+        for i in range(2):  # x, y, and z
+            coordinate_sum = 0
+            counter = 0
+            for atom in geometry:
+                coordinate_sum += atom[i]
+                counter += 1
+            # average axis value
+            average = coordinate_sum / counter
+            for atom in geometry:
+                # shift all towards center
+                atom[i] = atom[i] - average
+        return geometry
