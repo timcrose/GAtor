@@ -28,6 +28,7 @@ class FillInitialPool():
 	self.FFcommonpool_index = 0
 	self.structure_coll0 = StructureCollection(stoic, self.FFcommonpool_index)
 	self.ip_count = 0
+	self.reject_ip_count = 0
         self.initial_pool_relaxation_module = my_import(self.ui.get('modules', 'initial_pool_relaxation_module'), package='relaxation')
         self.comparison_module = my_import(self.ui.get('modules', 'initial_pool_comparison_module'), package='comparison')
         self.num_initial_pool_structures = int(self.ui.get('initial_pool', 'num_initial_pool_structures'))
