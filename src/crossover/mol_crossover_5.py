@@ -238,7 +238,8 @@ class Crossover(object):
         angledeg = anglerad*180/numpy.pi
         return (angledeg)
     def leng(self,v):
-        return((v[0]**2+v[1]**2+v[2]**2)**0.5)	
+	length = numpy.linalg.norm(v)
+        return length	
 
 
 #MAY NOT NEED ANYMORE
