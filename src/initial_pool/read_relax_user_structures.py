@@ -1,7 +1,5 @@
 '''
-Created on Aug 13, 2013
-
-@author: newhouse
+@author: farren
 '''
 import os
 import shutil
@@ -16,7 +14,7 @@ from structures.structure_collection import StructureCollection
 
 
 def main(replica, stoic):
-    # Fills Initial Pool (level -1) and returns the number of successful relaxations
+    # Fills Initial Pool (level 0) and returns the number of successful relaxations
     fip = FillInitialPool(replica, stoic)    
     num_success = fip.copy_user_structures()
     return num_success	
@@ -25,15 +23,13 @@ class FillInitialPool():
     
     def __init__(self, replica, stoic):
         self.replica = replica
+	self.stoic = stoic
         self.ui = user_input.get_config()
-        self.INITIAL_POOL_REFID = -1
-        self.structure_coll = StructureCollection(stoic, self.INITIAL_POOL_REFID)
-	self.structure_coll0 = StructureCollection(stoic, self.INITIAL_POOL_REFID+1)
+	self.FFcommonpool_index = 0
+	self.structure_coll0 = StructureCollection(stoic, self.FFcommonpool_index)
 	self.ip_count = 0
-	self.reject_ip_count = 0
         self.initial_pool_relaxation_module = my_import(self.ui.get('modules', 'initial_pool_relaxation_module'), package='relaxation')
         self.comparison_module = my_import(self.ui.get('modules', 'initial_pool_comparison_module'), package='comparison')
-        self.stoic = stoic
         self.num_initial_pool_structures = int(self.ui.get('initial_pool', 'num_initial_pool_structures'))
         self.control_in = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
                                     self.ui.get('control', 'initial_pool'))
@@ -77,32 +73,26 @@ class FillInitialPool():
             # keeps track of which user defined structures have been added
             struct.set_property('to_be_relaxed', True)
             struct.set_property('u_def_filename', filename)
-          #  structure_collection.add_structure(struct, struct.get_stoic(), self.INITIAL_POOL_REFID)
 
-		#RELAX structures before adding to level -1 ***NEW****** (add to own def later)	
+		#####RELAX structures before adding to level 0 ***NEW****** (add to own def later)	
             print "--Considering new IP structure--"	
 	    print "--Relaxation--"
 	    input_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),self.control_list[0]) 
 	    relax_struct = self.initial_pool_relaxation_module.main(struct, self.working_dir, input_string, self.replica)
-	   # structure_collection.add_structure(relax_struct, struct.get_stoic(), self.INITIAL_POOL_REFID)
             if relax_struct is False:
             	if self.verbose: self.output('Relaxation failure')	
 	    else:
 		print "--Comparison--"
-	 	if self.comparison_module.main(relax_struct, self.structure_coll, self.replica) is True:   	
+	 	if self.comparison_module.main(relax_struct, self.structure_coll0, self.replica) is True:   	
 			self.ip_count = self.ip_count +1
-                    #    print 'IP structure sucessfully relaxed & added to level -1 and 0'
-			print "IP Number:  ", self.ip_count
+			print "Success! IP Number:  ", self.ip_count
 			relax_struct.set_property('ID', self.ip_count) 	
-			structure_collection.add_structure(relax_struct, relax_struct.get_stoic(), self.INITIAL_POOL_REFID)
-			structure_collection.add_structure(relax_struct, relax_struct.get_stoic(), 0) 
-
-			self.structure_coll.update_local()
-			self.structure_coll0.update_local()
-			data_tools.write_energy_hierarchy(self.structure_coll)
+			structure_collection.add_structure(relax_struct, relax_struct.get_stoic(), 0) #add struct to common FF pool
+			self.structure_coll0.update_local() 
+			data_tools.write_energy_hierarchy(self.structure_coll0) #starts writing energy hierachy file
 		else:
 			self.reject_ip_count = self.reject_ip_count +1
-	return self.ip_count
+	return self.ip_count  #returns total number of relaxed structures added to common pool- should redo this a better way later
 
 
  
