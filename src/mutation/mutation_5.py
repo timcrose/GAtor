@@ -361,7 +361,7 @@ class RandomStrainMutation(object):
 	return s_mat
 
     def leng(self,v):
-        length = numpy.linalg.norm(v)
+        length = np.linalg.norm(v)
         return length
 
     def angle(self,v1,v2):
@@ -486,7 +486,7 @@ class RandomStrainMutationMoveMols(object):
 	return s_mat
 
     def leng(self,v):
-        length = numpy.linalg.norm(v)
+        length = np.linalg.norm(v)
         return length
 
     def angle(self,v1,v2):
@@ -598,7 +598,7 @@ class RandomStrainMutation(object):
 	return s_mat
 
     def leng(self,v):
-        length = numpy.linalg.norm(v)
+        length = np.linalg.norm(v)
         return length
 
     def angle(self,v1,v2):
@@ -755,7 +755,7 @@ class RandomSymmetryStrainMutationMoveMols(object):
 	return s_mat
 
     def leng(self,v):
-        length = numpy.linalg.norm(v)
+        length = np.linalg.norm(v)
         return length
 
     def angle(self,v1,v2):
