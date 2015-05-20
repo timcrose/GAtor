@@ -38,11 +38,11 @@ def select_mutator(input_structure, replica_stoic, replica):
     '''
     #Make sure if single parent is selected at crossover that it is forced to get a mutation
     if input_structure.get_property('cross_type') == [1,1]:
-	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand"]
+	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym"]
     elif input_structure.get_property('cross_type') == [2,2]:
-	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand"]
+	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym"]
     else:
-	mutation_list = ["None", "Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand"]
+	mutation_list = ["None", "Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym"]
 
     mut_choice = np.random.choice(mutation_list)
     mutator = object
@@ -58,6 +58,8 @@ def select_mutator(input_structure, replica_stoic, replica):
 	mutator = RandomStrainMutationMoveMols(input_structure, replica_stoic, replica)
     elif mut_choice == "Strain_rand":
 	mutator = RandomStrainMutation(input_structure, replica_stoic, replica)
+    elif mut_choice == "Strain_sym":
+	mutator = RandomSymmetryStrainMutationMoveMols(input_structure, replica_stoic, replica)
     return mutator	
 
 ###########################################################################################    
@@ -359,7 +361,8 @@ class RandomStrainMutation(object):
 	return s_mat
 
     def leng(self,v):
-        return((v[0]**2+v[1]**2+v[2]**2)**0.5)
+        length = numpy.linalg.norm(v)
+        return length
 
     def angle(self,v1,v2):
         numdot = np.dot(v1,v2)
@@ -483,7 +486,8 @@ class RandomStrainMutationMoveMols(object):
 	return s_mat
 
     def leng(self,v):
-        return((v[0]**2 + v[1]**2 + v[2]**2)**0.5)
+        length = numpy.linalg.norm(v)
+        return length
 
     def angle(self,v1,v2):
         numdot = np.dot(v1,v2)
@@ -594,7 +598,8 @@ class RandomStrainMutation(object):
 	return s_mat
 
     def leng(self,v):
-        return((v[0]**2 + v[1]**2 + v[2]**2)**0.5)
+        length = numpy.linalg.norm(v)
+        return length
 
     def angle(self,v1,v2):
         numdot = np.dot(v1,v2)
@@ -616,6 +621,160 @@ class RandomStrainMutation(object):
         return np.asarray(com)
 
 ##################################################################################################
-#Symmetry Strains
-###################################################################################################
+class RandomSymmetryStrainMutationMoveMols(object):
+    '''
+     This mutation gives a random strain to the lattice and moves the COM of the molecules
+    '''
+    def __init__(self, input_structure, target_stoic, replica):
+        self.geometry = deepcopy(input_structure.get_geometry())
+        self.A = np.asarray(deepcopy(input_structure.get_property('lattice_vector_a')))
+        self.B = np.asarray(deepcopy(input_structure.get_property('lattice_vector_b')))
+        self.C = np.asarray(deepcopy(input_structure.get_property('lattice_vector_c')))
+	self.ui = user_input.get_config()
+        self.input_structure = input_structure
+	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
+	self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
 
+    def mutate(self):
+        return self.rstrain()
+
+    def rstrain(self):
+	A = self.A
+	B = self.B
+	C = self.C 	
+        lat_mat = np.zeros((3,3))
+        lat_mat[0][0] = A[0]; lat_mat[0][1] = B[0]; lat_mat[0][2] = C[0]
+        lat_mat[1][0] = A[1]; lat_mat[1][1] = B[1]; lat_mat[1][2] = C[1]
+        lat_mat[2][0] = A[2]; lat_mat[2][1] = B[2]; lat_mat[2][2] = C[2]
+
+	#Fractional Transformation Matrix
+        lat_mat_f = np.linalg.inv(lat_mat)
+
+	#Strained Lattice Vecctors
+	strain_A, strain_B, strain_C = self.rand_vstrain(lat_mat)
+
+	#Lengths and angles of strained vectors
+        a = self.leng(strain_A)
+        b = self.leng(strain_B)
+        c = self.leng(strain_C)
+        alpha = self.angle(strain_B,strain_C)
+        beta = self.angle(strain_A,strain_C)
+        gamma = self.angle(strain_A,strain_B)
+
+	#Realign axis to have a along x
+        rad=float(np.pi/180)
+        ax=a;   ay=0.0;   az=0.0
+        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*a; bz=0.0
+        cx=c*np.cos(beta*rad);  cy=(b*c*np.cos(alpha*rad)-bx*cx)/by;    cz=np.sqrt(np.absolute(c**2-cx**2-cy**2))
+        lata_out = np.zeros(3); latb_out = np.zeros(3); latc_out = np.zeros(3)
+        lata_out[0] = ax;       lata_out[1] = ay;       lata_out[2] = az
+        latb_out[0] = bx;       latb_out[1] = by;       latb_out[2] = bz
+        latc_out[0] = cx;       latc_out[1] = cy;       latc_out[2] = cz
+
+        #Set new structure
+        new_struct = Structure()
+        new_struct.build_geo_whole(self.geometry)
+        new_struct.set_property('lattice_vector_a', lata_out)
+        new_struct.set_property('lattice_vector_b', latb_out)
+        new_struct.set_property('lattice_vector_c', latc_out)
+        new_struct.set_property('cell_vol', np.dot(lata_out, np.cross(latb_out, latc_out)))
+        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
+        new_struct.set_property('alpha',self.angle(latb_out, latc_out))
+        new_struct.set_property('beta', self.angle(lata_out, latc_out))
+        new_struct.set_property('gamma', self.angle(lata_out, latb_out))
+        return new_struct
+
+    def rand_vstrain(self, lat_mat):
+	eta = np.random.standard_normal(1) * self.st_dev 
+        strain_list = eta*self.choose_rand_sym_strain(lat_mat)
+        strain_mat = self.get_strain_mat(strain_list)
+#  	print "eta", eta
+        print "strain_mat", strain_mat
+
+        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
+        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
+        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
+        return strain_A, strain_B, strain_C
+
+    def choose_rand_sym_strain(self, lat_mat):
+	strain_dict={                       \
+	'1':[ 1., 1., 1., 0., 0., 0.],\
+	'2':[ 1., 0., 0., 0., 0., 0.],\
+	'3':[ 0., 1., 0., 0., 0., 0.],\
+	'4':[ 0., 0., 1., 0., 0., 0.],\
+	'5':[ 0., 0., 0., 2., 0., 0.],\
+	'6':[ 0., 0., 0., 0., 2., 0.],\
+	'7':[ 0., 0., 0., 0., 0., 2.],\
+	'8':[ 1., 1., 0., 0., 0., 0.],\
+	'9':[ 1., 0., 1., 0., 0., 0.],\
+	'10':[ 1., 0., 0., 2., 0., 0.],\
+	'11':[ 1., 0., 0., 0., 2., 0.],\
+	'12':[ 1., 0., 0., 0., 0., 2.],\
+	'13':[ 0., 1., 1., 0., 0., 0.],\
+	'14':[ 0., 1., 0., 2., 0., 0.],\
+	'15':[ 0., 1., 0., 0., 2., 0.],\
+	'16':[ 0., 1., 0., 0., 0., 2.],\
+	'17':[ 0., 0., 1., 2., 0., 0.],\
+	'18':[ 0., 0., 1., 0., 2., 0.],\
+	'19':[ 0., 0., 1., 0., 0., 2.],\
+	'20':[ 0., 0., 0., 2., 2., 0.],\
+	'21':[ 0., 0., 0., 2., 0., 2.],\
+	'22':[ 0., 0., 0., 0., 2., 2.],\
+	'23':[ 0., 0., 0., 2., 2., 2.],\
+	'24':[-1., .5, .5, 0., 0., 0.],\
+	'25':[ .5,-1., .5, 0., 0., 0.],\
+	'26':[ .5, .5,-1., 0., 0., 0.],\
+	'27':[ 1.,-1., 0., 0., 0., 0.],\
+	'28':[ 1.,-1., 0., 0., 0., 2.],\
+	'29':[ 0., 1.,-1., 0., 0., 2.],\
+	'30':[ 1., 2., 3., 4., 5., 6.],\
+	'31':[-2., 1., 4.,-3., 6.,-5.],\
+	'32':[ 3.,-5.,-1., 6., 2.,-4.],\
+	'33':[-4.,-6., 5., 1.,-3., 2.],\
+	'34':[ 5., 4., 6.,-2.,-1.,-3.],\
+	'35':[-6., 3.,-2., 5.,-4., 1.]}
+	rand_choice = str(np.random.randint(1,35))
+#	print "rand_choice", rand_choice
+#	print strain_dict[rand_choice] 
+	return np.array(strain_dict[rand_choice])
+	
+    def get_strain_mat(self, strain_list):
+	e = strain_list
+	s_mat = np.zeros((3,3))
+	s_mat[0][0] = 1.0 + e[0]
+        s_mat[0][1] = e[5]/2.
+        s_mat[0][2] = e[4]/2.
+
+    	s_mat[1][0] = e[5]/2.
+        s_mat[1][1] = 1.0 + e[1]
+        s_mat[1][2] = e[3]/2.
+
+        s_mat[2][0] = e[4]/2.
+        s_mat[2][1] = e[3]/2.
+        s_mat[2][2] = 1.0 + e[2]
+	return s_mat
+
+    def leng(self,v):
+        length = numpy.linalg.norm(v)
+        return length
+
+    def angle(self,v1,v2):
+        numdot = np.dot(v1,v2)
+        anglerad = np.arccos(numdot/(self.leng(v1)*self.leng(v2)))
+        angledeg = anglerad*180/np.pi
+        return (angledeg)
+
+    def return_COM(self, geometry):
+        '''
+        returns COM as np array 
+        '''
+	N = len(geometry)
+	xsum = 0 ; ysum = 0 ; zsum = 0;
+	for atom in geometry:
+	    xsum +=atom[0]
+	    ysum +=atom[1]
+	    zsum +=atom[2]
+	com = [xsum%N, ysum%N, zsum%N]
+        return np.asarray(com)
+
+##############################################################################################
