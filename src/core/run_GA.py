@@ -85,7 +85,6 @@ class RunGA():
         self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
         self.structure_coll = self.structure_supercoll.get((self.replica_stoic, self.max_cascade))
 	self.child_counter = 0
-#	self.success_counter = 0
 	self.success_counter = len(self.structure_coll)
 	self.min_energies_0 = []
 	self.delta_convg = float(self.ui.get('run_settings', 'delta_convergence'))   
