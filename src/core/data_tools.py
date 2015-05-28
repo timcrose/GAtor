@@ -60,7 +60,8 @@ def main(argv):
 def get_energy_tuples(structure_coll):
     energy_tuples = []
     for index, structure in structure_coll:
-        energy = structure.get_property('energy') 
+        energy = structure.get_property('energy')
+	replica = structure.get_property('replica') 
 	vol = structure.get_property('cell_vol')
 	a = structure.get_property('a')
 	b = structure.get_property('b')
@@ -72,9 +73,9 @@ def get_energy_tuples(structure_coll):
 	parent1 = structure.get_property('parent_1')
 	crosstype = structure.get_property('crossover_type')
 	localmindiff = structure.get_property('new_local_minima_diff')
-	childnum = structure.get_property('child_count')
+#	childnum = structure.get_property('child_count')
 	ID = structure.get_property('ID')
-	if energy is not None: energy_tuples.append((index, energy, ID, childnum, localmindiff, vol, a, b, c, alpha, beta, gamma, crosstype, str(parent0)[16:], str(parent1)[16:]))
+	if energy is not None: energy_tuples.append((ID, replica, index, energy, localmindiff, vol, a, b, c, alpha, beta, gamma, crosstype, str(parent0)[16:], str(parent1)[16:]))
 #	print energy_tuples
     return energy_tuples
  
@@ -93,25 +94,26 @@ def write_energy_hierarchy(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
  #   biggest_dists = get_biggest_dist(structure_coll)
     to_write = ''
-    energy_tuples.sort(key=lambda x: x[1])
-    for index, Id, energy, vol, a, b, c, al, be, ga, p0, p1, ct, md, cn in energy_tuples: 
+    energy_tuples.sort(key=lambda x: x[3])
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, p0, p1, ct, md in energy_tuples: 
 #	to_write += structure_coll.get_stoic().get_string() + '/'
+ 	to_write +=str(Id) + '	'
+	to_write +=str(rep) + '	'
         to_write += str(structure_coll.get_input_ref()) + '/'
         to_write += str(index) + '/'
-	to_write +='	' + str(Id)
-        to_write +='    ' + str(energy)
-	to_write +='    ' + str(vol)
-	to_write +='    ' + str(a)
-	to_write +='    ' + str(b)
-	to_write +='    ' + str(c)
-	to_write +='    ' + str(al)
-	to_write +='    ' + str(be)
-	to_write +='    ' + str(ga)
-	to_write +='    ' + str(p0)
-	to_write +='    ' + str(p1)	
-	to_write +='    ' + str(ct)
-	to_write +='    ' + str(md)
-	to_write +='    ' + str(cn)
+#	to_write +='	' + str(Id)
+        to_write +='	' + str(energy)
+	to_write +='	' + str(vol)
+	to_write +='	' + str(a)
+	to_write +='	' + str(b)
+	to_write +='	' + str(c)
+	to_write +='	' + str(al)
+	to_write +='	' + str(be)
+	to_write +='	' + str(ga)
+	to_write +='	' + str(p0)
+	to_write +='	' + str(p1)	
+	to_write +='	' + str(ct)
+	to_write +='	' + str(md)
         to_write += '\n'
     with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
         
