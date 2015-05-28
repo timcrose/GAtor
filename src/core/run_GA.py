@@ -42,14 +42,6 @@ def main(stoic):
     if not isinstance(n_processors, (int, long)) : begin(stoic)
     else: begin_multiprocess(stoic, int(n_processors))
 
-def begin_multiprocess(stoic_string, n_processors):
-    from multiprocessing import Process
-    processes_to_run = []
-    for i in range(n_processors):  # @UnusedVariable
-        time.sleep(0.1)  # slight separation between replicas
-        p = Process(target=begin, args=(stoic,))
-        processes_to_run.append(p)
-        p.start()
 
 def begin(stoic):
     replica = get_random_index()
@@ -93,7 +85,8 @@ class RunGA():
         self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
         self.structure_coll = self.structure_supercoll.get((self.replica_stoic, self.max_cascade))
 	self.child_counter = 0
-	self.success_counter = 0
+#	self.success_counter = 0
+	self.success_counter = len(self.structure_coll)
 	self.min_energies_0 = []
 	self.delta_convg = float(self.ui.get('run_settings', 'delta_convergence'))   
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
@@ -114,8 +107,7 @@ class RunGA():
 
         ########## Fill initial pool ##########
 	print "--Filling IP--"
-        num_success_ip = initial_pool_module.main(self.replica, self.replica_stoic)
-	self.success_counter = self.success_counter + num_success_ip
+	initial_pool_module.main(self.replica, self.replica_stoic)
         # update all
         structure_collection.update_supercollection(self.structure_supercoll)
         print "***************** USER INITIAL POOL RELAXED *****************"
@@ -135,6 +127,7 @@ class RunGA():
                 if len(self.structure_coll.structures) >= self.number_of_structures:
  			print "Length of collection"
 			print len(self.structure_coll.structures)
+			print self.structure_coll.structures
 			return
             except: pass
             if get_kill() == "kill": 
