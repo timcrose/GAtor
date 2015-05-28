@@ -65,7 +65,7 @@ class FillInitialPool():
                     files_to_add.append(filename)
             ffile.close()
             
-        for file in files_to_add:
+        for file in files_to_add:	
             # Tests passed. add structure to collection.
             try:
                 struct = Structure()
@@ -93,8 +93,8 @@ class FillInitialPool():
 			data_tools.write_energy_hierarchy(self.structure_coll0) #starts writing energy hierachy file
 		else:
 			self.reject_ip_count = self.reject_ip_count +1
-	return self.ip_count  #returns total number of relaxed structures added to common pool- should redo this a better way later
-
+#	return self.ip_count  #returns total number of relaxed structures added to common pool- should redo this a better way later
+	return
 
  
 if __name__ == '__main__':
