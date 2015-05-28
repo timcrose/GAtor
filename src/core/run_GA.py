@@ -249,16 +249,17 @@ class RunGA():
 
     def end_of_iteration_tasks(self, structures_to_add, min_e, num_success_IP):
         prev_struct_index = None
+	ID = len(self.structure_coll.structures) + 1
 	self.child_counter = self.child_counter + 1
-	self.struct_counter = self.child_counter + num_success_IP 
+#	self.struct_counter = self.child_counter + num_success_IP 
 	energy_list = []
 
         for key, struct in structures_to_add.items():
             # Set IDs and count numbers
             struct.set_property('prev_struct_id', prev_struct_index)  # tracks cascade sequence
 	    struct.set_property('child_count', self.child_counter)
-	    struct.set_property('ID', self.struct_counter)	
-		
+	    struct.set_property('ID', ID)	
+	    struct.set_property('replica', self.replica)		
 	    #Check for new Minimum Energy		
             e_new = struct.get_property('energy')
 	    if e_new < min_e:
@@ -281,8 +282,8 @@ class RunGA():
             message = 'Success: \n  stoichiometry-- ' + key[0].get_string() + \
                       '\n  cascade-- ' + str(key[1]) + \
                       '\n  structure index-- ' + str(index) + \
-		      '\n  child count-- ' + str(self.child_counter) + \
-		      '\n  collection count -- ' + str(self.struct_counter) + \
+		      '\n  replica child count-- ' + str(self.child_counter) + \
+		      '\n  collection count -- ' + str(ID) + \
 		      '\n  replica-- ' + str(self.replica)
             print message
             data_tools.write_energy_hierarchy(self.structure_coll)
