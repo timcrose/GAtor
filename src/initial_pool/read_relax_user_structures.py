@@ -16,8 +16,8 @@ from structures.structure_collection import StructureCollection
 def main(replica, stoic):
     # Fills Initial Pool (level 0) and returns the number of successful relaxations
     fip = FillInitialPool(replica, stoic)    
-    num_success = fip.copy_user_structures()
-    return num_success	
+    success = fip.copy_user_structures()
+    return success	
 
 class FillInitialPool():
     
@@ -87,7 +87,8 @@ class FillInitialPool():
 	 	if self.comparison_module.main(relax_struct, self.structure_coll0, self.replica) is True:   	
 			self.ip_count = self.ip_count +1
 			print "Success! IP Number:  ", self.ip_count
-			relax_struct.set_property('ID', self.ip_count) 	
+			relax_struct.set_property('ID', self.ip_count) 
+			relax_struct.set_property('replica', 'init__pool')	
 			structure_collection.add_structure(relax_struct, relax_struct.get_stoic(), 0) #add struct to common FF pool
 			self.structure_coll0.update_local() 
 			data_tools.write_energy_hierarchy(self.structure_coll0) #starts writing energy hierachy file
