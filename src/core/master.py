@@ -39,14 +39,7 @@ def main(*args, **kwargs):
     else:
         run_GA(argv)    
     
-    
-def fill_initial_pool():
-    set_progress('starting')
-
-    os.system('python ' + os.path.join(src_dir, 'core', 'fill_initial_pool.py'))
-    # replace with following for thnec
-    # os.system('qsub fill_initial_pool_jobs')
-    
+        
 def run_GA(argv):
     minor_version = sys.version_info[1]
     ui = user_input.get_config()
