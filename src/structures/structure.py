@@ -70,6 +70,7 @@ class Structure(object):
         
     def build_geo_whole(self, geometry): self.geometry = geometry
     def build_geo_from_atom_file(self, filepath): self.build_geo_whole_atom_format(read_data(filepath))
+    def build_geo_from_json_file(self, filepath): self.loads(read_data(filepath))	
     def unpack_geometry(self, text): self.geometry = convert_array(text)    
     def build_geo_whole_atom_format(self, atom_string):
         '''
@@ -167,8 +168,12 @@ class Structure(object):
     def loads(self, json_string):
         data_dictionary = json.loads(json_string)
         self.properties = data_dictionary['properties']
-        self.struct_id = data_dictionary['struct_id']
-        self.input_ref = data_dictionary['input_ref']
+        try:
+		self.struct_id = data_dictionary['struct_id']
+	except: pass
+	try:
+        	self.input_ref = data_dictionary['input_ref']
+	except: pass # if input reference from initial pool then skip this part
         self.build_geo_whole(convert_array(data_dictionary['geometry']))
         
     def update_local_data(self):
@@ -232,7 +237,13 @@ def convert_array(list_of_list):
         geometry[i]['y'] = list_of_list[i][1]
         geometry[i]['z'] = list_of_list[i][2]
         geometry[i]['element'] = str(list_of_list[i][3])
-        geometry[i]['spin'] = list_of_list[i][4]
-        geometry[i]['charge'] = list_of_list[i][5]
-        geometry[i]['fixed'] = list_of_list[i][6]
+	try:
+        	geometry[i]['spin'] = list_of_list[i][4]
+	except: geometry[i]['spin'] = None
+	try:
+        	geometry[i]['charge'] = list_of_list[i][5]
+	except: geometry[i]['charge'] = None
+	try:
+        	geometry[i]['fixed'] = list_of_list[i][6]
+	except: geometry[i]['fixed'] = None
     return geometry
