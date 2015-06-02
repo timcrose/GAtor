@@ -302,7 +302,7 @@ class RandomStrainMutationMoveMols(object):
 	#Realign axis to have a along x
         rad=float(np.pi/180)
         ax=a;   ay=0.0;   az=0.0
-        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*a; bz=0.0
+        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*b; bz=0.0
         cx=c*np.cos(beta*rad);  cy=(b*c*np.cos(alpha*rad)-bx*cx)/by;    cz=np.sqrt(np.absolute(c**2-cx**2-cy**2))
         lata_out = np.zeros(3); latb_out = np.zeros(3); latc_out = np.zeros(3)
         lata_out[0] = ax;       lata_out[1] = ay;       lata_out[2] = az
@@ -439,7 +439,7 @@ class RandomStrainMutation(object):
 	#Realign axis to have a along x
         rad=float(np.pi/180)
         ax=a;   ay=0.0;   az=0.0
-        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*a; bz=0.0
+        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*b; bz=0.0
         cx=c*np.cos(beta*rad);  cy=(b*c*np.cos(alpha*rad)-bx*cx)/by;    cz=np.sqrt(np.absolute(c**2-cx**2-cy**2))
         lata_out = np.zeros(3); latb_out = np.zeros(3); latc_out = np.zeros(3)
         lata_out[0] = ax;       lata_out[1] = ay;       lata_out[2] = az
@@ -552,7 +552,7 @@ class RandomSymmetryStrainMutationMoveMols(object):
 	#Realign axis to have a along x
         rad=float(np.pi/180)
         ax=a;   ay=0.0;   az=0.0
-        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*a; bz=0.0
+        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*b; bz=0.0
         cx=c*np.cos(beta*rad);  cy=(b*c*np.cos(alpha*rad)-bx*cx)/by;    cz=np.sqrt(np.absolute(c**2-cx**2-cy**2))
         lata_out = np.zeros(3); latb_out = np.zeros(3); latc_out = np.zeros(3)
         lata_out[0] = ax;       lata_out[1] = ay;       lata_out[2] = az
