@@ -256,119 +256,7 @@ class RandomRotationMolMutation(object):
         return geometry
 
 ##############################################################################################
-class RandomStrainMutation(object):
-    '''
-     This mutation gives a random rotation to the COM of all the mols in the cell
-    '''
-    def __init__(self, input_structure, target_stoic, replica):
-        self.geometry = deepcopy(input_structure.get_geometry())
-        self.A = np.asarray(deepcopy(input_structure.get_property('lattice_vector_a')))
-        self.B = np.asarray(deepcopy(input_structure.get_property('lattice_vector_b')))
-        self.C = np.asarray(deepcopy(input_structure.get_property('lattice_vector_c')))
-	self.ui = user_input.get_config()
-        self.input_structure = input_structure
-	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
-
-    def mutate(self):
-        return self.rstrain()
-
-    def rstrain(self):
-	A = self.A
-	B = self.B
-	C = self.C 	
-        lat_mat = np.zeros((3,3))
-        lat_mat[0][0] = A[0]; lat_mat[0][1] = B[0]; lat_mat[0][2] = C[0]
-        lat_mat[1][0] = A[1]; lat_mat[1][1] = B[1]; lat_mat[1][2] = C[1]
-        lat_mat[2][0] = A[2]; lat_mat[2][1] = B[2]; lat_mat[2][2] = C[2]
-
-	#Fractional Transformation Matrix
-        lat_mat_f = np.linalg.inv(lat_mat)
-
-	#Strained Lattice Vecctors
-	strain_A, strain_B, strain_C = self.rand_vstrain(lat_mat)
-
-	#Lengths and angles of strained vectors
-        a = self.leng(strain_A)
-        b = self.leng(strain_B)
-        c = self.leng(strain_C)
-        alpha = self.angle(strain_B,strain_C)
-        beta = self.angle(strain_A,strain_C)
-        gamma = self.angle(strain_A,strain_B)
-
-	#Realign axis to have a along x
-        rad=float(np.pi/180)
-        ax=a;   ay=0.0;   az=0.0
-        bx=np.cos(gamma*rad)*b; by=np.sin(gamma*rad)*a; bz=0.0
-        cx=c*np.cos(beta*rad);  cy=(b*c*np.cos(alpha*rad)-bx*cx)/by;    cz=np.sqrt(np.absolute(c**2-cx**2-cy**2))
-        lata_out = np.zeros(3); latb_out = np.zeros(3); latc_out = np.zeros(3)
-        lata_out[0] = ax;       lata_out[1] = ay;       lata_out[2] = az
-        latb_out[0] = bx;       latb_out[1] = by;       latb_out[2] = bz
-        latc_out[0] = cx;       latc_out[1] = cy;       latc_out[2] = cz
-
-	#Strain Geometry
-        xyz = [i for i in range(len(self.geometry))]
-        frac_xyz = [i for i in range(len(self.geometry))]
-        strain_xyz = [i for i in range(len(self.geometry))]
-	atoms = [i for i in range(len(self.geometry))]	
-        for i in range(len(self.geometry)):
-       		xyz[i]= [self.geometry[i][0], self.geometry[i][1], self.geometry[i][2]]
-        	frac_xyz[i] = np.dot(lat_mat_f, np.asarray(xyz[i]))
-	       	strain_xyz[i] = frac_xyz[i][0]*lata_out + frac_xyz[i][1]*latb_out + frac_xyz[i][2]*latc_out
-        for i in range(len(self.geometry)):
-                atoms[i] = self.geometry[i][3]
-
-        #Set new structure
-        new_struct = Structure()
-        for i in range(len(strain_xyz)):
-                 new_struct.build_geo_by_atom(float(strain_xyz[i][0]),
-                                                 float(strain_xyz[i][1]),
-                                                 float(strain_xyz[i][2]),
-                                                 atoms[i])
-        new_struct.set_property('lattice_vector_a', lata_out)
-        new_struct.set_property('lattice_vector_b', latb_out)
-        new_struct.set_property('lattice_vector_c', latc_out)
-        new_struct.set_property('cell_vol', np.dot(lata_out, np.cross(latb_out, latc_out)))
-        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
-        new_struct.set_property('alpha',self.angle(latb_out, latc_out))
-        new_struct.set_property('beta', self.angle(lata_out, latc_out))
-        new_struct.set_property('gamma', self.angle(lata_out, latb_out))
-        return new_struct
-
-    def rand_vstrain(self, lat_mat):
-	strain_list = np.random.standard_normal(6) * self.st_dev
-	strain_mat = self.get_strain_mat(strain_list)
-	print "strain_mat", strain_mat
-
-	strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
-	strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
-	strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
-	return strain_A, strain_B, strain_C
 	
-    def get_strain_mat(self, strain_list):
-	e = strain_list
-	s_mat = np.zeros((3,3))
-	s_mat[0][0] = 1.0 + e[0]
-        s_mat[0][1] = e[5]/2.
-        s_mat[0][2] = e[4]/2.
-
-    	s_mat[1][0] = e[5]/2.
-        s_mat[1][1] = 1.0 + e[1]
-        s_mat[1][2] = e[3]/2.
-
-        s_mat[2][0] = e[4]/2.
-        s_mat[2][1] = e[3]/2.
-        s_mat[2][2] = 1.0 + e[2]
-	return s_mat
-
-    def leng(self,v):
-        length = np.linalg.norm(v)
-        return length
-
-    def angle(self,v1,v2):
-        numdot = np.dot(v1,v2)
-        anglerad = np.arccos(numdot/(self.leng(v1)*self.leng(v2)))
-        angledeg = anglerad*180/np.pi
-        return (angledeg)	
 
 ##############################################################################################
 class RandomStrainMutationMoveMols(object):
@@ -511,7 +399,7 @@ class RandomStrainMutationMoveMols(object):
 ##############################################################################################
 class RandomStrainMutation(object):
     '''
-     This mutation gives a random strain to the lattice and moves the COM of the molecules
+     This mutation gives a random strain to the lattice and DOESNT move the COM of the molecules
     '''
     def __init__(self, input_structure, target_stoic, replica):
         self.geometry = deepcopy(input_structure.get_geometry())
