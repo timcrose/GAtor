@@ -267,7 +267,7 @@ class AmberRelaxation():
 	alpha=float(alpha); beta=float(beta); gamma=float(gamma)
 
 	ax=a;	ay=0;	az=0
-	bx=np.cos(gamma*rad)*b;	by=np.sin(gamma*rad)*a;	bz=0
+	bx=np.cos(gamma*rad)*b;	by=np.sin(gamma*rad)*b;	bz=0
 	cx=c*np.cos(beta*rad);	cy=(b*c*np.cos(alpha*rad)-bx*cx)/by;	cz=np.sqrt(np.absolute(c**2-cx**2-cy**2))
 	lata_out = np.zeros(3);	latb_out = np.zeros(3);	latc_out = np.zeros(3)
 
