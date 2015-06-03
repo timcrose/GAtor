@@ -164,8 +164,8 @@ class Crossover(object):
     def choose_crossover_type(self):
 	geom_opts = [1, 2, 3, 4]
         lat_opts = [1, 2, 3]
-	# 1/24th chance of single parent mutation
-	cross_types = [[1,1],[1,2],[1,2],[1,3],[1,3],[2,1],[2,1],[2,2],[2,3],[2,3],[3,1],[3,1],[3,2],[3,2],[3,3],[4,1],[4,1],[4,2],[4,2],[4,3],[4,3],[3,3],[4,3],[2,2]]
+	# 2/24 = 1/12 chance of single parent crossover [1,1] or [2,2] (note [3,3] and [4,3] weighted slightly heavier to match prob with 4 mol case
+	cross_types = [[1,1],[1,2],[1,2],[1,3],[1,3],[2,1],[2,1],[2,2],[2,3],[2,3],[3,1],[3,1],[3,2],[3,2],[3,3],[3,3],[4,1],[4,1],[4,2],[4,2],[4,3],[4,3],[3,3],[4,3]]
 	method = random.choice(cross_types)
 	return method
 
