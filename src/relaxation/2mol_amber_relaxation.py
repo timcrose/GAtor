@@ -267,7 +267,9 @@ class AmberRelaxation():
 	self.result_struct.set_property('cell_vol', cell_vol)
 
 	ct = self.input_structure.get_property('crossover_type')
+	mt = self.input_structure.get_property('mutation_type')
 	self.result_struct.set_property('crossover_type',ct)
+	self.result_struct.set_property('mutation_type',mt)
 
 #	print self.result_struct.get_lattice_vectors()
 #	print self.result_struct.geometry()
