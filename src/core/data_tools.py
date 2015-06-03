@@ -60,8 +60,10 @@ def main(argv):
 def get_energy_tuples(structure_coll):
     energy_tuples = []
     for index, structure in structure_coll:
-        energy = structure.get_property('energy')
-	replica = structure.get_property('replica') 
+	ID = structure.get_property('ID')
+	replica = structure.get_property('replica')
+        energy = structure.get_property('energy') 
+        localmindiff = structure.get_property('new_local_minima_diff')
 	vol = structure.get_property('cell_vol')
 	a = structure.get_property('a')
 	b = structure.get_property('b')
@@ -69,16 +71,41 @@ def get_energy_tuples(structure_coll):
 	alpha = structure.get_property('alpha')
 	beta = structure.get_property('beta')
 	gamma = structure.get_property('gamma')
+	mut = structure.get_property('mutation_type')
+        crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
-	crosstype = structure.get_property('crossover_type')
-	localmindiff = structure.get_property('new_local_minima_diff')
 #	childnum = structure.get_property('child_count')
-	ID = structure.get_property('ID')
-	if energy is not None: energy_tuples.append((ID, replica, index, energy, localmindiff, vol, a, b, c, alpha, beta, gamma, crosstype, str(parent0)[16:], str(parent1)[16:]))
+	if energy is not None: energy_tuples.append((ID, replica, index, energy, localmindiff, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
 #	print energy_tuples
     return energy_tuples
- 
+
+def write_energy_hierarchy(structure_coll):
+    energy_tuples = get_energy_tuples(structure_coll)
+ #   biggest_dists = get_biggest_dist(structure_coll)
+    to_write = ''
+    energy_tuples.sort(key=lambda x: x[3])
+    for  Id, rep, index, energy, lmd, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+#       to_write += structure_coll.get_stoic().get_string() + '/'
+        to_write +=str(Id) + '  '
+        to_write +=str(rep) + ' '
+        to_write += str(structure_coll.get_input_ref()) + '/'
+        to_write += str(index) + '/'
+        to_write +='    ' + str(energy)
+        to_write +='    ' + str(lmd)
+        to_write +='    ' + str(vol)
+        to_write +='    ' + str(a)
+        to_write +='    ' + str(b)
+        to_write +='    ' + str(c)
+        to_write +='    ' + str(al)
+        to_write +='    ' + str(be)
+        to_write +='    ' + str(ga)
+        to_write +='    ' + str(mut)    
+        to_write +='    ' + str(crosst)
+        to_write +='    ' + str(par0)
+        to_write +='    ' + str(par1)
+        to_write += '\n'
+    with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
 
 def make_user_structure_directory(structure_coll, energy_tuples, n_structures=10):
     path = os.path.join(tmp_dir, 'user_structures')
@@ -88,35 +115,7 @@ def make_user_structure_directory(structure_coll, energy_tuples, n_structures=10
             struct = structure_coll.get_struct(energy_tuples[i][0])
             write_data(path, struct.get_stoic_str() + '_' + energy_tuples[i][0], struct.get_geo_atom_format())
         except: raise Exception
-     
-
-def write_energy_hierarchy(structure_coll):
-    energy_tuples = get_energy_tuples(structure_coll)
- #   biggest_dists = get_biggest_dist(structure_coll)
-    to_write = ''
-    energy_tuples.sort(key=lambda x: x[3])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, p0, p1, ct, md in energy_tuples: 
-#	to_write += structure_coll.get_stoic().get_string() + '/'
- 	to_write +=str(Id) + '	'
-	to_write +=str(rep) + '	'
-        to_write += str(structure_coll.get_input_ref()) + '/'
-        to_write += str(index) + '/'
-#	to_write +='	' + str(Id)
-        to_write +='	' + str(energy)
-	to_write +='	' + str(vol)
-	to_write +='	' + str(a)
-	to_write +='	' + str(b)
-	to_write +='	' + str(c)
-	to_write +='	' + str(al)
-	to_write +='	' + str(be)
-	to_write +='	' + str(ga)
-	to_write +='	' + str(p0)
-	to_write +='	' + str(p1)	
-	to_write +='	' + str(ct)
-	to_write +='	' + str(md)
-        to_write += '\n'
-    with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
-        
+             
 def write_geometries_to_file(structure_coll):
     pass
     
