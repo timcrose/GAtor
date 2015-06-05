@@ -6,6 +6,7 @@ Created on Jul 29, 2013
 import os
 import subprocess
 import time
+import numpy as np
 from core import user_input, output
 from core.file_handler import mkdir_p_clean
 from structures.structure import Structure
@@ -24,7 +25,9 @@ def main(input_structure, working_dir, control_in_string, replica):
     for information on how to easily setup a Structure object) 
     '''
     r = FHIAimsRelaxation(input_structure, working_dir, control_in_string, replica)
+    print "setting up FHI-aims input files"	
     r.setup()
+    print "executing FHI-aims"	
     r.execute()
     if r.is_successful(): return r.extract()
     else: return False
@@ -87,8 +90,8 @@ class FHIAimsRelaxation():
 	exe_string = """#!/bin/bash\n
 #SBATCH --qos=normal\n
 #SBATCH --job-name=fhi_aims\n
-#SBATCH --time=0-6:00:00\n
-#SBATCH --nodes=6\n
+#SBATCH --time=0-2:00:00\n
+#SBATCH --nodes=12\n
 #SBATCH --ntasks-per-node=20\n
 #SBATCH --workdir="""
 	exe_string += out_location 
@@ -106,33 +109,56 @@ module load tulane/intel-psxe/2015\n"""
 #	os.system('sbatch ' + os.path.join(self.working_dir, 'exe.sh'))
         p = subprocess.Popen(['sbatch',out_location +'/exe.sh'],cwd=self.working_dir)
         p.wait()    
-	time.sleep(2)
+#	time.sleep(2)
 
     def extract(self):
         '''
         Reads the output files from relaxation and specifies properties of the structure (e.g. energy)
-        
         Returns: Structure or False
-        
-        Note: there is a quicker way to parse these files, but is left as is for readabilities sake
-        '''
+       	'''
         # creates empty structure
         self.result_struct = Structure()
-        
-        try: self.result_struct.set_lattice_vectors(self.input_structure.get_lattice_vectors())
-        except: pass
-        
-        # reads output file to extract energy
+        #try: self.result_struct.set_lattice_vectors(self.input_structure.get_lattice_vectors())
+
+	# reads output file to extract energy
         energy = self.extract_energy()
+	print "energy", energy
         if energy == False: return False  # did not converge
         self.result_struct.set_property('energy', energy)
-        
+       
+	# sets the result structure's lattice vectors based on output file
+	lats= self.extract_lats()
+
+	latA = [float(lats[0][0]), float(lats[0][1]), float(lats[0][2])]
+        latB = [float(lats[1][0]), float(lats[1][1]), float(lats[1][2])]
+        latC = [float(lats[2][0]), float(lats[2][1]), float(lats[2][2])]
+	self.result_struct.set_property('lattice_vector_a', latA)
+        self.result_struct.set_property('lattice_vector_b', latB)
+        self.result_struct.set_property('lattice_vector_c', latC)
+	
+	latA = np.asarray(latA)
+	latB = np.asarray(latB)
+	latC = np.asarray(latC)
+
+	temp_vol = np.dot(np.cross(latA, latB), latC)
+        alpha = self.angle(latB, latC)
+        beta = self.angle(latA, latC)
+        gamma = self.angle(latA, latB)
+	self.result_struct.set_property('cell_vol', temp_vol)
+	self.result_struct.set_property('alpha',alpha)
+        self.result_struct.set_property('beta', beta)
+        self.result_struct.set_property('gamma', gamma)
+
+	print "latA",latA
+	print "latB", latB
+	print "latc", latC
+	print "alpha", alpha
+	print "beta", beta
+	print "gamma", gamma
+ 
         # sets the result structure's geometry based on output file
         extract_success = self.extract_geometry()
-        # structure not relaxed, no final atomic structure, keep original geometry
-        if not extract_success: self.result_struct.build_geo_whole(deepcopy(self.input_structure.get_geometry()))
-        if not self.input_structure.get_stoic() == self.result_struct.get_stoic(): return False
-        
+
         # extract the spin moment
         if self.ui.get('FHI-aims','initial_moment') == 'custom': self.extract_spin_moment()
         
@@ -151,8 +177,43 @@ module load tulane/intel-psxe/2015\n"""
                 tokens = line.split()
                 energy = float(tokens[5])  # converts from SI string to float
                 return energy
-        
 
+    def extract_lats(self):
+	print "extract lats..."
+	aims_out = open(os.path.join(self.working_dir, 'aims.out'))
+	while True:
+        	line = aims_out.readline()
+        	if 'Final atomic structure' in line: break
+        aims_out.readline()  # skip one line
+        atom_string = ''
+	while True:
+        	line = aims_out.readline()
+        	if 'atom' in line: break
+        	else: atom_string += line
+
+	latout = atom_string.split()
+
+#	print latout
+#	lat_A = np.asarray(latout[0]),latout[1], float(latout[2]))
+#	lat_B = np.asarray(float(latout[5]),float(latout[6]), float(latout[7]))
+#	lat_C = np.asarray(float(latout[9]),float(latout[10]), float(latout[11]))
+	lat_A = [latout[1], latout[2], latout[3]]
+	lat_B = [latout[5], latout[6], latout[7]]
+	lat_C = [latout[9], latout[10], latout[11]]
+	lats = [lat_A, lat_B, lat_C]
+
+	return lats
+
+    def angle(self,v1,v2):
+        numdot = np.dot(v1,v2)
+        anglerad = np.arccos(numdot/(self.leng(v1)*self.leng(v2)))
+        angledeg = anglerad*180/np.pi
+        return (angledeg)
+   
+    def leng(self,v):
+        length = np.linalg.norm(v)
+        return length
+  
     def extract_geometry(self):
         '''
         Reads the FHI-aims output file and builds the structure's geometry
@@ -164,13 +225,14 @@ module load tulane/intel-psxe/2015\n"""
             if not line: return False  # not converged
             if 'Final atomic structure' in line: break
         aims_out.readline()  # skip one line
-        
+        aims_out.readline()  # skip one line
+        aims_out.readline()  # skip one line
+        aims_out.readline()  # skip one line
         atom_string = ''
         while True:
             line = aims_out.readline()
-            if '----' in line: break
+            if 'Fractional coordinates:' in line: break
             else: atom_string += line
-            
         self.result_struct.build_geo_whole_atom_format(atom_string)
         return True
     
@@ -205,25 +267,27 @@ module load tulane/intel-psxe/2015\n"""
         checks if relaxation/optimization was successful
         '''
         # TODO: need proper check
-	aims_out = open(os.path.join(self.working_dir, 'aims.out'))
+#	aims_out = open(os.path.join(self.working_dir, 'aims.out'))
+        aims_out = os.path.join(self.working_dir, 'aims.out')
 	self.wait_on_file(aims_out)
+	aims_out = open(aims_out)
         while True:
             line = aims_out.readline()
-            if not line: return False  # energy not converged
+        #    if not line: return False  # energy not converged
             if 'Have a nice day' in line:
                 return True
         return False
 
-    def wait_on_file(wait_file,sleeptime=1):
-	   """
+    def wait_on_file(self,wait_file,sleeptime=1):
+	"""
    	Simple function that sleeps until a file path exists and any writes
    	to it finish.
    	"""
 	lasttime=0
    # waiting for the file to exist
    	while not os.path.exists(wait_file):
-       		sleep(sleeptime)
+       		time.sleep(sleeptime)
    # wait for the file to stop updating
-   	while (os.path.getmtime(wait_file)-lasttime!=0):
-       		lasttime=os.path.getmtime(wait_file)
-       		sleep(sleeptime)
+#   	while (os.path.getmtime(wait_file)-lasttime!=0):
+#       		lasttime=os.path.getmtime(wait_file)
+#       		sleep(sleeptime)
