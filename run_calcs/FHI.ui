@@ -1,17 +1,17 @@
 #This file allows the user to easily change GA modules and parameters before running the GA with run.py
 
 [modules] 
-initial_pool_relaxation_module = FHI_relaxation_cypress
-initial_pool_module = read_relax_user_structures
+initial_pool_relaxation_module = FHI_relaxation_cypress; not currently used bc we expect pre-relaxed pool
+initial_pool_module = read_json_user_structures
 initial_pool_comparison_module = mol_structure_comparison_cypress
-relaxation_module = FHI_cypress
+relaxation_module = FHI_relaxation_cypress
 comparison_module = mol_structure_comparison_cypress
 selection_module = structure_selection_4
 mutation_module = 2mol_mutation
 crossover_module = 2mol_crossover
 
 [run_settings] 
-number_of_structures = 5 ; stop GA if this many structures are in final collection
+number_of_structures = 10 ; stop GA if this many structures are in final collection
 parallel_on_core = None ;  will run GA in parallel on one core
 recover_from_crashes = False
 verbose = True
@@ -28,9 +28,8 @@ num_molecules = 2
 
 [initial_pool]
 number_of_processors = 1
-user_structures_dir = /lustre/project/nmarom/fcurtis/gator/run_calcs/user_initial_pools/5_random_sg
-user_structures_dir3= /Users/FarrenSCurtis/GA/trunk/run_calcs/user_initial_pools/5_random_sg
-user_structures_dir2= /Users/FarrenSCurtis/GA/trunk/run_calcs/user_initial_pools/50_random_sg_upto_142
+user_structures_dir = /lustre/project/nmarom/fcurtis/gator/run_calcs/user_initial_pools/5_json
+
 
 [selection]
 fitness_function = standard
