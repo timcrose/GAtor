@@ -124,7 +124,7 @@ class RunGA():
             ########## Check if finished ##########
             try: 
                 if len(self.structure_coll.structures) >= self.number_of_structures:
- 			print "Length of collection"
+ 			print "Length of collection has reached user-specified number:"
 			print len(self.structure_coll.structures)
 			print self.structure_coll.structures
 			return
