@@ -44,7 +44,10 @@ def select_mutator(input_structure, replica_stoic, replica):
     else:
 	mutation_list = ["None","Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
 
-    mut_choice = np.random.choice(mutation_list)
+    try:
+	mut_choice = np.random.choice(mutation_list)
+    except:
+	mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
     mutator = object
     print "Mutation_Choice: ", mut_choice
    
