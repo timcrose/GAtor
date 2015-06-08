@@ -102,7 +102,7 @@ export MKL_DYNAMIC=FALSE\n
 module load intel/mic/runtime/3.3\n
 module load intel/mic/sdk/3.3\n
 module load tulane/intel-psxe/2015\n"""
-        exe_string += 'mpirun /home/fcurtis/fhi-aims.150205/bin/aims.150205.scalapack.mpi.x > ' + out_location+ '/aims.out'
+        exe_string += 'mpirun /home/xli20/fhi-aims/fhi-aims.071914/bin/aims.071914_1.scalapack.mpi.x > ' + out_location+ '/aims.out'
 	exe_script = open(os.path.join(self.working_dir, 'exe.sh'), 'w')
         exe_script.write(exe_string)
 	exe_script.close()
@@ -273,6 +273,8 @@ module load tulane/intel-psxe/2015\n"""
 	aims_out = open(aims_out)
         while True:
             line = aims_out.readline()
+	    if line == '':
+		break
         #    if not line: return False  # energy not converged
             if 'Have a nice day' in line:
                 return True
