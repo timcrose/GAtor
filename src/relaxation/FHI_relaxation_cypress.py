@@ -30,7 +30,10 @@ def main(input_structure, working_dir, control_in_string, replica):
     print "executing FHI-aims"	
     r.execute()
     if r.is_successful(): return r.extract()
-    else: return False
+    else: 
+	print "Relaxation failed!"
+#	raise RuntimeError('relaxation failed!')
+	return False
 
 class FHIAimsRelaxation():
     '''
@@ -90,7 +93,10 @@ class FHIAimsRelaxation():
 	exe_string = """#!/bin/bash\n
 #SBATCH --qos=normal\n
 #SBATCH --job-name=fhi_aims\n
+
 #SBATCH --time=0-2:00:00\n
+#SBATCH -o aims.log
+#SBATCH -e aims.err
 #SBATCH --nodes=12\n
 #SBATCH --ntasks-per-node=20\n
 #SBATCH --workdir="""
@@ -107,9 +113,27 @@ module load tulane/intel-psxe/2015\n"""
         exe_script.write(exe_string)
 	exe_script.close()
 #	os.system('sbatch ' + os.path.join(self.working_dir, 'exe.sh'))
-        p = subprocess.Popen(['sbatch',out_location +'/exe.sh'],cwd=self.working_dir)
-        p.wait()    
-#	time.sleep(2)
+        while True:
+    	    p = subprocess.Popen(['sbatch','exe.sh'],shell=False,cwd=self.working_dir,stdout=subprocess.PIPE)
+            p.wait()
+	    out,err=p.communicate()
+	    print out
+	#print "in fhi_relaxation_cypress, this is what is captured by screen", out	
+  	    if out.split()[0]!='Submitted' or out.split()[1]!='batch':
+		raise RuntimeError("Is the job run on Cypress?")
+	    self.jobid=out.split()[3]
+	    time.sleep(1)
+	    p = subprocess.Popen(['squeue --job '+self.jobid],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            p.wait()
+            out,err=p.communicate()
+            try:
+                    l=out.split()[12]
+            except: #When a job is done, squeue will no longer return the information about the job
+                    print "Job submission failed! ", self.jobid
+                    continue
+	    break
+	self.wait_on_job()
+	time.sleep(2)
 
     def extract(self):
         '''
@@ -269,11 +293,14 @@ module load tulane/intel-psxe/2015\n"""
         # TODO: need proper check
 #	aims_out = open(os.path.join(self.working_dir, 'aims.out'))
         aims_out = os.path.join(self.working_dir, 'aims.out')
-	self.wait_on_file(aims_out)
+#	self.wait_on_file(aims_out)
 	aims_out = open(aims_out)
         while True:
             line = aims_out.readline()
 	    if line == '':
+#		print "In is_successful, still waiting for aims to finish output."
+#	    else:
+#		print "Read: ", line
 		break
         #    if not line: return False  # energy not converged
             if 'Have a nice day' in line:
@@ -286,10 +313,32 @@ module load tulane/intel-psxe/2015\n"""
    	to it finish.
    	"""
 	lasttime=0
+#	print "Waiting for the file!"
    # waiting for the file to exist
    	while not os.path.exists(wait_file):
+#		print "Still waiting!"
        		time.sleep(sleeptime)
    # wait for the file to stop updating
-#   	while (os.path.getmtime(wait_file)-lasttime!=0):
-#       		lasttime=os.path.getmtime(wait_file)
-#       		sleep(sleeptime)
+#	print "Waiting for the file to be done ", os.path.getmtime(wait_file)
+   	while (os.path.getmtime(wait_file)-lasttime!=0):
+#		print "Still waiting! Last edited", os.path.getmtime(wait_file)
+       		lasttime=os.path.getmtime(wait_file)
+       		time.sleep(sleeptime)
+
+    def wait_on_job(self,sleeptime=1):
+	'''
+	Waits until the submitted job is finished
+	'''
+	time.sleep(sleeptime*5)
+	while True:
+		p = subprocess.Popen(['squeue --job '+self.jobid],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+       		p.wait()
+		time.sleep(sleeptime)
+        	out,err=p.communicate()
+		try:
+			l=out.split()[12]
+		except: #When a job is done, squeue will no longer return the information about the job
+			print "FHI-aims Job finished! Jobid:", self.jobid
+			break
+		time.sleep(sleeptime)
+	
