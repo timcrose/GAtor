@@ -73,7 +73,6 @@ class RunGA():
         self.ui = user_input.get_config()
         self.replica_stoic = stoic
         self.structure_supercoll = {}
-        self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.verbose = self.ui.get_eval('run_settings', 'verbose')        
         # read in all other structures to local memory from storage
@@ -87,9 +86,16 @@ class RunGA():
 	self.child_counter = 0
 	self.success_counter = len(self.structure_coll)
 	self.min_energies_0 = []
-	self.delta_convg = float(self.ui.get('run_settings', 'delta_convergence'))   
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
- 
+	#Convergence settings from ui.conf
+	self.delta_convg = float(self.ui.get('run_settings', 'delta_convergence'))   
+	self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
+	self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
+	self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
+	self.mod_iteration_counter = 0
+
+
+
     def start(self):
         '''
         Performs main genetic algorithm operations
@@ -121,13 +127,18 @@ class RunGA():
             self.ui = user_input.get_config()
             begin_time = datetime.datetime.now()
             
-            ########## Check if finished ##########
+            ########## Check if finished/converged ##########
             try: 
                 if len(self.structure_coll.structures) >= self.number_of_structures:
  			print "Length of collection has reached user-specified number:"
 			print len(self.structure_coll.structures)
-			print self.structure_coll.structures
 			return
+		if convergeTF == True:
+			print "~*~*~*~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*"
+			print "Top energies haven't changed in user-specfied number of iterations"
+			print "Length of Collection"
+                        print len(self.structure_coll.structures)
+                        return
             except: pass
             if get_kill() == "kill": 
                 print 'replica ' + str(self.replica) + ' killed'
@@ -154,7 +165,7 @@ class RunGA():
             else: targ_stoic = mutation_module.get_targ_stoic()
 
             ########## Crossover ##########
-	 # Expects: list_of_2_or_more<Structure>, target stochiometry #Returns Structure or False
+            # Expects: list_of_2_or_more<Structure>, target stochiometry #Returns Structure or False
 	    print "--Crossover--"
             if self.verbose: self.output('Beginning crossover')
             new_struct = crossover_module.main(structures_to_cross, targ_stoic, self.replica)
@@ -166,8 +177,7 @@ class RunGA():
 			 
             ########## Mutation Execution ##########
             # Expects: Structure, target_stoichiometry [decision] #Returns: Structure
-       
-	    print "--Mutation--"  	
+       	    print "--Mutation--"  	
             if self.verbose: self.output('Beginning mutation')
             new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
             if new_struct is False: 
@@ -202,8 +212,7 @@ class RunGA():
                 continue  # structure not acceptable start with new selection
     
             structures_to_add = {}
-#	    child_number = 0
-            while True:
+	    while True:
                 input_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
                                          self.control_list[cascade_counter])
                 ########## Relaxation ##########
@@ -224,63 +233,64 @@ class RunGA():
                     if self.verbose: self.output('Newly relaxed structure is not acceptable') 
                     break  # structure not acceptable start with new selection
 	
-		 # Add structure to a list of structures to be put in to collection
+		#Add structure to a list of structures to be put in to collection
                 struct.input_ref = cascade_counter
                 self.set_parents(structures_to_cross, struct)
                 structures_to_add[(struct.get_stoic(), cascade_counter)] = struct
 
-		# Set current minimum energy of collection (0 for now)
+		#Sort energies of collection for convergence and global minima checks
 		coll = self.structure_supercoll.get((self.replica_stoic, cascade_counter))
- 		temp_e_list = []
+		temp_e_list = np.array([])
+		tot_e_list = np.array([])
 		for index, structure in coll:
 			energy = structure.get_property('energy')
-			temp_e_list += [index, energy]
-
-		temp_min_e = min(temp_e_list)
+			tot_e_list = np.append(energy,tot_e_list)
+		tot_e_list= np.sort(tot_e_list.reshape(len(tot_e_list),1),axis=0)
+		temp_e_list = tot_e_list[:self.top_en_count]
+		temp_min_e = temp_e_list[0][0]
 
                 # End of cascade tasks
                 cascade_counter = cascade_counter + 1  # move to next input
                 new_struct = struct  # set new structure and return to beginning of cascade
                 if cascade_counter > self.max_cascade: break
             	    
-            if is_acceptable is False or struct is False: continue  # start with new selection
-            else: self.end_of_iteration_tasks(structures_to_add, temp_min_e, self.success_counter)	
+            if is_acceptable is False or struct is False: 
+		convergeTF = False
+		continue  # start with new selection
+            else: convergeTF = self.end_of_iteration_tasks(structures_to_add, temp_min_e, self.success_counter, temp_e_list, tot_e_list)	
             end_time = datetime.datetime.now()
-            if self.verbose: self.output("Iteration time: -- " + str(end_time - begin_time))
+            print "Iteration time: -- " + str(end_time - begin_time)
 
-    def end_of_iteration_tasks(self, structures_to_add, min_e, num_success_IP):
-        prev_struct_index = None
+    def end_of_iteration_tasks(self, structures_to_add, min_e, num_success_common, old_en_list, tot_en_list):
+        prev_struct_index = None #none for now because only using GA for FF or aims not both
 	ID = len(self.structure_coll.structures) + 1
-	self.child_counter = self.child_counter + 1
-#	self.struct_counter = self.child_counter + num_success_IP 
+	self.child_counter = self.child_counter + 1 
 	energy_list = []
-
+	self.top_en_count 
+	self.delta_convg
         for key, struct in structures_to_add.items():
             # Set IDs and count numbers
             struct.set_property('prev_struct_id', prev_struct_index)  # tracks cascade sequence
 	    struct.set_property('child_count', self.child_counter)
 	    struct.set_property('ID', ID)	
 	    struct.set_property('replica', self.replica)		
-	    #Check for new Minimum Energy		
+
+	    #Check if new structure's energy is a new global minima
             e_new = struct.get_property('energy')
 	    if e_new < min_e:
 		diff = min_e - e_new
-		print "*************************** NEW MINIMUM FOUND **********************************"
+		print "*********** NEW GLOBAL MINIMUM FOUND ************"
 		print "old minima:  ", min_e
 		print "new minima:  ", e_new
 		print "difference:  ", diff
+		print "Difference of new and old global minima:   ", diff
 		struct.set_property('new_local_minima', "True")
-		struct.set_property('new_local_minima_diff', min_e - e_new)
-
-		if diff < .001:
-			print "~CONVERGED ENERGY!!!~"
-		else:
-			print "~New minimum not converged yet~"
+		struct.set_property('new_local_minima_diff', diff)
 
 	    #Output success message to screen and write energy hierarchy	
 	    index = structure_collection.add_structure(struct, key[0], key[1])
             prev_struct_index = str(key) + str(index)
-            message = 'Success: \n  stoichiometry-- ' + key[0].get_string() + \
+            message = 'Success!: \n  stoichiometry-- ' + key[0].get_string() + \
                       '\n  cascade-- ' + str(key[1]) + \
                       '\n  structure index-- ' + str(index) + \
 		      '\n  replica child count-- ' + str(self.child_counter) + \
@@ -289,8 +299,40 @@ class RunGA():
             print message
             data_tools.write_energy_hierarchy(self.structure_coll)
             self.output(message)
-#             print str(asizeof.asizeof(self.structure_supercoll) / 1048576) + ' MB'
-            
+
+	    #Check for Energy Convergence of GA 
+	    old_list_top_en = old_en_list
+	    new_list_top_en = np.append(tot_en_list, e_new)
+	    new_list_top_en= np.sort(new_list_top_en.reshape(len(new_list_top_en),1),axis=0)
+            new_list_top_en = new_list_top_en[:self.top_en_count]	
+
+	    print "old top energies:    ", old_list_top_en
+	    print "new top energies:    ", new_list_top_en
+
+	    converged = self.check_convergence(old_list_top_en,new_list_top_en,len(self.structure_coll.structures)) 
+	    if converged is "not_converged":
+                print "GA not converged yet."
+                pass	
+	    elif converged is "converged":
+		return True	
+
+    def check_convergence(self, old_list_top_en, new_list_top_en, length_coll):
+	#Check if top N energies havent changed in X iterations
+	self.mod_iteration_counter = self.mod_iteration_counter + 1
+	for en_new in new_list_top_en:
+ 		if en_new in old_list_top_en:
+			continue
+		else:
+                	print "Top "+str(self.top_en_count)+" energies have changed."
+			self.mod_iteration_counter = 0
+			print "Convergence counter reset."
+			print "Convergence iteration:  ", self.mod_iteration_counter
+                        return "not_converged"
+	print "Convergence iteration:  ", self.mod_iteration_counter
+	if self.mod_iteration_counter == self.max_en_it:
+		return "converged" 
+
+        
     def set_parents(self, structures_to_cross, struct):
         # set the the parent structures as a property for family tree tracing
         for i in range(len(structures_to_cross)): 
