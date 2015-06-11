@@ -213,6 +213,7 @@ class RunGA():
 		struct = relaxation_module.main(new_struct, self.working_dir, input_string, self.replica)
                 if struct is False: 
                     if self.verbose: self.output('Relaxation failure')
+		    print 'Relaxation failure for replica', self.replica
                     break  # optimization failed, start with new selection
                     
                 ########## Comparison ##########
