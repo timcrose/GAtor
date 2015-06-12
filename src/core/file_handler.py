@@ -10,9 +10,18 @@ import time
 from hashlib import sha1
 
 from external_libs.filelock import FileLock
-from core.master import argument_opt
 
 cwd = os.getcwd()
+def argument_opt():
+        from optparse import OptionParser
+        parser=OptionParser()
+        parser.add_option('-c','--clean','-r','--reset',action='store_true',dest='reset',default=False,help='Enables resetting environment before run')
+        parser.add_option('-k',action='store_true',dest='kill',default=False,help='Terminates the GA')
+        parser.add_option('-f','--file',action='store',type='string',dest='user_input',default='ui.conf',help='User input file name (default="ui.conf"')
+        parser.add_option('-d','--data',action='store_true',dest='data',default=False,help='Enables datatools')
+        parser.add_option('-n','--dontrun',action='store_false',dest='run_e',default=True,help='Disables the actual running of the GA')
+        return parser.parse_args()
+
 
 # source directories
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -33,6 +42,7 @@ progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
 default_config = os.path.join(GA_dir, 'res', 'default.conf')
 (options,argv)=argument_opt() #Retrieve the user_input from command line
 ui_conf = os.path.join(cwd, options.user_input)
+print "in File_handler, this is ui_conf:",os.path.join(cwd,options.user_input)
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
 
