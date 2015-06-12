@@ -10,7 +10,7 @@ import time
 from hashlib import sha1
 
 from external_libs.filelock import FileLock
-
+from core.master import argument_opt
 
 cwd = os.getcwd()
 
@@ -31,7 +31,8 @@ db_file = os.path.join(cwd, 'structures.sqlite')  # TODO: change par_dir to cwd
 # useful files
 progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
 default_config = os.path.join(GA_dir, 'res', 'default.conf')
-ui_conf = os.path.join(cwd, 'ui.conf')
+(options,argv)=argument_opt() #Retrieve the user_input from command line
+ui_conf = os.path.join(cwd, options.user_input)
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
 
