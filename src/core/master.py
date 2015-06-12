@@ -21,15 +21,20 @@ from core.file_handler import *
 from core.kill import set_unkill,set_kill
 from core import output
 
-def main(reset_e,kill_e,data_e,run_e):
+def main(reset_e,kill_e,data_e,run_e,fip_e):
     # read command line arguments
-    if reset_e:
+    if reset_e: #User requires reseting environment
         clean()
-    if data_e:
+    if fip_e:
+	from core import IP_filling
+	mkdir_p(tmp_dir) #tmp stores the added_user_structures.dat
+	mkdir_p(structure_dir) #structure_dir stores the common storage
+	IP_filling.main()
+    if data_e: #Unknown feature
 	from core import data_tools
 	data_tools.main(sys.argv)
 	return
-    if kill_e:
+    if kill_e: #User requires terminating GA
 	set_kill()
 	return
     if run_e:
@@ -38,13 +43,13 @@ def main(reset_e,kill_e,data_e,run_e):
 	number_of_multi=ui.get_eval('parallel_settings','number_of_multiprocesses')
 	environment=ui.get('parallel_settings','system')
 	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,environment)
+	mkdir_p(tmp_dir)
+	mkdir_p(structure_dir)
+	set_unkill()
 	if environment=='Cypress' or environment=='cypress' or environment=='1':
 		#Replica name will be a random string
 		pool=multiprocessing.Pool(processes=number_of_multi)
 		replica_name_list=[get_random_index() for i in range (number_of_multi)]
-		mkdir_p(tmp_dir)
-		mkdir_p(structure_dir)
-		set_unkill()
 		pool.map(run_GA_master,replica_name_list)
     
         
@@ -83,6 +88,7 @@ if __name__ == '__main__':
 		kill_e=options.kill		
 		data_e=options.data
 		run_e=options.run_e
+		fip_e=options.fip_e
 	except:
 		pass
-	main(reset_e,kill_e,data_e,run_e)
+	main(reset_e,kill_e,data_e,run_e,fip_e)
