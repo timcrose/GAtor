@@ -18,7 +18,8 @@ sys.path.append(src_dir)
 
 #from core import user_input
 from core.file_handler import *
-from core.kill import set_kill
+from core.kill import set_unkill,set_kill
+from core import output
 
 
 def argument_opt():
@@ -53,11 +54,20 @@ def main(reset_e,kill_e,data_e,run_e):
 		#Replica name will be a random string
 		pool=multiprocessing.Pool(processes=number_of_multi)
 		replica_name_list=[get_random_index() for i in range (number_of_multi)]
-		pool.map(run_GA,replica_name_list)
+		mkdir_p(tmp_dir)
+		mkdir_p(structure_dir)
+		set_unkill()
+		pool.map(run_GA_master,replica_name_list)
     
         
-def run_GA(replica):
-	os.system('python '+os.path.join(src_dir,'core','run_GA.py')+' '+replica)
+def run_GA_master(replica):
+	from utilities.stoic_model import determine_stoic
+	from core import run_GA	
+	stoic=determine_stoic()
+	ga=run_GA.RunGA(replica,stoic)
+	ga.start()
+	output.move_to_shared_output(replica)
+#	os.system('python '+os.path.join(src_dir,'core','run_GA.py')+' '+replica)
 #    minor_version = sys.version_info[1]
 #    ui = user_input.get_config()
 #        if (minor_version == 7) or (minor_version == 6): os.system('python ' + os.path.join(src_dir, 'core', 'run_GA.py ') + stoic_filename)  # laptop
@@ -78,7 +88,7 @@ def clean():
 
 
 if __name__ == '__main__':
-	try:
+	try:#PYthon 2.6 still uses optparse
 		(options,args)=argument_opt()
 		user_input=options.user_input
 		reset_e=options.reset
