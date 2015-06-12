@@ -1,4 +1,3 @@
 ### run in /bin/bash
 
-python /Users/FarrenSCurtis/GA/GAtor_5_14/src/core/master.py ui.conf 
-
+python /home/xli20/gator/src/core/master.py -f multi-ui.conf
