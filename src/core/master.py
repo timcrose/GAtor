@@ -21,17 +21,6 @@ from core.file_handler import *
 from core.kill import set_unkill,set_kill
 from core import output
 
-
-def argument_opt():
-	from optparse import OptionParser
-	parser=OptionParser()
-	parser.add_option('-c','--clean','-r','--reset',action='store_true',dest='reset',default=False,help='Enables resetting environment before run')
-	parser.add_option('-k',action='store_true',dest='kill',default=False,help='Terminates the GA')
-	parser.add_option('-f','--file',action='store',type='string',dest='user_input',default='ui.conf',help='User input file name (default="ui.conf"')
-	parser.add_option('-d','--data',action='store_true',dest='data',default=False,help='Enables datatools')
-	parser.add_option('-n','--dontrun',action='store_false',dest='run_e',default=True,help='Disables the actual running of the GA')
-	return parser.parse_args()
-
 def main(reset_e,kill_e,data_e,run_e):
     # read command line arguments
     if reset_e:
