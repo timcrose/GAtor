@@ -20,6 +20,7 @@ def argument_opt():
         parser.add_option('-f','--file',action='store',type='string',dest='user_input',default='ui.conf',help='User input file name (default="ui.conf"')
         parser.add_option('-d','--data',action='store_true',dest='data',default=False,help='Enables datatools')
         parser.add_option('-n','--dontrun',action='store_false',dest='run_e',default=True,help='Disables the actual running of the GA')
+	parser.add_option('-i','--fill_ip',action='store_true',dest='fip_e',default=False,help='Enables reading initial pool from user defined directory')
         return parser.parse_args()
 
 
