@@ -31,7 +31,7 @@ from utilities.stoic_model import determine_stoic
 
 # from profilestats import profile  # for time profiling
 # @profile
-def main(stoic):
+def main(replica,stoic):
     # setup
     mkdir_p(tmp_dir)
     mkdir_p(structure_dir)
@@ -39,12 +39,11 @@ def main(stoic):
     # check if going to be multiprocess
     ui = user_input.get_config()
     n_processors = ui.get_eval('run_settings', 'parallel_on_core')
-    if not isinstance(n_processors, (int, long)) : begin(stoic)
+    if not isinstance(n_processors, (int, long)) : begin(replica,stoic)
     else: begin_multiprocess(stoic, int(n_processors))
 
 
-def begin(stoic):
-    replica = get_random_index()
+def begin(replica,stoic):
     # run genetic algorithm
     ga = RunGA(replica, stoic)
     # catch crashes
@@ -344,17 +343,14 @@ class RunGA():
 
 
 if __name__ == '__main__':
-    '''
-    This command is important. If the module is run directly instead of imported,
-    it will execute the main() method. This allows for a single replica to join 
-    a current genetic algorithm search.
-    '''
-    try: 
-        stoic_filename = sys.argv[1]
-        stoic = determine_stoic(os.path.join(cwd, stoic_filename))
-    except: 
-        stoic = determine_stoic()
-    if stoic == None: raise Exception
-        
-    main(stoic)
+	'''
+	This command is important. If the module is run directly instead of imported,
+	it will execute the main() method. This allows for a single replica to join 
+	a current genetic algorithm search.
+	'''
+	replica=sys.argv[1]
+	print "this is replica received", replica
+	stoic = determine_stoic()
+	if stoic == None: raise Exception
+	main(replica,stoic)
 
