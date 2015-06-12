@@ -36,10 +36,9 @@ def main(reset_e,kill_e,data_e,run_e):
 	from core import user_input
 	ui=user_input.get_config()
 	number_of_multi=ui.get_eval('parallel_settings','number_of_multiprocesses')
-	environment=ui.get_eval('parallel_settings','system')
-	system_dict={1:"Cypress"}
-	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,system_dict[environment])
-	if environment==1: #Meaning cypress
+	environment=ui.get('parallel_settings','system')
+	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,environment)
+	if environment=='Cypress' or environment=='cypress' or environment=='1':
 		#Replica name will be a random string
 		pool=multiprocessing.Pool(processes=number_of_multi)
 		replica_name_list=[get_random_index() for i in range (number_of_multi)]
