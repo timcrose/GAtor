@@ -110,8 +110,8 @@ class RunGA():
         comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
 
         ########## Fill initial pool ##########
-	print "--Filling IP--"
-	initial_pool_module.main(self.replica, self.replica_stoic)
+	print "--Replica %s updating local pool--" %(self.replica)
+#	initial_pool_module.main(self.replica, self.replica_stoic) #The stoichiometry passed in here is collected from ui.conf
         # update all
         structure_collection.update_supercollection(self.structure_supercoll)
         print "***************** USER INITIAL POOL RELAXED *****************"
