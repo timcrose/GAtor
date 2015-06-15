@@ -39,8 +39,9 @@ def main(replica,stoic):
     # check if going to be multiprocess
     ui = user_input.get_config()
     n_processors = ui.get_eval('run_settings', 'parallel_on_core')
-    if not isinstance(n_processors, (int, long)) : begin(replica,stoic)
-    else: begin_multiprocess(stoic, int(n_processors))
+    begin(replica,stoic)
+#    if not isinstance(n_processors, (int, long)) : begin(replica,stoic)
+#    else: begin_multiprocess(stoic, int(n_processors))
 
 
 def begin(replica,stoic):
@@ -348,7 +349,10 @@ if __name__ == '__main__':
 	it will execute the main() method. This allows for a single replica to join 
 	a current genetic algorithm search.
 	'''
-	replica=sys.argv[1]
+	(options,argv)=argument.opt()
+	replica=options.replica
+	if replica==None:
+		replica=get_random_index()
 	print "this is replica received", replica
 	stoic = determine_stoic()
 	if stoic == None: raise Exception
