@@ -21,7 +21,7 @@ from core.file_handler import *
 from core.kill import set_unkill,set_kill
 from core import output
 
-def main(reset_e,kill_e,data_e,run_e,fip_e):
+def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
     # read command line arguments
     if reset_e: #User requires reseting environment
         clean()
@@ -51,7 +51,30 @@ def main(reset_e,kill_e,data_e,run_e,fip_e):
 		pool=multiprocessing.Pool(processes=number_of_multi)
 		replica_name_list=[get_random_index() for i in range (number_of_multi)]
 		pool.map(run_GA_master,replica_name_list)
-    
+	elif environment=='Cypress_login' or environment=='cypress_login' or environment=='CYpress-login' or environment=='cypress-login':
+		for i in range (number_of_multi):
+			replica_name=get_random_index()
+			exe_string='''#!/bin/bash
+#SBATCH --qos=normal
+#SBATCH --job-name=fhi_aims
+
+#SBATCH --time=%s
+#SBATCH -o %s.log
+#SBATCH -e %s.err
+#SBATCH --nodes=%i
+#SBATCH --ntasks-per-node=20
+#SBATCH --workdir=%s
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export MKL_DYNAMIC=FALSE
+
+python %s -f %s --rn %s
+''' % (ui.get('parallel_settings','replica_walltime'),replica_name,replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)
+			ss=open('submit.ss','w')
+			ss.write(exe_string)
+			ss.close()
+			os.system("sbatch submit.ss")    
         
 def run_GA_master(replica):
 	from utilities.stoic_model import determine_stoic
@@ -83,7 +106,7 @@ def clean():
 if __name__ == '__main__':
 	try:#PYthon 2.6 still uses optparse
 		(options,args)=argument_opt()
-		user_input=options.user_input
+		ui_name=options.user_input
 		reset_e=options.reset
 		kill_e=options.kill		
 		data_e=options.data
@@ -91,4 +114,4 @@ if __name__ == '__main__':
 		fip_e=options.fip_e
 	except:
 		pass
-	main(reset_e,kill_e,data_e,run_e,fip_e)
+	main(ui_name,reset_e,kill_e,data_e,run_e,fip_e)
