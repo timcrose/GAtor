@@ -21,6 +21,7 @@ def argument_opt():
         parser.add_option('-d','--data',action='store_true',dest='data',default=False,help='Enables datatools')
         parser.add_option('-n','--dontrun',action='store_false',dest='run_e',default=True,help='Disables the actual running of the GA')
 	parser.add_option('-i','--fill_ip',action='store_true',dest='fip_e',default=False,help='Enables reading initial pool from user defined directory')
+	parser.add_option('-n','--name',action='store',type='string',dest='replica',default=None, help='Replica name for the run_GA; not used for master.py')
         return parser.parse_args()
 
 
