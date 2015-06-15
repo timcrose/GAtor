@@ -349,7 +349,7 @@ if __name__ == '__main__':
 	it will execute the main() method. This allows for a single replica to join 
 	a current genetic algorithm search.
 	'''
-	(options,argv)=argument.opt()
+	(options,argv)=argument_opt()
 	replica=options.replica
 	if replica==None:
 		replica=get_random_index()
