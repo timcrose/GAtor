@@ -264,7 +264,7 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
 	str+=print_aims(struct)
 	output.local_message(str,replica)
     if count==0 and verbose:
-	output.local_message("Cell checked! Reasonable angles observed!\n",replica)
+	output.local_message("Cell checked! Reasonable angles observed!",replica)
     return struct
     
 def print_aims(struct):
