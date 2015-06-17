@@ -183,7 +183,7 @@ class RunGA():
 
 	    ####Structure modification of angles. Checks reasonable structure is fed into relaxation####
 	    #self.output("within GA, this is new_struct.properties"+str(new_struct.properties))
-	    structure_handling.cell_modification(new_struct, self.replica)
+	    structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
             ########### Begin Cascade #############
