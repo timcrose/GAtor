@@ -4,7 +4,7 @@ Created on Fri May 29 13:46:41 2015
 
 @author: Patrick Kilecdi
 """
-from structures import structure. structure_handling
+from structures import structure, structure_handling
 from core import user_input
 import numpy
 import copy
@@ -30,15 +30,20 @@ def main(struct,structure_coll,replica):
 	If the residual is smaller than is_duplicate_tolerance, than a False will be returned
 	'''
 	list=structure_coll.get_structures()
+	if len(list)==0:
+		raise RuntimeError("Suprecollection length is 0 in comparison module")
 	if verbose:
-		message="Comparison begins: comparing with %i structures in the commmon pool\n" % (len(list))
+		message="Comparison begins: comparing with %i structures in the commmon pool" % (len(list))
 		output.local_message(message,replica)	
 	minimum_residual=None
 	napm=int(len(struct.geometry)/nmpc)
 	for i in list:
 		current_struct=list[i]
-		if abs(current_struct.properties["energy"]-struct.properties["energy"])>energy_tolerance:
-			continue
+		try:
+			if abs(current_struct.properties["energy"]-struct.properties["energy"])>energy_tolerance:
+				continue
+		except:
+			pass
 		current_residual=is_duplicate(struct,current_struct,nmpc,napm)
 		if minimum_residual==None or minimum_residual>current_residual:
 			minimum_residual=current_residual
@@ -48,7 +53,10 @@ def main(struct,structure_coll,replica):
 				output.local_message(message,replica)
 			return False #Meaning the new structures is not acceptable
 	if verbose:
-		message="Comparison test finds the new structure to be acceptible! Minimum resi=%f\n" %(minimum_residual)
+		try:
+			message="Comparison test finds the new structure to be acceptible! Minimum resi=%f\n" %(minimum_residual)
+		except:
+			message="Comparison test finds the new structure to be acceptible! Energy unique from the other structures!\n"
 		output.local_message(message,replica)
 	return True
 				
@@ -264,7 +272,7 @@ def main1():
     print is_duplicate(struct,struct1,nmpc,napm,create_duplicate=False,extended_check=True)
     structure_handling.print_aims(struct1,"duplicate_not_quite.in")
 
-def main():
+def main1():
     nmpc=2; napm=10
     struct=structure.Structure()
     f=open("beta_glycine_0.data","r")
