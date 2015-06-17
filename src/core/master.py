@@ -69,7 +69,7 @@ export MKL_NUM_THREADS=1
 export MKL_DYNAMIC=FALSE
 
 python %s -f %s --rn %s
-''' % (ui.get('parallel_settings','replica_walltime'),replica_name,replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)
+''' % (ui.get('parallel_settings','replica_walltime'),replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)
 			ss=open('submit.ss','w')
 			ss.write(exe_string)
 			ss.close()
