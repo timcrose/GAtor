@@ -1,12 +1,6 @@
 #!/usr/bin/python
 
-'''
-Created on Jul 19, 2013
-
-@author: newhouse
-'''
 from __future__ import division
-
 import datetime
 import os
 import sys
@@ -15,7 +9,6 @@ import numpy as np
 # add source directory to python path
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(src_dir)
-
 from core import user_input, data_tools, output
 from file_handler import *
 from kill import *
@@ -23,14 +16,11 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
-
-
-
 # from external_libs import asizeof
-
-
 # from profilestats import profile  # for time profiling
-# @profile
+
+
+
 def main(replica,stoic):
     # setup
     mkdir_p(tmp_dir)
@@ -56,16 +46,16 @@ def begin(replica,stoic):
                 ga.start() 
                 break
             except Exception, e: 
-                print output.error(e, replica)
+                output.error(e, replica)
     output.move_to_shared_output(replica)
     
 class RunGA():
     '''
-    DOCUMENT
+    This is the core algorithm which runs the genetic algorithm tasks
     '''
     def __init__(self, replica, stoic):
         '''
-        Document
+        Initialization
         '''
 
         # Define class fields
@@ -111,11 +101,11 @@ class RunGA():
         comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
 
         ########## Fill initial pool ##########
-	print "--Replica %s updating local pool--" %(self.replica)
+	self.output("--Replica %s updating local pool--" %(self.replica))
 #	initial_pool_module.main(self.replica, self.replica_stoic) #The stoichiometry passed in here is collected from ui.conf
         # update all
         structure_collection.update_supercollection(self.structure_supercoll)
-        print "***************** USER INITIAL POOL RELAXED *****************"
+        self.output("***************** USER INITIAL POOL RELAXED *****************")
         #rm this break after initial pool tests
         #    break            
 
@@ -130,18 +120,17 @@ class RunGA():
             ########## Check if finished/converged ##########
             try: 
                 if len(self.structure_coll.structures) >= self.number_of_structures:
- 			print "Length of collection has reached user-specified number:"
-			print len(self.structure_coll.structures)
+ 			self.output("Length of collection has reached user-specified number:")
+			self.output(str(len(self.structure_coll.structures)))
 			return
 		if convergeTF == True:
-			print "~*~*~*~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*"
-			print "Top energies haven't changed in user-specfied number of iterations"
-			print "Length of Collection"
-                        print len(self.structure_coll.structures)
+			self.output("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*")
+			self.output("Top energies haven't changed in user-specfied number of iterations")
+			self.output("Length of Collection")
+                        self.output((len(self.structure_coll.structures)))
                         return
             except: pass
             if get_kill() == "kill": 
-                print 'replica ' + str(self.replica) + ' killed'
                 self.output('replica ' + str(self.replica) + ' killed')
                 return
             	  
@@ -149,55 +138,52 @@ class RunGA():
             
             ########## Structure Selection ##########
             # Expects: dictionary_of_on_or_more<Stoic, StructureCollection> #Returns: list_of_2_or_more<Structure>
-            if self.verbose: self.output('Beginning structure selection')
-	    print "--Structure selection--"	
+	    self.output("--Structure selection--")	
             structures_to_cross = selection_module.main(self.structure_supercoll, self.replica_stoic, self.replica)
             if structures_to_cross is False: self.output('Selection failure'); continue
-            if self.verbose: 
-                stc_message = ''
-                for stc in structures_to_cross: stc_message += stc.get_path() + ' + '
-                self.output('Crossing structures: ' + stc_message[:-3])
+	    #stc_message = ''
+            #for stc in structures_to_cross: stc_message += stc.get_path() + ' + '
+            #self.output('Crossing structures: ' + stc_message[:-3])
              
 	    ########## Mutation Decision ##########
-            # Expects: None #Returns: stoichiometry or None
-            # target_stoic in StoicDict format
+            # Expects: None #Returns: stoichiometry or None. target_stoic in StoicDict format
             if not hasattr(mutation_module, 'get_targ_stoic'): targ_stoic = self.replica_stoic
             else: targ_stoic = mutation_module.get_targ_stoic()
 
             ########## Crossover ##########
             # Expects: list_of_2_or_more<Structure>, target stochiometry #Returns Structure or False
-	    print "--Crossover--"
-            if self.verbose: self.output('Beginning crossover')
+	    self.output("--Crossover--")
             new_struct = crossover_module.main(structures_to_cross, targ_stoic, self.replica)
 	    if new_struct is False: 
-           	if self.verbose: self.output('Crossover failure')
+           	self.output("Crossover failure")
              	continue  # crossover failed, start with new selection
-#	    print "post crossover geo: "
-#	    print new_struct.get_geometry_atom_format()       	    
+	    #self.output("post crossover geo: ")
+	    #self.output(str(new_struct.get_geometry_atom_format()))       	    
 			 
             ########## Mutation Execution ##########
             # Expects: Structure, target_stoichiometry [decision] #Returns: Structure
-       	    print "--Mutation--"  	
+       	    self.output("--Mutation--")  	
             if self.verbose: self.output('Beginning mutation')
             new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
             if new_struct is False: 
                  if self.verbose: self.output('Mutation failure')
                  continue  # mutation failed, start with new selection
-#	    print "post mutation geo: "	
-#	    print new_struct.get_geometry_atom_format()	
+	    #self.output("post mutation geo: ")	
+	    #self.output(str(new_struct.get_geometry_atom_format()))	
           
 	    ##### Choose possibility of second Mutation ##########
 	    randnum = np.random.random()
 	    if randnum < self.doublemutate:
-		print "--Second Mutation--"
+		self.output("--Second Mutation--")
 		new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
-#		print "post second mutation geo: "
-#            	print new_struct.get_geometry_atom_format()
+		#self.output("post second mutation geo: ")
+            	#self.output(str(new_struct.get_geometry_atom_format()))
 	        if new_struct is False:
-                	if self.verbose: self.output('Mutation failure')
+                	self.output('Mutation failure')
                  	continue  # mutation failed, start with new selection
-	    #Now implements structure modification and checks to make sure reasonable structure is fed into aims
-	    print "within GA, this is new_struct.properties", new_struct.properties
+
+	    ####Structure modification of angles. Checks reasonable structure is fed into relaxation####
+	    #self.output("within GA, this is new_struct.properties"+str(new_struct.properties))
 	    structure_handling.cell_modification(new_struct, self.replica)
  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
@@ -220,20 +206,18 @@ class RunGA():
                                          self.control_list[cascade_counter])
                 ########## Relaxation ##########
                 # Expects: Structure, working_dir, input_path #Returns: Structure
-		print "--Relaxation--"
-                self.output('Beginning relaxation')
+		self.output("--Relaxation--")
 		struct = relaxation_module.main(new_struct, self.working_dir, input_string, self.replica)
                 if struct is False: 
-                    if self.verbose: self.output('Relaxation failure')
-		    print 'Relaxation failure for replica', self.replica
+		    self.output('Relaxation failure for replica'+ str(self.replica))
                     break  # optimization failed, start with new selection
                     
                 ########## Comparison ##########
-		print "--Comparison--"
+		self.output("--Comparison--")
                 structure_collection.update_supercollection(self.structure_supercoll)
                 is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((struct.get_stoic(), cascade_counter)), self.replica)
                 if is_acceptable is False:
-                    if self.verbose: self.output('Newly relaxed structure is not acceptable') 
+                    self.output('Newly relaxed structure is not acceptable') 
                     break  # structure not acceptable start with new selection
 	
 		#Add structure to a list of structures to be put in to collection
@@ -262,7 +246,7 @@ class RunGA():
 		continue  # start with new selection
             else: convergeTF = self.end_of_iteration_tasks(structures_to_add, temp_min_e, self.success_counter, temp_e_list, tot_e_list)	
             end_time = datetime.datetime.now()
-            print "Iteration time: -- " + str(end_time - begin_time)
+            self.output("Iteration time: -- " + str(end_time - begin_time))
 
     def end_of_iteration_tasks(self, structures_to_add, min_e, num_success_common, old_en_list, tot_en_list):
         prev_struct_index = None #none for now because only using GA for FF or aims not both
@@ -282,11 +266,11 @@ class RunGA():
             e_new = struct.get_property('energy')
 	    if e_new < min_e:
 		diff = min_e - e_new
-		print "*********** NEW GLOBAL MINIMUM FOUND ************"
-		print "old minima:  ", min_e
-		print "new minima:  ", e_new
-		print "difference:  ", diff
-		print "Difference of new and old global minima:   ", diff
+	        message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
+                      '\n  old minima:  ' + str(min_e) + \
+                      '\n  new minima:  ' + str(e_new) + \
+                      '\n  difference:  ' + str(diff) + 
+		self.output(message)
 		struct.set_property('new_local_minima', "True")
 		struct.set_property('new_local_minima_diff', diff)
 
@@ -299,7 +283,7 @@ class RunGA():
 		      '\n  replica child count-- ' + str(self.child_counter) + \
 		      '\n  collection count -- ' + str(ID) + \
 		      '\n  replica-- ' + str(self.replica)
-            print message
+            self.output(message)
             data_tools.write_energy_hierarchy(self.structure_coll)
             self.output(message)
 
@@ -309,12 +293,12 @@ class RunGA():
 	    new_list_top_en= np.sort(new_list_top_en.reshape(len(new_list_top_en),1),axis=0)
             new_list_top_en = new_list_top_en[:self.top_en_count]	
 
-	    print "old top energies:    ", old_list_top_en
-	    print "new top energies:    ", new_list_top_en
+	    self.output("old top energies:    "+ str(old_list_top_en))
+	    self.output("new top energies:    "+ str(new_list_top_en))
 
 	    converged = self.check_convergence(old_list_top_en,new_list_top_en,len(self.structure_coll.structures)) 
 	    if converged is "not_converged":
-                print "GA not converged yet."
+                self.output("GA not converged yet.")
                 pass	
 	    elif converged is "converged":
 		return True	
@@ -326,12 +310,12 @@ class RunGA():
  		if en_new in old_list_top_en:
 			continue
 		else:
-                	print "Top "+str(self.top_en_count)+" energies have changed."
+                	self.output("Top "+str(self.top_en_count)+" energies have changed.")
 			self.mod_iteration_counter = 0
-			print "Convergence counter reset."
-			print "Convergence iteration:  ", self.mod_iteration_counter
+			self.output("Convergence counter reset.")
+			self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
                         return "not_converged"
-	print "Convergence iteration:  ", self.mod_iteration_counter
+	self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
 	if self.mod_iteration_counter == self.max_en_it:
 		return "converged" 
 
@@ -356,7 +340,7 @@ if __name__ == '__main__':
 	replica=options.replica
 	if replica==None:
 		replica=get_random_index()
-	print "this is replica received", replica
+	self.output("this is replica received"+ str(replica))
 	stoic = determine_stoic()
 	if stoic == None: raise Exception
 	main(replica,stoic)
