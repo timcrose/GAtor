@@ -4,13 +4,11 @@ Created in May 2015
 @author: farren
 '''
 from __future__ import division
-
 from copy import deepcopy
 from math import cos, sin
 import math
 import numpy 
 import random
-
 from core import user_input, output
 from structures.structure import StoicDict, Structure
 
@@ -24,14 +22,11 @@ def main(list_of_structures, targit_stoic, replica):
     '''
     cross_object = Crossover(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
     return_struct = cross_object.cross()
-    if cross_object.verbose and not return_struct is False: 
-         cross_object.output('geometries to cross: \n' + list_of_structures[0].get_geometry_atom_format() +\
-                        '\n' + list_of_structures[1].get_geometry_atom_format())
-         cross_object.output('crossed_geometry: \n' + return_struct.get_geometry_atom_format())
+#    if cross_object.verbose and not return_struct is False: 
+#         cross_object.output('geometries to cross: \n' + list_of_structures[0].get_geometry_atom_format() +\
+#                        '\n' + list_of_structures[1].get_geometry_atom_format())
+#         cross_object.output('crossed_geometry: \n' + return_struct.get_geometry_atom_format())
   
-  #  print return_struct.get_property('crossover_type') 
-  #  print return_struct.get_geometry()
-  #  print return_struct.get_lattice_vectors()
     return return_struct
     
 class Crossover(object):
@@ -101,7 +96,7 @@ class Crossover(object):
 
 	#Choose Random Crossover type
 	cross_type  = self.choose_crossover_type()
-	print "cross_type:     ", cross_type
+	self.output( "cross_type:     "+str(cross_type))
 
 	#Setup geo for child 
 	child_geo = self.geo_options(cross_type, mol1_a, mol2_a, mol3_a, mol4_a, mol1_b, mol2_b, mol3_b, mol4_b)
@@ -111,19 +106,19 @@ class Crossover(object):
         mol4_c = child_geo[3*atom_num_per_mol:len(temp_a)]
 	tooclose = self.is_too_close(mol1_c, mol2_c)
 	if tooclose is True:
-		print "!child mols 1&2 too close together!"
+		self.output("!child mols 1&2 too close together!")
 		return False
 	tooclose = self.is_too_close(mol2_c, mol3_c)
         if tooclose is True:
-                print "!child mols 2&3 too close together!"
+                self.output("!child mols 2&3 too close together!")
                 return False
         tooclose = self.is_too_close(mol3_c, mol4_c)
         if tooclose is True:
-                print "!child mols 3&4 too close together!"
+                self.output("!child mols 3&4 too close together!")
                 return False
         tooclose = self.is_too_close(mol4_c, mol1_c)
         if tooclose is True:
-                print "!child mols 4&1 too close together!"
+                self.output("!child mols 4&1 too close together!")
                 return False
 
 	#Setup lattice for child
@@ -143,28 +138,12 @@ class Crossover(object):
 #	print "geo parent B", temp_b
 #	print "child geo", child_geo
 
-	#Printout parent +child lattices for checking
-#	print "lattice vectors parent A"
-#       print A_a
-#	print B_a      
-#       print C_a
-#       print "lattice vectors parent B"
-#       print A_b
-#       print B_b
-#       print C_b 
-#	print "child lattice vectors"
-#	print child_latA
-#	print child_latB
-#	print child_latC
-
 	#Printout parent + child lengths and angles
-	print "Parent A lats:  ", numpy.sqrt(numpy.dot(A_a, A_a)), numpy.sqrt(numpy.dot(B_a, B_a)), numpy.sqrt(numpy.dot(C_a, C_a))
-	print "Parent B lats:  ", numpy.sqrt(numpy.dot(A_b, A_b)), numpy.sqrt(numpy.dot(B_b, B_b)), numpy.sqrt(numpy.dot(C_b, C_b))
-	print "Child lats:     ", numpy.sqrt(numpy.dot(child_latA, child_latA)), numpy.sqrt(numpy.dot(child_latB, child_latB)), numpy.sqrt(numpy.dot(child_latC, child_latC))
-	print "Child angles:   ", alpha, beta, gamma
-
-
-	
+        message = 'Parent A lattice vectors:  ' + str(numpy.linalg.norm(A_a))+' '+str(numpy.linalg.norm(B_a))+' '+str(numpy.linalg.norm(C_a))+\
+                  '\nParent B lattice vectors:  ' + str(numpy.linalg.norm(A_b))+' '+str(numpy.linalg.norm(B_b))+' '+str(numpy.linalg.norm(C_b))+\
+                  '\nChild lattice vectors:  ' + str(numpy.linalg.norm(child_latA))+' '+str(numpy.linalg.norm(child_latB))+' '+str(numpy.linalg.norm(child_latC))+\
+                  '\nChild angles:    ' +str(alpha)+' '+str(beta)+' '+str(gamma)
+        self.output(message)
 
 	#Set new structure
 	new_struct = Structure()
@@ -172,6 +151,9 @@ class Crossover(object):
 	new_struct.set_property('lattice_vector_a', child_latA)
 	new_struct.set_property('lattice_vector_b', child_latB)
 	new_struct.set_property('lattice_vector_c', child_latC)
+	new_struct.set_property('a', numpy.linalg.norm(child_latA))
+        new_struct.set_property('b', numpy.linalg.norm(child_latB))
+        new_struct.set_property('c', numpy.linalg.norm(child_latC))
 	new_struct.set_property('cell_vol', temp_vol)
 	new_struct.set_property('crossover_type', cross_type)
 	new_struct.set_property('alpha',alpha)
@@ -230,9 +212,7 @@ class Crossover(object):
 
 	if lat_choice == 3:
 	#take lattice of random combo of parent A + B
-#		rand_vec = numpy.random.uniform(0.2, 0.8, 3)
 		rand_vec = numpy.random.random(3)
-		print "Rand vec:       ", rand_vec
 		latA = rand_vec[0]*lat1A + (1 - rand_vec[0])*lat2A
 		latB = rand_vec[1]*lat1B + (1 - rand_vec[1])*lat2B
 		latC = rand_vec[2]*lat1C + (1 - rand_vec[2])*lat2C
