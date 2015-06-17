@@ -84,7 +84,7 @@ class FHIAimsRelaxation():
 	out_location = str(self.working_dir)
         ui=user_input.get_config()
         bin=ui.get('FHI-aims','path_to_aims_executable')
-	command='mpirun --rr -wdir %s %s > %s' % (out_location,bin,os.path.join(out_location,'aims.out'))
+	command='mpirun -wdir %s %s > %s' % (out_location,bin,os.path.join(out_location,'aims.out'))
 	os.system(command) #With the & at the end, will wait until FHI relaxation is done
 	
 
@@ -121,10 +121,17 @@ class FHIAimsRelaxation():
         alpha = self.angle(latB, latC)
         beta = self.angle(latA, latC)
         gamma = self.angle(latA, latB)
+	a = np.linalg.norm(latA)
+	b = np.linalg.norm(latB)
+	c = np.linalg.norm(latC)
 	self.result_struct.set_property('cell_vol', temp_vol)
 	self.result_struct.set_property('alpha',alpha)
         self.result_struct.set_property('beta', beta)
         self.result_struct.set_property('gamma', gamma)
+	self.result_struct.set_property('a',a)
+        self.result_struct.set_property('b', b)
+        self.result_struct.set_property('c', c)
+
 
 	print "latA",latA
 	print "latB", latB
