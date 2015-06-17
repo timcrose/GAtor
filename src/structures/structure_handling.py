@@ -15,7 +15,7 @@ import exceptions
 from core import user_input
 molar_mass={'H':1,'C':12,'N':14,'O':16,'S':32}
 lat_interp={0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
-ui-user_input.get_config()
+ui=user_input.get_config()
 verbose=ui.get_eval('run_settings','verbose')
 nmpc=ui.get_eval('unit_cell_settings','num_molecules')
 def cell_translation(struct,trans_vec,create_duplicate=True):
@@ -252,7 +252,7 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
             struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
             struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
             struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
-    struct=move_molecule_in(struct,nmpc,napm,False)
+    struct=move_molecule_in(struct,False)
     if count>0 and verbose:
 	str="------Cell modification required------\n"
 	str+="Geometry before modification:\n"
@@ -261,7 +261,7 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
 	str+=print_aims(struct)
 	output.local_message(str,replica)
     if count==0 and verbose:
-	output.local_message("Cell checked! Reasonable angles observed!\n")
+	output.local_message("Cell checked! Reasonable angles observed!\n",replica)
     return struct
     
 def print_aims(struct):
