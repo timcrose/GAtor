@@ -19,7 +19,7 @@ sys.path.append(src_dir)
 from core import user_input, data_tools, output
 from file_handler import *
 from kill import *
-from structures import structure_collection
+from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
@@ -196,8 +196,10 @@ class RunGA():
 	        if new_struct is False:
                 	if self.verbose: self.output('Mutation failure')
                  	continue  # mutation failed, start with new selection
-
-   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
+	    #Now implements structure modification and checks to make sure reasonable structure is fed into aims
+	    structure_handling.cell_modification(new_struct, self.replica)
+ 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
             ########### Begin Cascade #############
             cascade_counter = 0
  	    if self.max_cascade > 0: self.output('Beginning cascade')
