@@ -44,7 +44,6 @@ progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
 default_config = os.path.join(GA_dir, 'res', 'default.conf')
 (options,argv)=argument_opt() #Retrieve the user_input from command line
 ui_conf = os.path.join(cwd, options.user_input)
-print "in File_handler, this is ui_conf:",os.path.join(cwd,options.user_input)
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
 
