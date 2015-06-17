@@ -182,6 +182,9 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
     test=True
     run=0
     count=0
+    struct.properties['a']=numpy.linalg.norm(struct.properties["lattice_vector_a"])
+    struct.properties['b']=numpy.linalg.norm(struct.properties["lattice_vector_b"])
+    struct.properties['c']=numpy.linalg.norm(struct.properties["lattice_vector_c"])
     while test and run<10:
         test=False
         run+=1
