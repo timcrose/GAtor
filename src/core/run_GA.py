@@ -163,10 +163,9 @@ class RunGA():
             ########## Mutation Execution ##########
             # Expects: Structure, target_stoichiometry [decision] #Returns: Structure
        	    self.output("--Mutation--")  	
-            if self.verbose: self.output('Beginning mutation')
-            new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+	    new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
             if new_struct is False: 
-                 if self.verbose: self.output('Mutation failure')
+                 self.output('Mutation failure')
                  continue  # mutation failed, start with new selection
 	    #self.output("post mutation geo: ")	
 	    #self.output(str(new_struct.get_geometry_atom_format()))	
@@ -284,9 +283,8 @@ class RunGA():
 		      '\n  collection count -- ' + str(ID) + \
 		      '\n  replica-- ' + str(self.replica)
             self.output(message)
+	    self.output("writing hierachy")	
             data_tools.write_energy_hierarchy(self.structure_coll)
-            self.output(message)
-
 	    #Check for Energy Convergence of GA 
 	    old_list_top_en = old_en_list
 	    new_list_top_en = np.append(tot_en_list, e_new)
