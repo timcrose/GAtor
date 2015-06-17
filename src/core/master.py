@@ -59,7 +59,6 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 #SBATCH --job-name=fhi_aims
 
 #SBATCH --time=%s
-#SBATCH -o %s.log
 #SBATCH -e %s.err
 #SBATCH --nodes=%i
 #SBATCH --ntasks-per-node=20

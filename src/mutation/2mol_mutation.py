@@ -10,7 +10,7 @@ import numpy as np
 import random
 import time
 
-from core import user_input
+from core import user_input,output
 from structures.structure import Structure
 
 def main(struct, r_stoic, replica):
@@ -48,9 +48,10 @@ def select_mutator(input_structure, replica_stoic, replica):
 	mut_choice = np.random.choice(mutation_list)
     except:
 	mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
+    message = "Mutation Choice:    " +str(mut_choice)	
+    output.local_message(message, replica)
+
     mutator = object
-    print "Mutation_Choice: ", mut_choice
-   
     if mut_choice == "None":
     	mutator = NoMutation(input_structure, replica_stoic, replica)
     elif mut_choice == "Trans_mol":
@@ -81,6 +82,9 @@ class NoMutation(object):
         new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
         new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
         new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
+	new_struct.set_property('a', np.linalg.norm(self.input_structure.get_property('lattice_vector_a')))
+        new_struct.set_property('b', np.linalg.norm(self.input_structure.get_property('lattice_vector_b')))
+        new_struct.set_property('c', np.linalg.norm(self.input_structure.get_property('lattice_vector_c')))
         new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
@@ -100,7 +104,10 @@ class RandomTranslationMutation(object):
         self.input_structure = input_structure
 	self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
     	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_trans')
-    
+	self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica) 
+
     def mutate(self):
         return self.random_translation()  
 
@@ -123,6 +130,9 @@ class RandomTranslationMutation(object):
         new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
         new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
         new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
+	new_struct.set_property('a', np.linalg.norm(self.input_structure.get_property('lattice_vector_a')))
+        new_struct.set_property('b', np.linalg.norm(self.input_structure.get_property('lattice_vector_b')))
+        new_struct.set_property('c', np.linalg.norm(self.input_structure.get_property('lattice_vector_c')))
         new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
@@ -136,7 +146,7 @@ class RandomTranslationMutation(object):
         randomly displaces the COM of a molecule within gaussian dist
         '''
    	rand_disp = np.random.standard_normal(3) * st_dev
-        print rand_disp	
+        self.output(rand_disp)	
         for atom in geometry:
 	    atom[0] = atom[0] - rand_disp[0]
 	    atom[1] = atom[1] - rand_disp[1]
@@ -171,6 +181,9 @@ class RandomRotationMolMutation(object):
         self.input_structure = input_structure
         self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
         self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+	self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica)
 
     def mutate(self):
         return self.random_rotation()
@@ -202,6 +215,9 @@ class RandomRotationMolMutation(object):
         new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
         new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
         new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
+	new_struct.set_property('a', np.linalg.norm(self.input_structure.get_property('lattice_vector_a')))
+        new_struct.set_property('b', np.linalg.norm(self.input_structure.get_property('lattice_vector_b')))
+        new_struct.set_property('c', np.linalg.norm(self.input_structure.get_property('lattice_vector_c')))
         new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
@@ -278,6 +294,9 @@ class RandomStrainMutationMoveMols(object):
         self.input_structure = input_structure
 	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
 	self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
+	self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica)
 
     def mutate(self):
         return self.rstrain()
@@ -356,6 +375,9 @@ class RandomStrainMutationMoveMols(object):
         new_struct.set_property('lattice_vector_a', lata_out)
         new_struct.set_property('lattice_vector_b', latb_out)
         new_struct.set_property('lattice_vector_c', latc_out)
+	new_struct.set_property('a', np.linalg.norm(lata_out))
+        new_struct.set_property('b', np.linalg.norm(latb_out))
+        new_struct.set_property('c', np.linalg.norm(latc_out))
         new_struct.set_property('cell_vol', np.dot(lata_out, np.cross(latb_out, latc_out)))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
@@ -367,7 +389,7 @@ class RandomStrainMutationMoveMols(object):
     def rand_vstrain(self, lat_mat):
 	strain_list = np.random.standard_normal(6) * self.st_dev
 	strain_mat = self.get_strain_mat(strain_list)
-	print "strain_mat", strain_mat
+	self.output("strain_mat"+ str(strain_mat))
 
 	strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
 	strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
@@ -426,6 +448,9 @@ class RandomStrainMutation(object):
 	self.ui = user_input.get_config()
         self.input_structure = input_structure
 	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
+	self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica)
 
     def mutate(self):
         return self.rstrain()
@@ -469,6 +494,9 @@ class RandomStrainMutation(object):
 	new_struct.set_property('lattice_vector_a', lata_out)
         new_struct.set_property('lattice_vector_b', latb_out)
         new_struct.set_property('lattice_vector_c', latc_out)
+	new_struct.set_property('a', np.linalg.norm(lata_out))
+        new_struct.set_property('b', np.linalg.norm(latb_out))
+        new_struct.set_property('c', np.linalg.norm(latc_out))
         new_struct.set_property('cell_vol', np.dot(lata_out, np.cross(latb_out, latc_out)))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
@@ -480,7 +508,7 @@ class RandomStrainMutation(object):
     def rand_vstrain(self, lat_mat):
 	strain_list = np.random.standard_normal(6) * self.st_dev
 	strain_mat = self.get_strain_mat(strain_list)
-	print "strain_mat", strain_mat
+	self.output("strain_mat" +str(strain_mat))
 
 	strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
 	strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
@@ -527,6 +555,9 @@ class RandomSymmetryStrainMutationMoveMols(object):
         self.input_structure = input_structure
 	self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
 	self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
+	self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica)
 
     def mutate(self):
         return self.rstrain()
@@ -604,6 +635,9 @@ class RandomSymmetryStrainMutationMoveMols(object):
 	new_struct.set_property('lattice_vector_a', lata_out)
         new_struct.set_property('lattice_vector_b', latb_out)
         new_struct.set_property('lattice_vector_c', latc_out)
+        new_struct.set_property('a', np.linalg.norm(lata_out))
+        new_struct.set_property('b', np.linalg.norm(latb_out))
+        new_struct.set_property('c', np.linalg.norm(latc_out))
         new_struct.set_property('cell_vol', np.dot(lata_out, np.cross(latb_out, latc_out)))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
@@ -616,8 +650,8 @@ class RandomSymmetryStrainMutationMoveMols(object):
 	eta = np.random.standard_normal(1) * self.st_dev 
         strain_list = eta*self.choose_rand_sym_strain(lat_mat)
         strain_mat = self.get_strain_mat(strain_list)
-#  	print "eta", eta
-        print "strain_mat", strain_mat
+	self.output("eta" +str(eta))
+        self.output("strain_mat"+ str(strain_mat))
 
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
@@ -719,6 +753,9 @@ class RandomSymmetryStrainMutation(object):
         self.input_structure = input_structure
         self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
         self.num_mols = self.ui.get_eval('unit_cell_settings', 'num_molecules')
+	self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica)
 
     def mutate(self):
         return self.rstrain()
@@ -762,6 +799,9 @@ class RandomSymmetryStrainMutation(object):
         new_struct.set_property('lattice_vector_a', lata_out)
         new_struct.set_property('lattice_vector_b', latb_out)
         new_struct.set_property('lattice_vector_c', latc_out)
+	new_struct.set_property('a', np.linalg.norm(lata_out))
+	new_struct.set_property('b', np.linalg.norm(latb_out))
+	new_struct.set_property('c', np.linalg.norm(latc_out))
         new_struct.set_property('cell_vol', np.dot(lata_out, np.cross(latb_out, latc_out)))
         new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
@@ -774,8 +814,8 @@ class RandomSymmetryStrainMutation(object):
         eta = np.random.standard_normal(1) * self.st_dev
         strain_list = eta*self.choose_rand_sym_strain(lat_mat)
         strain_mat = self.get_strain_mat(strain_list)
-#       print "eta", eta
-        print "strain_mat", strain_mat
+	self.output("eta"+ str(eta))
+        self.output("strain_mat"+ str(strain_mat))
 
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
