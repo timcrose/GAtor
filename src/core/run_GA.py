@@ -197,6 +197,7 @@ class RunGA():
                 	if self.verbose: self.output('Mutation failure')
                  	continue  # mutation failed, start with new selection
 	    #Now implements structure modification and checks to make sure reasonable structure is fed into aims
+	    print "within GA, this is new_struct.properties", new_struct.properties
 	    structure_handling.cell_modification(new_struct, self.replica)
  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
@@ -206,12 +207,12 @@ class RunGA():
             ########## Comparison ##########
             # Expects: Structure, Structure:collection #Returns: Boolean
             # Checks if structure is unique or does not meet constraints (energy, etc.)
- 	    print "--Comparison--"  	  
-            structure_collection.update_supercollection(self.structure_supercoll)
-            is_acceptable = comparison_module.main(new_struct, self.structure_supercoll.get((self.replica_stoic, cascade_counter)), self.replica)
-            if is_acceptable is False: 
-                if self.verbose: self.output('Structure to be relaxed is not acceptable')
-                continue  # structure not acceptable start with new selection
+# 	    print "--Comparison--"  	  
+#            structure_collection.update_supercollection(self.structure_supercoll)
+#            is_acceptable = comparison_module.main(new_struct, self.structure_supercoll.get((self.replica_stoic, cascade_counter)), self.replica)
+#            if is_acceptable is False: 
+#                if self.verbose: self.output('Structure to be relaxed is not acceptable')
+#                continue  # structure not acceptable start with new selection
     
             structures_to_add = {}
 	    while True:
