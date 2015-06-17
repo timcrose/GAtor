@@ -269,7 +269,7 @@ class RunGA():
 	        message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
                       '\n  old minima:  ' + str(min_e) + \
                       '\n  new minima:  ' + str(e_new) + \
-                      '\n  difference:  ' + str(diff) + 
+                      '\n  difference:  ' + str(diff)  
 		self.output(message)
 		struct.set_property('new_local_minima', "True")
 		struct.set_property('new_local_minima_diff', diff)
@@ -340,7 +340,7 @@ if __name__ == '__main__':
 	replica=options.replica
 	if replica==None:
 		replica=get_random_index()
-	self.output("this is replica received"+ str(replica))
+	print "this is replica received"+ str(replica)
 	stoic = determine_stoic()
 	if stoic == None: raise Exception
 	main(replica,stoic)
