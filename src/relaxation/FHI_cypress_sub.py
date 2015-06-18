@@ -85,15 +85,21 @@ class FHIAimsRelaxation():
         ui=user_input.get_config()
         bin=ui.get('FHI-aims','path_to_aims_executable')
 	environment=ui.get('parallel_settings','system')
-	if environment=='Cypress_login':
+	if environment=='Cypress_login' or environment=="cypress_login" or environment=="Cypress-login" or environment=="cypress-login":
 		command='mpirun -wdir %s %s > %s' % (out_location,bin,os.path.join(out_location,'aims.out'))
 	elif environment=='Edison_login':
 		nodes = ui.get_eval('parallel_settings','nodes_per_replica')
                 ppn_edison = 24
                 width = ppn_edison*nodes
 		command='aprun -n ' +str(width)+' '+str(bin)+' > '+str(os.path.join(out_location,'aims.out'))
-	os.chdir(out_location)
-	os.system(command) #With the & at the end, will wait until FHI relaxation is done
+		os.chdir(out_location)
+		os.system(command) #Without the & at the end, will wait until FHI relaxation is done
+	elif environment=="cetus" or environment=="Cetus":
+		block_size=ui.get_eval('parallel_settings','number_of_multiprocesses')
+		#Will run it with modes=4 and thre=4
+		modes=4; thres=4
+		command='runjob --np %i -p %i --envs OMP_NUM_THREADS=%i -- block %s --cwd %s : %s > %s' % (modes*block_size,modes,thres,replica,out_location,bin,os.path.join(out_location,'aims.out') 
+		os.system(command)
 
     def output(self, message): output.local_message(message, self.replica)
     def extract(self):
