@@ -74,6 +74,30 @@ python %s -f %s --rn %s
 			ss.write(exe_string)
 			ss.close()
 			os.system("sbatch submit.ss")    
+        #####CYPRESS SBATCH SUBMISSION SCRIPT#############
+        elif environment=='Edison_login':
+                for i in range (number_of_multi):
+                        replica_name=get_random_index()
+                        nodes = ui.get_eval('parallel_settings','nodes_per_replica')
+                        time = ui.get('parallel_settings','replica_walltime')
+                        ppn_edison = 24
+                        width = ppn_edison*nodes
+                        cwd = os.getcwd()
+                        ex = os.path.join(src_dir,'core','run_GA.py')
+                        exe_string="#!/bin/bash" + \
+                                   "\n#PBS -q regular" + \
+                                   "\n#PBS -A m2016" + \
+                                   "\n#PBS -j eo" + \
+                                   "\n#PBS -o " +str(replica_name)+".log" + \
+                                   "\n#PBS -e " +str(replica_name)+".err" + \
+                                   "\n#PBS -l mppwidth="+str(width) + \
+                                   "\n#PBS -l walltime="+str(time) + \
+				   "\n\ncd " +str(cwd)+ \
+                                   "\npython " + str(ex)+ " -f " + str(ui_name)+ " --rn " +str(replica_name)
+                        ss=open('submit.ss','w')
+                        ss.write(exe_string)
+                        ss.close()
+                        os.system("qsub submit.ss")
         
 def run_GA_master(replica):
 	from utilities.stoic_model import determine_stoic
