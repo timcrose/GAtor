@@ -102,9 +102,9 @@ class FHIAimsRelaxation():
 			l=self.replica.index("%")
 			block=self.replica[0:l]
 			rest=self.replica[l+1:]
-			l=self.replica.index("%")
-			corner=self.replica[:l]
-			shape=self.replica[l+1:]
+			l=rest.index("%")
+			corner=rest[:l]
+			shape=rest[l+1:]
 			command='runjob --np %i -p %i --envs OMP_NUM_THREADS=%i --block %s --corner %s --shape %s --cwd %s : %s > %s' % (modes*block_size,modes,thres,block,corner,shape,out_location,bin,os.path.join(out_location,'aims.out'))
 		except: #Only has a block name
 			command='runjob --np %i -p %i --envs OMP_NUM_THREADS=%i --block %s --cwd %s : %s > %s' % (modes*block_size,modes,thres,self.replica,out_location,bin,os.path.join(out_location,'aims.out')) 
