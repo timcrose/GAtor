@@ -98,6 +98,37 @@ python %s -f %s --rn %s
                         ss.write(exe_string)
                         ss.close()
                         os.system("qsub submit.ss")
+	elif environment=="Cetus" or environment=="cetus":
+		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
+		from external_libs import bgqtools
+		if block_size>=128:
+		#Will get individual blocks
+			
+			partsize, partition, job_id = bgqtools.get_cobalt_info()
+			blocks = bgqtools.get_bootable_blocks(partition,partsize,block_size)
+			bgqtools.boot_blocks(blocks)
+			number_of_multi=int(partsize/block_size)
+#			print "In master.py, this is number_of_multi", number_of_multi
+			pool=multiprocessing.Pool(processes=number_of_multi)
+			pool.map(run_GA_master,blocks)
+#			run_GA_master(blocks[0])
+			
+		else:
+		#Will need to get corners; will boot blocks of 128
+			partsize, partition, job_id = bgqtools.get_cobalt_info()
+			blocks=bgqtools.get_bootable_blocks(partition,partsize,128)
+			bgqtools.boot_blocks(blocks)
+			corners = bgqtools.block_corner_iter(blocks,block_size)
+			replica_name=[]
+			while True: #converts the iterable into a list of replica names
+				try:
+					corner=next(corners)
+					replica_name.append(corner[0]+'%'+corner[1]+'%'+corner[2])
+				except:
+					break
+			number_of_multi=int(partsize/block_size)
+			pool=multiprocessing.Pool(processes=number_of_multi)
+			pool.map(run_GA_master,replica_name)
         
 def run_GA_master(replica):
 	from utilities.stoic_model import determine_stoic
