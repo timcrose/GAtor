@@ -86,7 +86,10 @@ class FHIAimsRelaxation():
         bin=ui.get('FHI-aims','path_to_aims_executable')
 	environment=ui.get('parallel_settings','system')
 	if environment=='Cypress_login' or environment=="cypress_login" or environment=="Cypress-login" or environment=="cypress-login":
+		output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
+		output.local_message("Binary location is"+bin,self.replica)
 		command='mpirun -wdir %s %s > %s' % (out_location,bin,os.path.join(out_location,'aims.out'))
+		os.system(command)
 	elif environment=='Edison_login':
 		nodes = ui.get_eval('parallel_settings','nodes_per_replica')
                 ppn_edison = 24
