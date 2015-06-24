@@ -36,6 +36,9 @@ tmp_dir = os.path.join(cwd, 'tmp/')
 # filesystem storage
 structure_dir = os.path.join(cwd, 'structures')
 
+# molecule directory
+molecules_dir = os.path.join(cwd,"molecules")
+
 # database storage
 db_file = os.path.join(cwd, 'structures.sqlite')  # TODO: change par_dir to cwd
 
