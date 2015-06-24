@@ -43,6 +43,35 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 	number_of_multi=ui.get_eval('parallel_settings','number_of_multiprocesses')
 	environment=ui.get('parallel_settings','system')
 	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,environment)
+	mole_list=ui.get_eval('unit_cell_settings','molecule_list')
+	for (molename,napm,occurance) in mole_list:
+		if os.path.isfile(os.path.join(molecules_dir,molename+"_com_adjusted")):
+			pass
+		else:
+			if not os.path.isfile(os.path.join(molecules_dir,molename)):
+				raise RuntimeError("molecule geometry not found!")
+				return
+			atom_list=[]
+			f=open(os.path.join(molecules_dir,molename),"r")
+			st=f.readline()
+			while st!='':
+				atom_list.append(st.split())
+				for j in rnage (3):
+					atom_list[j]=float(atom_list[j])
+				st=f.readline()
+			f.close()
+			cm=[0,0,0]; tm=0
+			for i in range (len(atom_list))
+				mass=ui.get_eval('molar_mass',atom_list[i][3])
+				tm+=mass
+				for j in range (3):
+					cm[j]+=atom_list[i][j]*mass
+			cm=[cm[j]/tm for j in range (3)]
+			atom_list=[[atom_list[i][j]-cm[j] for j in range (3)].append(atom_list[i][3]) for i in range (len(atom_list))]
+			f=open(os.path.join(molecules_dir,molename+'_com_adjusted'),"w")
+			for i in range (len(atom_list))
+				f.write('%f %f %f %s\n' % (atom_list[i]))
+			f.close()
 	mkdir_p(tmp_dir)
 	mkdir_p(structure_dir)
 	set_unkill()
