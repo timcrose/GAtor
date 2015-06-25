@@ -51,26 +51,22 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 			if not os.path.isfile(os.path.join(molecules_dir,molename)):
 				raise RuntimeError("molecule geometry not found!")
 				return
-			atom_list=[]
-			f=open(os.path.join(molecules_dir,molename),"r")
-			st=f.readline()
-			while st!='':
-				atom_list.append(st.split())
-				for j in rnage (3):
-					atom_list[j]=float(atom_list[j])
-				st=f.readline()
-			f.close()
+			atom_list=get_molecule_geo(molename,False)
 			cm=[0,0,0]; tm=0
-			for i in range (len(atom_list))
+			for i in range (len(atom_list)):
 				mass=ui.get_eval('molar_mass',atom_list[i][3])
 				tm+=mass
 				for j in range (3):
 					cm[j]+=atom_list[i][j]*mass
 			cm=[cm[j]/tm for j in range (3)]
-			atom_list=[[atom_list[i][j]-cm[j] for j in range (3)].append(atom_list[i][3]) for i in range (len(atom_list))]
+			for atom in atom_list:
+				for j in range (3):
+					atom[j]-=cm[j]
+			print "this is atom_list",atom_list
 			f=open(os.path.join(molecules_dir,molename+'_com_adjusted'),"w")
-			for i in range (len(atom_list))
-				f.write('%f %f %f %s\n' % (atom_list[i]))
+			for i in range (len(atom_list)):
+				f.write('%f %f %f %s\n' % (atom_list[i][0],atom_list[i][1],atom_list[i][2],atom_list[i][3])) 
+			#fix
 			f.close()
 	mkdir_p(tmp_dir)
 	mkdir_p(structure_dir)
