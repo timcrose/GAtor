@@ -158,6 +158,8 @@ python %s -f %s --rn %s
 			number_of_multi=int(partsize/block_size)
 			pool=multiprocessing.Pool(processes=number_of_multi)
 			pool.map(run_GA_master,replica_name)
+	else:
+		raise RuntimeError("parallel_settings.system not recognized!")
         
 def run_GA_master(replica):
 	from utilities.stoic_model import determine_stoic
