@@ -150,6 +150,29 @@ def get_random_index(seed=None):
     LENGTH_OF_INDEX = 10
     return sha1(repr(time.time())+str(seed)).hexdigest()[:LENGTH_OF_INDEX]
 
+def get_molecule_geo(molename,adjusted=True):
+	'''
+	Reads in the molecule geometry from the molecules_dir
+	if adjusted=True, then the file opened will be molename_com_adjusted
+	'''
+	if adjusted:
+		f=open(os.path.join(molecules_dir,molename+"_com_adjusted"),"r")
+	else:
+		f=open(os.path.join(molecules_dir,molename),"r")
+	st=f.readline()
+	llist=[]
+	while st!='':
+		atom=st.split()
+		if len(atom)<4:
+			st=f.readline()
+			continue
+		for j in range (3):
+			atom[j]=float(atom[j])
+		llist.append(atom)
+		st=f.readline()
+	f.close()
+	return llist
+
 def print_to_file(message):
     with FileLock(output_file):
         data_file = open(output_file, 'a')
