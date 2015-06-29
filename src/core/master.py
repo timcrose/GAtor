@@ -79,6 +79,7 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 	elif environment=='Cypress_login' or environment=='cypress_login' or environment=='CYpress-login' or environment=='cypress-login':
 		for i in range (number_of_multi):
 			replica_name=get_random_index()
+			print "In master.py, this is replica_name", replica_name
 			exe_string='''#!/bin/bash
 #SBATCH --qos=normal
 #SBATCH --job-name=fhi_aims
