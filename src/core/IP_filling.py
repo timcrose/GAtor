@@ -43,6 +43,7 @@ def main():
 				ffile.write(filename + '\n')
 				files_to_add.append(filename)
 		ffile.close()	
+	os.system("chmod 775 "+added_user_structures)
 
 	for file in files_to_add:	
 		# add structure to collection.
