@@ -23,7 +23,7 @@ from utilities.stoic_model import determine_stoic
 
 def main(replica,stoic):
     # setup
-    mkdir_p(tmp_dir)
+    mkdir_p(tmp_dir)	
     mkdir_p(structure_dir)
     set_unkill()
     # check if going to be multiprocess
