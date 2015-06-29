@@ -106,6 +106,7 @@ def write_energy_hierarchy(structure_coll):
         to_write +='    ' + str(par1)
         to_write += '\n'
     with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
+    os.system("chmod 771 "+os.path.join(tmp_dir,'energy_hierarchy.'+str(structure_coll.get_input_ref())+'.dat'))
 
 def make_user_structure_directory(structure_coll, energy_tuples, n_structures=10):
     path = os.path.join(tmp_dir, 'user_structures')
