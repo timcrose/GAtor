@@ -39,4 +39,5 @@ def move_to_shared_output(replica):
         data_file = open(output_file, 'a')
         data_file.write('Replica: ' + str(replica) + str(contents_string) + '\n')
         data_file.close()
+	os.system("chmod 771 "+output_file)
     reset_local(replica)
