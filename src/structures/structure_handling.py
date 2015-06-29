@@ -7,13 +7,17 @@ Created on Fri May 29 16:09:38 2015
 Basic modification of crystal structures
 Funtions that read in a struct() and necessary arguments, and return a struct()
 """
+import sys # for debuging!
+sys.path.append("/lustre/project/nmarom/gator_shared_duplicate/gator/src/") #for debuging!
+
 import numpy
 from structures import structure
 from core import output
 import copy
 import exceptions
+from core import file_handler
 from core import user_input
-molar_mass={'H':1,'C':12,'N':14,'O':16,'S':32}
+molar_mass={'H':1,'C':12,'N':14,'O':16,'S':32} #deprecated
 lat_interp={0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
 ui=user_input.get_config()
 verbose=ui.get_eval('run_settings','verbose')
@@ -109,6 +113,28 @@ def cell_extension(struct,create_duplicate=True):
             mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
     return struct
 
+def cell_populate_molecules(struct,mole_info_list):
+	'''
+	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; requires the mole_info_list to be comprehensive and matching with the number of molecules specified in unit_cell_settings
+	mole_info_list should be a list of tuples defined as:
+	[COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle]
+	'''
+	ui=user_input.get_config()
+	if len(mole_info_list)!=ui.get_eval("unit_cell_settings","num_molecules"):
+		raise RuntimeError("In structure_handling.cell_populate_molecules, the number of molecules to be populated does not match")
+		return False
+	count=-1
+	mole_list=ui.get_eval("unit_cell_settings","molecule_list")
+	llist=[]
+	for (molename,napm,occurance) in mole_list:
+		geo=file_handler.get_molecule_geo(molename)
+		for t in range (occurance):
+			count+=1
+			llist+=list_transformation(geo,mole_info_list[count])
+	struct.geometry=structure.convert_array(llist)
+	return True	
+			
+
 def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
     if (vec==None) and (frac==None):
         raise exceptions.RuntimeError("Please input at least one type of translation vector into structure_handling.mole_translation")
@@ -124,6 +150,114 @@ def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
             struct.geometry[i][j]+=vec[j]
     return struct
 
+def mole_recognize(struct):
+	'''
+	Interpret the geometry of struct in terms of the molecules given in ui.conf
+	Returns a tuple of [COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle,residual]
+	where vec is the axis of rotation, and angle is the angle being rotated
+	the orientation is determined according to the standard geometry
+	found in run_calcs/molecules
+	'''
+	ui=user_input.get_config() 
+	molecules=ui.get_eval('unit_cell_settings','molecule_list')
+	sum=0;count=-1
+	result=[]
+	struct=copy.deepcopy(struct)
+	for (molename,napm,occurance) in molecules:
+		geo=file_handler.get_molecule_geo(molename)
+		for j in range (occurance):
+			com=cm_calculation(struct,range(sum,sum+napm))
+			orient=mole_get_orientation(struct,geo,range(sum,sum+napm),com,False)
+			if orient==False:
+				return False
+			result.append(com+orient)
+				#if a molecule is torn apart by relaxation, mole_get_orientation will return False, thus causing error for connecting the list
+	return result
+
+def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
+	'''
+	Check if the list of atoms provided in struct fit the molecule specified by mole_name
+	if yes, then the orientation of the molecule is given in a list
+	[is_mirror_reflection,vec[0],vec[1],vec[2],angle,residual]
+	Make sure molecule defined by geo has its COM at the origin
+	'''
+	if create_duplicate:
+		struct=copy.deepcopy(struct)
+	if com==None:
+		com=cm_calculation(struct,atom_list)
+	if len(atom_list)!=len(geo):
+		raise RuntimeError("In structure_handling.mole_get_orientation, the length of atom_list does not match that of geo")
+		return False
+	for atom in atom_list:
+		for j in range (3):
+			struct.geometry[atom][j]-=com[j]
+	lll=0
+	match_molecule_length_requirement=0.0001
+	match_molecule_cross_tolerance=0.001
+	match_molecule_tolerance=ui.get_eval("unit_cell_settings","recognize_tolerance")
+	result=[False,0,0,0,0,0]
+	while lll<2:
+		lll+=1
+		vec1=vec2=None
+		i=0
+		rotation_axis=[0,0,0]
+		chosen=None
+		while (vec2==None) and (i<len(geo)):
+			diff=[struct.geometry[atom_list[i]]-geo[i][j] for j in range (3)]
+			leng=numpy.linalg.norm(diff)
+			if leng<0.0001:
+				rotation_axis=struct.geometry[atom_list[i]][:3]
+				if numpy.linalg.norm(rotation_axis)>match_molecule_cross_tolerance:
+					break
+			if leng>match_molecule_length_requirement:
+				if vec1==None:
+					vec1=diff
+					chosen=i
+					i+=1
+					continue
+				if numpy.linalg.norm(numpy.cross(vec1,diff))>match_molecule_cross_tolerance:
+					vec2=diff
+					break
+			i+=1
+		if numpy.linalg.norm(rotation_axis)<match_molecule_cross_tolerance:
+			if vec2==None:
+				vec2=[0,0,0]
+			rotation_axis=numpy.cross(vec1,vec2)
+		r1=numpy.linalg.norm(rotation_axis)
+		if rl>match_molecule_cross_tolerance:
+			for j in range (3):
+				rotation_axis[j]/=rl
+			if chosen==None:
+				chosen=0
+				while (chosen<len(geo)) and (numpy.linalg.norm(numpy.cross(rotation_axis,struct.geometry[atom_list[chosen]]))<match_molecule_cross_tolerance):
+					chosen+=1
+			v1=struct.geometry[atom_list[chosen]][:3]
+			v2=geo[chosen][:3]
+			m1=numpy.dot(v1,rotation_axis)
+			v1=[v1[j]-m1*rotation_axis[j] for j in range (3)]
+			m2=numpy.dot(v2,rotation_axis)
+			v2=[v2[j]-m2*rotation_axis[j] for j in range (3)]
+			l1=numpy.linalg.norm(v1); l2=numpy.linalg.norm(v2)
+			direction=numpy.cross(v1,v2)
+			rad=numpy.arcsin(numpy.linalg.norm(direction)/(l1*l2))
+			if numpy.sign(numpy.dot(v1,v2))==-1:
+				rad=numpy.pi-rad
+			if numpy.linalg.norm(direction)>match_molecule_cross_tolerance:
+				rad*=numpy.sign(numpy.dot(direction,rotation_axis))
+			geo_1=list_rotation(geo,vec=rotation_axis,rad=-rad,create_duplicate=True)
+			resi=0
+			for i in range (len(geo)):
+				resi+=numpy.linalg.norm([struct.geometry[atom_list[i]][j]-geo_1[i][j] for j in range (3)])**2
+			if resi<match_molecule_tolerance:
+				for j in rnage (3):
+					result[j+1]=rotation_axis[j]
+				result[4]=numpy.rad2deg(rad)
+				result[5]=resi
+				return result
+		list_reflection_z(geo,False)
+		result[0]=True
+	return False
+
 def cm_calculation (struct,atom_list):
     '''
     Reads in a list of atom
@@ -131,10 +265,11 @@ def cm_calculation (struct,atom_list):
     '''
 #    print "this is atom_list",atom_list
     cm=[0,0,0]; tm=0;
+    ui=user_input.get_config()
     for i in range(len(atom_list)):
-        tm+=molar_mass[struct.geometry[atom_list[i]][3]]
+        tm+=ui.get_eval("molar_mass",struct.geometry[atom_list[i]][3])
         for j in range (3):
-            cm[j]+=molar_mass[struct.geometry[atom_list[i]][3]]*struct.geometry[atom_list[i]][j]
+            cm[j]+=ui.get_eval("molar_mass",struct.geometry[atom_list[i]][3])*struct.geometry[atom_list[i]][j]
     for j in range (3):
         cm[j]/=tm
 #    print 'this is cm', cm
@@ -336,6 +471,82 @@ def cell_check(struct,replica):
 	if verbose:
 		output.local_message("The new structure has passed through all the cell check being called.\n",replica)
 	return True
+
+def list_rotation(llist,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_rad=None,origin=[0,0,0],deg=None,rad=None,create_duplicate=True):
+    '''
+    Same as cell_rotation, but now acts upon a list of coordinates
+    '''
+    if create_duplicate:
+        llist=copy.deepcopy(llist)
+    if (deg==None) and (rad==None):
+        return False
+    if (vec==None) and (((theta_deg==None) and (theta_rad==None)) or ((phi_deg==None) and (phi_rad==None))):
+        return False
+    if rad==None:
+        rad=numpy.deg2rad(deg)
+    if (theta_rad==None) and (theta_deg!=None):
+        theta_rad=numpy.deg2rad(theta_deg)
+    if (phi_rad==None) and (phi_deg!=None):
+        phi_rad=numpy.deg2rad(phi_deg)
+    if vec==None:
+        vec=[numpy.sin(phi_rad)*numpy.cos(theta_rad),numpy.sin(phi_rad)*numpy.sin(theta_rad),numpy.cos(phi_rad)]
+    else:
+        l=(vec[0]**2+vec[1]**2+vec[2]**2)**0.5
+        for j in range (3):
+            vec[j]/=l
+    c=numpy.cos(rad); s=numpy.sin(rad)
+    x,y,z=vec
+    mat=[[x*x*(1-c)+c,x*y*(1-c)-z*s,x*z*(1-c)+y*s],
+         [x*y*(1-c)+z*s,y*y*(1-c)+c,y*z*(1-c)-x*s],
+         [x*z*(1-c)-y*s,y*z*(1-c)+x*s,z*z*(1-c)+c]]
+    if origin!=[0,0,0]:
+        list_translation(llist,[-j for j in origin],create_duplicate=False)
+    for i in range (len(llist)):
+        oldpos=[0,0,0]
+        for j in range (3):
+            oldpos[j]=llist[i][j]
+        newpos=numpy.dot(mat,oldpos)
+        for j in range(3):
+            llist[i][j]=newpos[j]
+    if origin!=[0,0,0]:
+        list_translation(llist,origin,create_duplicate=False)
+    return llist
+
+def list_translation(llist,trans_vec,create_duplicate=True):
+    '''
+    Similar to struct_translation, but acts upon a list of coordinates
+    '''
+    if create_duplicate:
+        llist=copy.deepcopy(llist)
+    for i in range (len(llist)):
+        for j in range (3):
+            llist[i][j]+=trans_vec[j]
+    return llist
+
+def list_reflection_z(llist,create_duplicate=True):
+    '''
+    Flip the sign of the z component of the coordinates specified by llist
+    '''
+    if create_duplicate:
+        llist=copy.deepcopy(llist)
+    for i in range(len(llist)):
+        llist[i][2]=-llist[i][2]
+    return llist
+
+def list_transformation(llist,info,create_duplicate=True):
+	'''
+	Performs transformation as specified by info on llist
+	info format: [COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle]
+	'''
+	if create_duplicate:
+		llist=copy.deepcopy(llist)
+	if info[3]:
+		list_reflection_z(llist,False)
+	list_rotation(llist,vec=info[4:7],deg=angle,create_duplicate=False)
+	list_translation(llist,info[0:3],False)
+	return llist
+	
+
  
 def print_aims(struct):
     os=''        
@@ -362,3 +573,16 @@ def print_aims(struct):
     os+='\n'
     return os
 
+def main():
+	struct=structure.Structure()
+	struct.set_property("lattice_vector_a",[10,0,0])
+	struct.set_property("lattice_vector_b",[0,10,0])
+	struct.set_property("lattice_vectory_c",[0,0,10])
+	mole_info=[[1,2,3,False,0,0,1,72],[5,6,7,True,0,1,0,0]]
+	cell_populate_mole(struct,mole_info)
+	print print_aims(struct)
+
+if __name__ == '__main__':
+	main()
+	
+	
