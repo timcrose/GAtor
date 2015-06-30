@@ -169,6 +169,7 @@ class RunGA():
 
 	    ####Structure modification of angles. Checks reasonable structure is fed into relaxation####
 	    #self.output("within GA, this is new_struct.properties"+str(new_struct.properties))
+	    self.output("--Cell Checks--")	
 	    structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
 	    if not structure_handling.cell_check(new_struct,self.replica):
 		#unit cell considered not acceptable
