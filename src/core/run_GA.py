@@ -30,9 +30,6 @@ def main(replica,stoic):
     ui = user_input.get_config()
     n_processors = ui.get_eval('run_settings', 'parallel_on_core')
     begin(replica,stoic)
-#    if not isinstance(n_processors, (int, long)) : begin(replica,stoic)
-#    else: begin_multiprocess(stoic, int(n_processors))
-
 
 def begin(replica,stoic):
     # run genetic algorithm
@@ -57,7 +54,6 @@ class RunGA():
         '''
         Initialization
         '''
-
         # Define class fields
         self.replica = replica
         self.ui = user_input.get_config()
@@ -72,28 +68,25 @@ class RunGA():
             self.structure_supercoll[(self.replica_stoic, i)] = StructureCollection(self.replica_stoic, i)
         structure_collection.update_supercollection(self.structure_supercoll)
         self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
-        self.structure_coll = self.structure_supercoll.get((self.replica_stoic, self.max_cascade))
+        self.structure_coll = self.structure_supercoll.get((self.replica_stoic, 0))
 	self.child_counter = 0
 	self.success_counter = len(self.structure_coll)
 	self.min_energies_0 = []
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
-	#Convergence settings from ui.conf
-	self.delta_convg = float(self.ui.get('run_settings', 'delta_convergence'))   
+	#Convergence settings from ui.conf  
+	self.full_relax_tol = float(self.ui.get('run_settings', 'full_relax_tol'))   
 	self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
 	self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 	self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
 	self.mod_iteration_counter = 0
 
 
-
     def start(self):
         '''
         Performs main genetic algorithm operations
         Loads necessary modules based on UI at runtime
-        '''  # TODO: improve documentation
-        # Dynamically load modules outside of loop
-
-        initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
+        ''' 
+	initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
         selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
         crossover_module = my_import(self.ui.get('modules', 'crossover_module'), package='crossover')
         mutation_module = my_import(self.ui.get('modules', 'mutation_module'), package='mutation')
@@ -102,16 +95,14 @@ class RunGA():
 
         ########## Fill initial pool ##########
 	self.output("--Replica %s updating local pool--" %(self.replica))
-#	initial_pool_module.main(self.replica, self.replica_stoic) #The stoichiometry passed in here is collected from ui.conf
-        # update all
+	#initial_pool_module.main(self.replica, self.replica_stoic) #The stoichiometry passed in here is collected from ui.conf
         structure_collection.update_supercollection(self.structure_supercoll)
         self.output("***************** USER INITIAL POOL RELAXED *****************")
         #rm this break after initial pool tests
         #    break            
 
-
         while True:
-	 ########## Beginning of Iteration Tasks ##########
+            ########## Beginning of Iteration Tasks ##########
             output.move_to_shared_output(self.replica)
             if self.verbose: self.output('Beginning iteration')
             self.ui = user_input.get_config()
@@ -134,9 +125,7 @@ class RunGA():
                 self.output('replica ' + str(self.replica) + ' killed')
                 return
             	  
-	 ########## Perform Genetic Algorithm Tasks ##########
-            
-            ########## Structure Selection ##########
+	     ########## Structure Selection #######
             # Expects: dictionary_of_on_or_more<Stoic, StructureCollection> #Returns: list_of_2_or_more<Structure>
 	    self.output("--Structure selection--")	
             structures_to_cross = selection_module.main(self.structure_supercoll, self.replica_stoic, self.replica)
@@ -191,64 +180,71 @@ class RunGA():
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
             ########### Begin Cascade #############
             cascade_counter = 0
- 	    if self.max_cascade > 0: self.output('Beginning cascade')
-            ########## Comparison ##########
-            # Expects: Structure, Structure:collection #Returns: Boolean
-            # Checks if structure is unique or does not meet constraints (energy, etc.)
-# 	    print "--Comparison--"  	  
-#            structure_collection.update_supercollection(self.structure_supercoll)
-#            is_acceptable = comparison_module.main(new_struct, self.structure_supercoll.get((self.replica_stoic, cascade_counter)), self.replica)
-#            if is_acceptable is False: 
-#                if self.verbose: self.output('Structure to be relaxed is not acceptable')
-#                continue  # structure not acceptable start with new selection
-    
+ 	    if self.max_cascade > 0: self.output('Beginning cascade') 
             structures_to_add = {}
-	    while True:
-                input_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
-                                         self.control_list[cascade_counter])
-                ########## Relaxation ##########
-                # Expects: Structure, working_dir, input_path #Returns: Structure
-		self.output("--Relaxation--")
-		struct = relaxation_module.main(new_struct, self.working_dir, input_string, self.replica)
-                if struct is False: 
-		    self.output('Relaxation failure for replica'+ str(self.replica))
-		    is_acceptable = False
-                    break  # optimization failed, start with new selection
+            control_relax_geo_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
+                                         self.control_list[0])
+            control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
+                                         self.control_list[1])
+            ########## Relaxation ##########
+            # Expects: Structure, working_dir, input_path #Returns: Structure
+	    self.output("--Relaxation--")
+	    struct = relaxation_module.main(new_struct, self.working_dir, control_relax_geo_string, self.replica)
+            if struct is False: 
+	    	self.output('Relaxation failure for replica'+ str(self.replica))
+		is_acceptable = False
+                break  # optimization failed, start with new selection
                     
-                ########## Comparison ##########
-		self.output("--Comparison--")
-                structure_collection.update_supercollection(self.structure_supercoll)
-                is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((struct.get_stoic(), cascade_counter)), self.replica)
-                if is_acceptable is False:
-                    self.output('Newly relaxed structure is not acceptable') 
-                    break  # structure not acceptable start with new selection
-	
-		#Add structure to a list of structures to be put in to collection
-                struct.input_ref = cascade_counter
-                self.set_parents(structures_to_cross, struct)
-                structures_to_add[(struct.get_stoic(), cascade_counter)] = struct
-
-		#Sort energies of collection for convergence and global minima checks
-		coll = self.structure_supercoll.get((self.replica_stoic, cascade_counter))
-		temp_e_list = np.array([])
-		tot_e_list = np.array([])
-		for index, structure in coll:
-			energy = structure.get_property('energy')
-			tot_e_list = np.append(energy,tot_e_list)
+                ########## Comparison #############
+	    self.output("--Comparison--")
+            structure_collection.update_supercollection(self.structure_supercoll)
+            is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((struct.get_stoic(), cascade_counter)), self.replica)
+            if is_acceptable is False:
+            	self.output('Newly relaxed structure is not acceptable') 
+                break  # structure not acceptable start with new selection
+		
+	    ########## Possible Full Relaxation #########
+	    #Sort energies of collection for convergence and global minima checks
+	    coll = self.structure_supercoll.get((self.replica_stoic, cascade_counter))
+            temp_e_list = np.array([])
+	    tot_e_list = np.array([])
+	    for index, structure in coll:
+		energy = structure.get_property('energy')
+		tot_e_list = np.append(energy,tot_e_list)
 		tot_e_list= np.sort(tot_e_list.reshape(len(tot_e_list),1),axis=0)
 		temp_e_list = tot_e_list[:self.top_en_count]
 		temp_min_e = temp_e_list[0][0]
+		
+	    #######Check if needs to be fully relaxed and compared######
+	    e_struct = struct.get_property('energy')
+	    if e_struct <= temp_min_e + self.full_relax_tol:
+	    	self.output("Structure close to global minima")
+		########## Full Relaxation #############
+                self.output("--Full Relaxation--")
+                struct = relaxation_module.main(new_struct, self.working_dir, control_relax_full_string, self.replica)
+                if struct is False:
+                	self.output('Relaxation failure for replica'+ str(self.replica))
+                    	is_acceptable = False
+                    	break  # optimization failed, start with new selection
+	        ########## Comparison #############
+            	self.output("--Full Comparison--")
+            	structure_collection.update_supercollection(self.structure_supercoll)
+            	is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((struct.get_stoic(), 0)), self.replica)
+            	if is_acceptable is False:
+                	self.output('Newly relaxed structure is not acceptable')
+                	break  # structure not acceptable start with new selection
 
-                # End of cascade tasks
-                cascade_counter = cascade_counter + 1  # move to next input
-                new_struct = struct  # set new structure and return to beginning of cascade
-                if cascade_counter > self.max_cascade: break
-            	    
+            #Add structure to a list of structures to be put in to collection
+            self.set_parents(structures_to_cross, struct)
+            structures_to_add[(struct.get_stoic(), 0)] = struct
+
+	    #End of iteration tasks and convergence checks	
             if is_acceptable is False or struct is False: 
 		convergeTF = False
 		continue  # start with new selection
-            else: convergeTF = self.end_of_iteration_tasks(structures_to_add, temp_min_e, self.success_counter, temp_e_list, tot_e_list)	
-            end_time = datetime.datetime.now()
+            else: 
+		convergeTF = self.end_of_iteration_tasks(structures_to_add, temp_min_e, self.success_counter, temp_e_list, tot_e_list)	
+       	    end_time = datetime.datetime.now()
             self.output("Iteration time: -- " + str(end_time - begin_time))
 
     def end_of_iteration_tasks(self, structures_to_add, min_e, num_success_common, old_en_list, tot_en_list):
@@ -257,7 +253,6 @@ class RunGA():
 	self.child_counter = self.child_counter + 1 
 	energy_list = []
 	self.top_en_count 
-	self.delta_convg
         for key, struct in structures_to_add.items():
             # Set IDs and count numbers
             struct.set_property('prev_struct_id', prev_struct_index)  # tracks cascade sequence
