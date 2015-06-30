@@ -74,8 +74,9 @@ def get_energy_tuples(structure_coll):
         crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
+	relaxtype = structure.get_property('Relax_type')
 #	childnum = structure.get_property('child_count')
-	if energy is not None: energy_tuples.append((ID, replica, index, energy, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
+	if energy is not None: energy_tuples.append((ID, replica, index, energy, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:],relaxtype))
 #	print energy_tuples
     return energy_tuples
 
@@ -84,7 +85,7 @@ def write_energy_hierarchy(structure_coll):
  #   biggest_dists = get_biggest_dist(structure_coll)
     to_write = ''
     energy_tuples.sort(key=lambda x: x[3])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, mut, crosst, par0, par1,rt in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
         to_write +=str(Id) + '  '
         to_write +=str(rep) + ' '
@@ -102,6 +103,7 @@ def write_energy_hierarchy(structure_coll):
         to_write +='    ' + str(crosst)
         to_write +='    ' + str(par0)
         to_write +='    ' + str(par1)
+	to_write +='    ' + str(rt)
         to_write += '\n'
     with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
     os.system("chmod 771 "+os.path.join(tmp_dir,'energy_hierarchy.'+str(structure_coll.get_input_ref())+'.dat'))
