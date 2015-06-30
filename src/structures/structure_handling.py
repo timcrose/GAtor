@@ -469,7 +469,7 @@ def cell_check(struct,replica):
 	elif verbose:
 		output.local_message("No interatomic distance check is called.",replica)
 	if verbose:
-		output.local_message("The new structure has passed through all the cell check being called.\n",replica)
+		output.local_message("The new structure has passed through all the cell check being called.",replica)
 	return True
 
 def list_rotation(llist,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_rad=None,origin=[0,0,0],deg=None,rad=None,create_duplicate=True):
