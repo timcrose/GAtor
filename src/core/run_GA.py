@@ -265,7 +265,6 @@ class RunGA():
                       '\n  difference:  ' + str(diff)  
 		self.output(message)
 		struct.set_property('new_local_minima', "True")
-		struct.set_property('new_local_minima_diff', diff)
 
 	    #Output success message to screen and write energy hierarchy	
 	    index = structure_collection.add_structure(struct, key[0], key[1])
