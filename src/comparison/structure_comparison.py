@@ -56,7 +56,7 @@ def main(struct,structure_coll,replica):
 		try:
 			message="Comparison test finds the new structure to be acceptible! Minimum resi=%f\n" %(minimum_residual)
 		except:
-			message="Comparison test finds the new structure to be acceptible! Energy unique from the other structures!\n"
+			message="Comparison test finds the new structure to be acceptible! Energy unique from the other structures!"
 		output.local_message(message,replica)
 	return True
 				
