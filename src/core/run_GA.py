@@ -214,7 +214,7 @@ class RunGA():
 	    e_struct = struct.get_property('energy')
 	    if e_struct >= temp_min_e + self.full_relax_tol:
 	    	self.output("Structure close to global minima")
-		self.output("E_stuct: "+str(e_struct)+"GM: "+str(temp_min_e))
+		self.output("E_stuct: "+str(e_struct)+"  GM: "+str(temp_min_e))
 		########## Full Relaxation #############
                 self.output("--Full Relaxation--")
                 struct = relaxation_module.main(new_struct, self.working_dir, control_relax_full_string, self.replica)
