@@ -63,7 +63,6 @@ def get_energy_tuples(structure_coll):
 	ID = structure.get_property('ID')
 	replica = structure.get_property('replica')
         energy = structure.get_property('energy') 
-        localmindiff = structure.get_property('new_local_minima_diff')
 	vol = structure.get_property('cell_vol')
 	a = structure.get_property('a')
 	b = structure.get_property('b')
@@ -76,7 +75,7 @@ def get_energy_tuples(structure_coll):
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
 #	childnum = structure.get_property('child_count')
-	if energy is not None: energy_tuples.append((ID, replica, index, energy, localmindiff, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
+	if energy is not None: energy_tuples.append((ID, replica, index, energy, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
 #	print energy_tuples
     return energy_tuples
 
@@ -85,14 +84,13 @@ def write_energy_hierarchy(structure_coll):
  #   biggest_dists = get_biggest_dist(structure_coll)
     to_write = ''
     energy_tuples.sort(key=lambda x: x[3])
-    for  Id, rep, index, energy, lmd, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
         to_write +=str(Id) + '  '
         to_write +=str(rep) + ' '
         to_write += str(structure_coll.get_input_ref()) + '/'
         to_write += str(index) + '/'
         to_write +='    ' + str(energy)
-        to_write +='    ' + str(lmd)
         to_write +='    ' + str(vol)
         to_write +='    ' + str(a)
         to_write +='    ' + str(b)
