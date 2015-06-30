@@ -214,6 +214,7 @@ class RunGA():
 	    e_struct = struct.get_property('energy')
 	    if e_struct >= temp_min_e + self.full_relax_tol:
 	    	self.output("Structure close to global minima")
+		self.output("E_stuct: "+str(e_struct)+"GM: "+str(temp_min_e))
 		########## Full Relaxation #############
                 self.output("--Full Relaxation--")
                 struct = relaxation_module.main(new_struct, self.working_dir, control_relax_full_string, self.replica)
@@ -228,7 +229,9 @@ class RunGA():
             	if is_acceptable is False:
                 	self.output('Newly relaxed structure is not acceptable')
                 	break  # structure not acceptable start with new selection
-
+		struct.set_property('Relax_type','Full_Relax')
+	    else: struct.set_property('Relax_type','Geom_Relax')
+		
             #Add structure to a list of structures to be put in to collection
             self.set_parents(structures_to_cross, struct)
             structures_to_add[(struct.get_stoic(), 0)] = struct
