@@ -80,7 +80,6 @@ class RunGA():
 	self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
 	self.mod_iteration_counter = 0
 
-
     def start(self):
         '''
         Performs main genetic algorithm operations
@@ -97,14 +96,12 @@ class RunGA():
 	self.output("--Replica %s updating local pool--" %(self.replica))
 	#initial_pool_module.main(self.replica, self.replica_stoic) #The stoichiometry passed in here is collected from ui.conf
         structure_collection.update_supercollection(self.structure_supercoll)
-        self.output("***************** USER INITIAL POOL RELAXED *****************")
-        #rm this break after initial pool tests
-        #    break            
+        self.output("***************** USER INITIAL POOL FILLED *****************") 
 
         while True:
             ########## Beginning of Iteration Tasks ##########
             output.move_to_shared_output(self.replica)
-            if self.verbose: self.output('Beginning iteration')
+            self.output('Beginning iteration')
             self.ui = user_input.get_config()
             begin_time = datetime.datetime.now()
             
@@ -177,8 +174,7 @@ class RunGA():
 		#unit cell considered not acceptable
 		continue
  
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
-            ########### Begin Cascade #############
+	     ########### Begin Cascade #############
             cascade_counter = 0
  	    if self.max_cascade > 0: self.output('Beginning cascade') 
             structures_to_add = {}
@@ -195,7 +191,7 @@ class RunGA():
 		is_acceptable = False
                 break  # optimization failed, start with new selection
                     
-                ########## Comparison #############
+            ########## Comparison #############
 	    self.output("--Comparison--")
             structure_collection.update_supercollection(self.structure_supercoll)
             is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((struct.get_stoic(), cascade_counter)), self.replica)
@@ -203,7 +199,6 @@ class RunGA():
             	self.output('Newly relaxed structure is not acceptable') 
                 break  # structure not acceptable start with new selection
 		
-	    ########## Possible Full Relaxation #########
 	    #Sort energies of collection for convergence and global minima checks
 	    coll = self.structure_supercoll.get((self.replica_stoic, cascade_counter))
             temp_e_list = np.array([])
@@ -215,7 +210,7 @@ class RunGA():
 		temp_e_list = tot_e_list[:self.top_en_count]
 		temp_min_e = temp_e_list[0][0]
 		
-	    #######Check if needs to be fully relaxed and compared######
+	    #######Check if needs to be fully relaxed and compare######
 	    e_struct = struct.get_property('energy')
 	    if e_struct >= temp_min_e + self.full_relax_tol:
 	    	self.output("Structure close to global minima")
@@ -238,7 +233,7 @@ class RunGA():
             self.set_parents(structures_to_cross, struct)
             structures_to_add[(struct.get_stoic(), 0)] = struct
 
-	    #End of iteration tasks and convergence checks	
+	    ######End of iteration tasks and convergence checks########	
             if is_acceptable is False or struct is False: 
 		convergeTF = False
 		continue  # start with new selection
@@ -284,15 +279,14 @@ class RunGA():
             self.output(message)
 	    self.output("writing hierachy")	
             data_tools.write_energy_hierarchy(self.structure_coll)
+
 	    #Check for Energy Convergence of GA 
 	    old_list_top_en = old_en_list
 	    new_list_top_en = np.append(tot_en_list, e_new)
 	    new_list_top_en= np.sort(new_list_top_en.reshape(len(new_list_top_en),1),axis=0)
             new_list_top_en = new_list_top_en[:self.top_en_count]	
-
 	    self.output("old top energies:    "+ str(old_list_top_en))
 	    self.output("new top energies:    "+ str(new_list_top_en))
-
 	    converged = self.check_convergence(old_list_top_en,new_list_top_en,len(self.structure_coll.structures)) 
 	    if converged is "not_converged":
                 self.output("GA not converged yet.")
@@ -316,9 +310,7 @@ class RunGA():
 	if self.mod_iteration_counter == self.max_en_it:
 		return "converged" 
 
-        
     def set_parents(self, structures_to_cross, struct):
-        # set the the parent structures as a property for family tree tracing
         for i in range(len(structures_to_cross)): 
             par_st = structures_to_cross[i]
             struct.set_property('parent_' + str(i), par_st.get_stoic_str() + '/' \
@@ -337,7 +329,7 @@ if __name__ == '__main__':
 	replica=options.replica
 	if replica==None:
 		replica=get_random_index()
-	print "this is replica received"+ str(replica)
+	print "This is the replica received: "+ str(replica)
 	stoic = determine_stoic()
 	if stoic == None: raise Exception
 	main(replica,stoic)
