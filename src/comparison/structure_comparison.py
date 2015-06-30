@@ -49,12 +49,12 @@ def main(struct,structure_coll,replica):
 			minimum_residual=current_residual
 		if minimum_residual<is_duplicate_tolerance:
 			if verbose:
-				message="Comparison test finds the new structure to be duplicate. Resi=%f\n" % (minimum_residual)
+				message="Comparison test finds the new structure to be duplicate. Resi=%f" % (minimum_residual)
 				output.local_message(message,replica)
 			return False #Meaning the new structures is not acceptable
 	if verbose:
 		try:
-			message="Comparison test finds the new structure to be acceptible! Minimum resi=%f\n" %(minimum_residual)
+			message="Comparison test finds the new structure to be acceptible! Minimum resi=%f" %(minimum_residual)
 		except:
 			message="Comparison test finds the new structure to be acceptible! Energy unique from the other structures!"
 		output.local_message(message,replica)
