@@ -185,7 +185,8 @@ class Crossover_2mol(object):
 
 	if lat_choice == 3:
 	#take lattice of random combo of parent A + B
-		rand_vec = [random.random() for i in range(3)]
+		rand_vec = [numpy.random.uniform(0.25,0.75) for i in range(3)]
+		self.output("Random Frac: " +str(rand_vec))	
 		latA = rand_vec[0]*lat1A + (1 - rand_vec[0])*lat2A
 		latB = rand_vec[1]*lat1B + (1 - rand_vec[1])*lat2B
 		latC = rand_vec[2]*lat1C + (1 - rand_vec[2])*lat2C
@@ -429,11 +430,12 @@ class Crossover_4mol(object):
 
 	if lat_choice == 3:
 	#take lattice of random combo of parent A + B
-		rand_vec = numpy.random.random(3)
-		latA = rand_vec[0]*lat1A + (1 - rand_vec[0])*lat2A
-		latB = rand_vec[1]*lat1B + (1 - rand_vec[1])*lat2B
-		latC = rand_vec[2]*lat1C + (1 - rand_vec[2])*lat2C
-		lats =[latA, latB, latC]	
+		rand_vec = [numpy.random.uniform(0.25,0.75) for i in range(3)]
+                self.output("Random Frac: " +str(rand_vec))
+                latA = rand_vec[0]*lat1A + (1 - rand_vec[0])*lat2A
+                latB = rand_vec[1]*lat1B + (1 - rand_vec[1])*lat2B
+                latC = rand_vec[2]*lat1C + (1 - rand_vec[2])*lat2C
+                lats =[latA, latB, latC]	
 	elif lat_choice == 1:
 		lats = [lat1A, lat1B, lat1C]
 	elif lat_choice == 2:
