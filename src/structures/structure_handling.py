@@ -22,6 +22,25 @@ lat_interp={0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
 ui=user_input.get_config()
 verbose=ui.get_eval('run_settings','verbose')
 nmpc=ui.get_eval('unit_cell_settings','num_molecules')
+
+def cell_lower_triangular(struct,create_duplicate=True):
+        '''
+        Sets the cell back to lower triangular form
+        Returns a boolean to indicate whether or not the reset was required
+        '''
+        if create_duplicate:
+                struct=copy.deepcopy(struct)
+
+        if abs(struct.properties["lattice_vector_a"][1])<0.001 and abs(struct.properties["lattice_vector_a"][2])<0.001 and abs(struct.properties["lattice_vector_b"][2])<0.001:
+                return struct
+
+        struct.properties.update(lattice_parameters(struct)) #Add in case not calculated
+        new_lattice=lattice_lower_triangular(struct)
+        old_lattice=struct.get_lattice_vectors()
+        rots = numpy.dot(numpy.transpose(new_lattice),numpy.linalg.inv(numpy.transpose(old_lattice)))
+        struct=cell_transform_mat(struct,rots,create_duplicate=False)
+        return struct
+
 def cell_translation(struct,trans_vec,create_duplicate=True):
     '''
     Translate the entire structure by trans_vec
@@ -100,6 +119,30 @@ def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi
         cell_translation(struct,origin,create_duplicate=False)
     return struct
 
+def cell_transform_mat(struct,mat,origin=[0,0,0],create_duplicate=True):
+        '''
+        Transform a structure through a matrix form.
+        Allows the input of an origin
+        '''
+        if create_duplicate:
+                struct=copy.deepcopy(struct)
+        if origin!=[0,0,0]:
+                cell_translation(struct,[-j for j in origin],create_duplicate=False)
+        for i in range (len(struct.geometry)):
+                oldpos=[0,0,0]
+                for j in range (3):
+                        oldpos[j]=struct.geometry[i][j]
+                newpos=numpy.dot(mat,oldpos)
+                for j in range(3):
+                         struct.geometry[i][j]=newpos[j]
+        struct.properties["lattice_vector_a"]=numpy.dot(mat,struct.properties["lattice_vector_a"])
+        struct.properties["lattice_vector_b"]=numpy.dot(mat,struct.properties["lattice_vector_b"])
+        struct.properties["lattice_vector_c"]=numpy.dot(mat,struct.properties["lattice_vector_c"])
+        if origin!=[0,0,0]:
+                cell_translation(struct,origin,create_duplicate=False)
+        return struct
+
+
 def cell_extension(struct,create_duplicate=True):
     if create_duplicate:
         struct=copy.deepcopy(struct)
@@ -133,6 +176,39 @@ def cell_populate_molecules(struct,mole_info_list):
 			llist+=list_transformation(geo,mole_info_list[count])
 	struct.geometry=structure.convert_array(llist)
 	return True	
+
+def lattice_lower_triangular(struct):
+        '''
+        Returns a list of lattice vectors that corresponds to the a, b, c, alpha, beta, gamma as specified by struct
+        ! In row vector form !
+        '''
+        lattice=[[0 for i in range (3)] for j in range (3)]
+        a=struct.properties["a"]; b=struct.properties["b"]; c=struct.properties["c"]
+        alpha=numpy.deg2rad(struct.properties["alpha"])
+        beta=numpy.deg2rad(struct.properties["beta"])
+        gamma=numpy.deg2rad(struct.properties["gamma"])
+        lattice[0][0] = a
+        lattice[0][1] = 0; lattice[0][2] = 0
+        lattice[1][0] = numpy.cos(gamma)*b
+        lattice[1][1] = numpy.sin(gamma)*b
+        lattice[1][2] = 0
+        lattice[2][0] = numpy.cos(beta)*c
+        lattice[2][1] = (b*c*numpy.cos(alpha) - lattice[1][0]*lattice[2][0])/lattice[1][1]
+        lattice[2][2] = (c**2 - lattice[2][0]**2 - lattice[2][1]**2)**0.5
+        return lattice
+
+def lattice_parameters(struct):
+        '''
+        Returns a dictionary of the lattice parameters a, b, c, alpha, beta, gamma
+        '''
+        parameters={}
+        parameters["a"] = numpy.linalg.norm(struct.properties["lattice_vector_a"])
+        parameters["b"] = numpy.linalg.norm(struct.properties["lattice_vector_b"])
+        parameters["c"] = numpy.linalg.norm(struct.properties["lattice_vector_c"])
+        parameters["alpha"] = numpy.rad2deg(numpy.arccos(numpy.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/parameters["b"]/parameters["c"]))
+        parameters["beta"] = numpy.rad2deg(numpy.arccos(numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/parameters["a"]/parameters["c"]))
+        parameters["gamma"] = numpy.rad2deg(numpy.arccos(numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/parameters["a"]/parameters["b"]))
+        return parameters
 			
 
 def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
@@ -317,9 +393,12 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
     test=True
     run=0
     count=0
-    struct.properties['a']=numpy.linalg.norm(struct.properties["lattice_vector_a"])
-    struct.properties['b']=numpy.linalg.norm(struct.properties["lattice_vector_b"])
-    struct.properties['c']=numpy.linalg.norm(struct.properties["lattice_vector_c"])
+    try: #Updates the missing struct information
+        gamma=struct.properties['gamma']
+	a=struct.properties['a']
+    except:
+        struct.properties.update(lattice_parameters(struct))
+
     while test and run<10:
         test=False
         run+=1
@@ -390,7 +469,10 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
             struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
             struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
             struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
+
     struct=move_molecule_in(struct,False)
+    struct=cell_lower_triangular(struct,False)
+
     if count>0 and verbose:
 	str="------Cell modification required------\n"
 	str+="Geometry before modification:\n"
@@ -582,7 +664,20 @@ def main():
 	cell_populate_mole(struct,mole_info)
 	print print_aims(struct)
 
+def main2():
+        struct=structure.Structure()
+        f=open("blind_test_0.in","r")
+        st=f.read()
+        f.close()
+        struct.build_geo_whole_atom_format(st)
+	print struct.properties["lattice_vector_a"]
+        cell_modification(struct,"asdfasdf",False)
+        f=open("blind_test_0_modified.in","w")
+        f.write(struct.get_geometry_atom_format())
+        f.close()
+
+
 if __name__ == '__main__':
-	main()
+	main2()
 	
 	
