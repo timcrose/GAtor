@@ -30,7 +30,8 @@ def main(struct, r_stoic, replica):
 	mutate_object = select_mutator_2mol(input_structure, replica_stoic, replica)
     elif num_mols == 4:
 	mutate_object = select_mutator_4mol(input_structure, replica_stoic, replica)
-
+    elif num_mols == 8:
+        mutate_object = select_mutator_8mol(input_structure, replica_stoic, replica)
     return mutate_object.mutate()
 
 ###################### Two Molecule Mutation #######################################
