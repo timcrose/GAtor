@@ -499,7 +499,7 @@ def cell_check(struct,replica):
 		elif verbose:
 			output.local_message("The new structure is found to have a reasonable volume.",replica)
 	elif verbose:
-		output.local_message("No volume check is called.\n",replica)
+		output.local_message("No volume check is called.",replica)
 	length_range=ui.get_eval("cell_check_settings","lattice_length_range")
 	if standard_volume!=None and length_range!=None:
 		(lower_length, upper_length)=[standard_volume**(1/(3+0.0))*length_range[i] for i in range (2)]
