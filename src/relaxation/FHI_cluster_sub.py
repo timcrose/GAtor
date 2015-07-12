@@ -1,7 +1,6 @@
 '''
 Created on Jul 29, 2013
-
-@author: newhouse
+@authors: newhouse/patrick/farren
 '''
 import os
 import subprocess
@@ -13,10 +12,8 @@ from structures.structure import Structure
 from copy import deepcopy
 
 
-def main(input_structure, working_dir, control_in_string, replica):
-	'''
-	For a relaxation module, the method main() must be implemented.
-	
+def main(input_structure, working_dir, control_check_SPE_string, control_relax_full_string, replica):
+	'''	
 	It must take as arguments a 'Structure', a string which defines 
 	in which working directory the relaxation will take place, and a string
 	representation of the full control.in file
@@ -24,14 +21,30 @@ def main(input_structure, working_dir, control_in_string, replica):
 	It must return a Structure object. (Please see structure documentation
 	for information on how to easily setup a Structure object) 
 	'''
-	r = FHIAimsRelaxation(input_structure, working_dir, control_in_string, replica)
-	print "Replica %s executing FHI-aims" % (replica)
-	r.execute()
-	if r.is_successful(): return r.extract()
-	else: 
-		print "Relaxation failed!"
-#	raise RuntimeError('relaxation failed!')
-		return False
+	ui = user_input.get_config()
+	SPE_threshold = ui.get_eval('run_settings','SPE_threshold')
+
+	SPE = FHIAimsRelaxation(input_structure, working_dir, control_check_SPE_string, replica)
+	print "Replica %s executing FHI-aims and checking the SPE" % (replica)
+	checkSPE = SPE.execute()
+	if SPE.is_successful():
+		SP_energy = SPE.extract_energy()
+		output.local_message("SPE extracted", replica)
+		if SP_energy >= SPE_threshold:
+			return False
+		elif SP_energy <= SPE_threshold:
+			message = "Structure passed SPE check"
+			output.local_message(message, replica)
+			fullrelax = FHIAimsRelaxation(input_structure, working_dir, control_relax_full_string, replica)
+			print "Replica %s executing FHI-aims for a full unit cell relax" % (replica)
+			fullrelax.execute()
+			if fullrelax.is_successful(): 
+				return fullrelax.extract()
+	       		else:
+        	        	print "Relaxation failed!"
+                		return False
+		else:
+			print "Error with energy threshold"
 
 class FHIAimsRelaxation():
     '''
@@ -125,7 +138,7 @@ class FHIAimsRelaxation():
 
 	# reads output file to extract energy
         energy = self.extract_energy()
-	print "energy", energy
+	#self.output("extracted energy" +str(energy))
         if energy == False: return False  # did not converge
         self.result_struct.set_property('energy', energy)
        
@@ -166,10 +179,27 @@ class FHIAimsRelaxation():
         # sets the result structure's geometry based on output file
         extract_success = self.extract_geometry()
 
+	# extracts time from aims output
+	wall_time = self.extract_time()
+	self.result_struct.set_property('relax_time', wall_time)
         # extract the spin moment
         if self.ui.get('FHI-aims','initial_moment') == 'custom': self.extract_spin_moment()
         
         return self.result_struct
+
+    def extract_time(self):
+        '''
+        reads the resulting time from the FHI-aims log
+        Returns: float if successful, False if unsuccessful
+        '''
+        aims_out = open(os.path.join(self.working_dir, 'aims.out'))
+        while True:
+            line = aims_out.readline()
+            if not line: return False  # energy not converged
+            if '| Total time                                 :' in line:
+                tokens = line.split()
+                time = tokens[6]  # converts from SI string to float
+                return time
 
     def extract_energy(self):
         '''
@@ -200,10 +230,6 @@ class FHIAimsRelaxation():
 
 	latout = atom_string.split()
 
-#	print latout
-#	lat_A = np.asarray(latout[0]),latout[1], float(latout[2]))
-#	lat_B = np.asarray(float(latout[5]),float(latout[6]), float(latout[7]))
-#	lat_C = np.asarray(float(latout[9]),float(latout[10]), float(latout[11]))
 	lat_A = [latout[1], latout[2], latout[3]]
 	lat_B = [latout[5], latout[6], latout[7]]
 	lat_C = [latout[9], latout[10], latout[11]]
@@ -286,8 +312,10 @@ class FHIAimsRelaxation():
 #		print "Read: ", line
 		break
         #    if not line: return False  # energy not converged
-            if 'Have a nice day' in line:
-                return True
+#            if 'Have a nice day' in line:
+#                return True
+	    if 'Leaving FHI-aims.' in line:
+		return True
         return False
 
     def wait_on_file(self,wait_file,sleeptime=1):
@@ -324,4 +352,5 @@ class FHIAimsRelaxation():
 			print "FHI-aims Job finished! Jobid:", self.jobid
 			break
 		time.sleep(sleeptime)
-	
+
+
