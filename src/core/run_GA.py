@@ -22,11 +22,6 @@ def main(replica,stoic):
     # setup
     mkdir_p(tmp_dir)	
     mkdir_p(structure_dir)
-
-   #Make empty restart file here !!!!!	
-
-
-
     set_unkill()
     # check if going to be multiprocess
     ui = user_input.get_config()
