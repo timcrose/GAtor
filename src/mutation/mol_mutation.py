@@ -43,14 +43,7 @@ def select_mutator_2mol(input_structure, replica_stoic, replica):
     Expects: Structure, target_stoic
     Returns: Class
     '''
-    #Make sure if single parent is selected at crossover that it is forced to get a mutation
-    if input_structure.get_property('cross_type') == [1,1]:
-	mutation_list = ["Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
-    elif input_structure.get_property('cross_type') == [2,2]:
-	mutation_list = ["Trans_mol", "Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
-    else:
-	mutation_list = ["None","Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
-
+    mutation_list = ["Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
     try:
 	mut_choice = np.random.choice(mutation_list)
     except:
@@ -59,9 +52,7 @@ def select_mutator_2mol(input_structure, replica_stoic, replica):
     output.local_message(message, replica)
 
     mutator = object
-    if mut_choice == "None":
-    	mutator = NoMutation(input_structure, replica_stoic, replica)
-    elif mut_choice == "Trans_mol":
+    if mut_choice == "Trans_mol":
 	mutator = RandomTranslationMutation(input_structure, replica_stoic, replica)
     elif mut_choice == "Rot_mol":
 	mutator = RandomRotationMolMutation(input_structure, replica_stoic, replica)
@@ -74,31 +65,6 @@ def select_mutator_2mol(input_structure, replica_stoic, replica):
     elif mut_choice == "Strain_sym":
 	mutator = RandomSymmetryStrainMutation(input_structure, replica_stoic, replica)
     return mutator	
-
-###########################################################################################    
-class NoMutation(object):
-    '''
-     This class leaves the geometry un-mutilated
-    '''
-    def __init__(self, input_structure, target_stoic, replica):
-        self.geometry = deepcopy(input_structure.get_geometry())
-	self.input_structure = input_structure	
-    def mutate(self):
-        new_struct = Structure()
-        new_struct.build_geo_whole(self.geometry)
-        new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
-        new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
-        new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
-	new_struct.set_property('a', np.linalg.norm(self.input_structure.get_property('lattice_vector_a')))
-        new_struct.set_property('b', np.linalg.norm(self.input_structure.get_property('lattice_vector_b')))
-        new_struct.set_property('c', np.linalg.norm(self.input_structure.get_property('lattice_vector_c')))
-        new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
-        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
-        new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
-        new_struct.set_property('beta', self.input_structure.get_property('beta'))
-        new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
-        new_struct.set_property('mutation_type', 'No_mutate')
-        return new_struct
 
 ####################################################################################################
 class RandomTranslationMutation(object):
@@ -912,7 +878,7 @@ class RandomSymmetryStrainMutation(object):
 
 ##############################################################################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-########################## Four Molecule Mutation #########################################################
+########################## Four Molecule Mutation ############################################
 def select_mutator_4mol(input_structure, replica_stoic, replica):
     '''
     In this mutation implementation, there are several classes, each performing a 
@@ -922,13 +888,7 @@ def select_mutator_4mol(input_structure, replica_stoic, replica):
     Returns: Class
     '''
     #Make sure if single parent is selected at crossover that it is forced to get a mutation
-    if input_structure.get_property('cross_type') == [1,1]:
-	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
-    elif input_structure.get_property('cross_type') == [2,2]:
-	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
-    else:
-	mutation_list = ["None","Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
-
+    mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -937,9 +897,7 @@ def select_mutator_4mol(input_structure, replica_stoic, replica):
     output.local_message(message, replica)
 
     mutator = object   
-    if mut_choice == "None":
-    	mutator = NoMutation_4mol(input_structure, replica_stoic, replica)
-    elif mut_choice == "Trans_mol":
+    if mut_choice == "Trans_mol":
 	mutator = RandomTranslationMutation_4mol(input_structure, replica_stoic, replica)
     elif mut_choice == "Rot_mol":
 	mutator = RandomRotationMolMutation_4mol(input_structure, replica_stoic, replica)
@@ -952,31 +910,6 @@ def select_mutator_4mol(input_structure, replica_stoic, replica):
     elif mut_choice == "Strain_sym":
         mutator = RandomSymmetryStrainMutation_4mol(input_structure, replica_stoic, replica)
     return mutator	
-
-###########################################################################################    
-class NoMutation_4mol(object):
-    '''
-     This class leaves the geometry un-mutilated
-    '''
-    def __init__(self, input_structure, target_stoic, replica):
-        self.geometry = deepcopy(input_structure.get_geometry())
-	self.input_structure = input_structure	
-    def mutate(self):
-        new_struct = Structure()
-        new_struct.build_geo_whole(self.geometry)
-        new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
-        new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
-        new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
-        new_struct.set_property('a', np.linalg.norm(self.input_structure.get_property('lattice_vector_a')))
-        new_struct.set_property('b', np.linalg.norm(self.input_structure.get_property('lattice_vector_b')))
-        new_struct.set_property('c', np.linalg.norm(self.input_structure.get_property('lattice_vector_c')))
-        new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
-        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
-        new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
-        new_struct.set_property('beta', self.input_structure.get_property('beta'))
-        new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
-	new_struct.set_property('mutation_type', 'No_mutate')
-        return new_struct
 
 ####################################################################################################
 class RandomTranslationMutation_4mol(object):
@@ -1822,13 +1755,7 @@ def select_mutator_8mol(input_structure, replica_stoic, replica):
     Returns: Class
     '''
     #Make sure if single parent is selected at crossover that it is forced to get a mutation
-    if input_structure.get_property('cross_type') == [1,1]:
-	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
-    elif input_structure.get_property('cross_type') == [2,2]:
-	mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
-    else:
-	mutation_list = ["None","Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
-
+    mutation_list = ["Trans_mol", "Rot_mol", "Strain_rand_mols", "Strain_rand", "Strain_sym_mols","Strain_sym"]
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -1837,9 +1764,7 @@ def select_mutator_8mol(input_structure, replica_stoic, replica):
     output.local_message(message, replica)
 
     mutator = object   
-    if mut_choice == "None":
-    	mutator = NoMutation_8mol(input_structure, replica_stoic, replica)
-    elif mut_choice == "Trans_mol":
+    if mut_choice == "Trans_mol":
 	mutator = RandomTranslationMutation_8mol(input_structure, replica_stoic, replica)
     elif mut_choice == "Rot_mol":
 	mutator = RandomRotationMolMutation_8mol(input_structure, replica_stoic, replica)
@@ -1852,31 +1777,6 @@ def select_mutator_8mol(input_structure, replica_stoic, replica):
     elif mut_choice == "Strain_sym":
         mutator = RandomSymmetryStrainMutation_8mol(input_structure, replica_stoic, replica)
     return mutator	
-
-###########################################################################################    
-class NoMutation_8mol(object):
-    '''
-     This class leaves the geometry un-mutilated
-    '''
-    def __init__(self, input_structure, target_stoic, replica):
-        self.geometry = deepcopy(input_structure.get_geometry())
-	self.input_structure = input_structure	
-    def mutate(self):
-        new_struct = Structure()
-        new_struct.build_geo_whole(self.geometry)
-        new_struct.set_property('lattice_vector_a', self.input_structure.get_property('lattice_vector_a'))
-        new_struct.set_property('lattice_vector_b', self.input_structure.get_property('lattice_vector_b'))
-        new_struct.set_property('lattice_vector_c', self.input_structure.get_property('lattice_vector_c'))
-        new_struct.set_property('a', np.linalg.norm(self.input_structure.get_property('lattice_vector_a')))
-        new_struct.set_property('b', np.linalg.norm(self.input_structure.get_property('lattice_vector_b')))
-        new_struct.set_property('c', np.linalg.norm(self.input_structure.get_property('lattice_vector_c')))
-        new_struct.set_property('cell_vol', self.input_structure.get_property('cell_vol'))
-        new_struct.set_property('crossover_type', self.input_structure.get_property('crossover_type'))
-        new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
-        new_struct.set_property('beta', self.input_structure.get_property('beta'))
-        new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
-	new_struct.set_property('mutation_type', 'No_mutate')
-        return new_struct
 
 ####################################################################################################
 class RandomTranslationMutation_8mol(object):
