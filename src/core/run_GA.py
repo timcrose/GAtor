@@ -107,7 +107,7 @@ class RunGA():
             self.output('Beginning iteration')
             self.ui = user_input.get_config()
             begin_time = datetime.datetime.now()
-            
+#            self.restart(str(self.replica)+' '+str(restart_counter)+' started_iteration:  ' +str(datetime.datetime.now()))            
             ########## Check if finished/converged ##########
             try: 
                 if len(self.structure_coll.structures) >= self.number_of_structures:
@@ -188,7 +188,7 @@ class RunGA():
             ########## Check SPE and perform Full Relaxation ##########
             # Expects: Structure, working_dir, input_path #Returns: Structure
 	    self.output("--SPE Check and Full Relaxation--")
-            self.restart(str(self.replica)+' '+str(restart_counter)+' started_relaxing:  ' +str(datetime.datetime.now()))
+            self.restart(str(self.replica)+' '+str(restart_counter)+' started_relaxing:    ' +str(datetime.datetime.now()))
 
 	    struct = relaxation_module.main(new_struct, self.working_dir, control_check_SPE_string, control_relax_full_string, self.replica)
             if struct is False: 
@@ -197,7 +197,7 @@ class RunGA():
                 continue  # optimization failed, start with new selection
 
 	    self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
-	    self.restart(str(self.replica)+' '+str(restart_counter)+' finished_relaxing: ' +str(datetime.datetime.now()))
+	    self.restart(str(self.replica)+' '+str(restart_counter)+' finished_relaxing:   ' +str(datetime.datetime.now()))
 	
 	    ########### Comparison Post Relaxation ####################
 	    self.output("--Comparison--")
@@ -217,14 +217,14 @@ class RunGA():
 		continue  # start with new selection
             else:
 		restart_counter = restart_counter +1 
-		convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter)
+		convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter, restart_counter)
        	    end_time = datetime.datetime.now()
             self.output("GA Iteration time: -- " + str(end_time - begin_time))
 
 
 ############################# Helper Functions used in start function above #######################################################  
 
-    def end_of_iteration_tasks(self, structures_to_add, num_success_common):
+    def end_of_iteration_tasks(self, structures_to_add, num_success_common, restart_counter):
         prev_struct_index = None #none for now because only using GA for FF or aims not both
 	ID = len(self.structure_coll.structures) + 1
 	self.child_counter = self.child_counter + 1 
@@ -280,6 +280,7 @@ class RunGA():
             self.output("writing hierachy")
             data_tools.write_energy_hierarchy(self.structure_coll)		   	
 
+	    self.restart(str(self.replica)+' '+str(restart_counter-1)+' finished_iteration:  ' +str(datetime.datetime.now()))
 	    if converged is "not_converged":
                 self.output("GA not converged yet.")
                 pass	
