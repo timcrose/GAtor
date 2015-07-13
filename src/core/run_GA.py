@@ -22,6 +22,11 @@ def main(replica,stoic):
     # setup
     mkdir_p(tmp_dir)	
     mkdir_p(structure_dir)
+
+   #Make empty restart file here !!!!!	
+
+
+
     set_unkill()
     # check if going to be multiprocess
     ui = user_input.get_config()
@@ -95,6 +100,7 @@ class RunGA():
         structure_collection.update_supercollection(self.structure_supercoll)
         self.output("***************** USER INITIAL POOL FILLED *****************") 
 
+	restart_counter = 0
         while True:
             ########## Beginning of Iteration Tasks ##########
             output.move_to_shared_output(self.replica)
@@ -158,7 +164,7 @@ class RunGA():
 				self.output("--Second Mutation--")
                         	new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
 		else:
-			self.output('No mutation applied')
+			self.output('No mutation applied.')
 			new_struct.set_property('mutation_type', 'No_mutation')
             if new_struct is False: 
                  self.output('Mutation failure')
@@ -182,12 +188,16 @@ class RunGA():
             ########## Check SPE and perform Full Relaxation ##########
             # Expects: Structure, working_dir, input_path #Returns: Structure
 	    self.output("--SPE Check and Full Relaxation--")
+            self.restart(str(self.replica)+' '+str(restart_counter)+' started_relaxing:  ' +str(datetime.datetime.now()))
+
 	    struct = relaxation_module.main(new_struct, self.working_dir, control_check_SPE_string, control_relax_full_string, self.replica)
             if struct is False: 
 	    	self.output('SPE check not passed or full relaxation failure for '+ str(self.replica))
 		is_acceptable = False
                 continue  # optimization failed, start with new selection
+
 	    self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
+	    self.restart(str(self.replica)+' '+str(restart_counter)+' finished_relaxing: ' +str(datetime.datetime.now()))
 	
 	    ########### Comparison Post Relaxation ####################
 	    self.output("--Comparison--")
@@ -205,7 +215,8 @@ class RunGA():
             if is_acceptable is False or struct is False: 
 		convergeTF = False
 		continue  # start with new selection
-            else: 
+            else:
+		restart_counter = restart_counter +1 
 		convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter)
        	    end_time = datetime.datetime.now()
             self.output("GA Iteration time: -- " + str(end_time - begin_time))
@@ -307,6 +318,7 @@ class RunGA():
                                 + str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
 
     def output(self, message): output.local_message(message, self.replica)
+    def restart(self, message): output.restart_message(message)	
 
 
 if __name__ == '__main__':
