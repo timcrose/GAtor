@@ -68,6 +68,7 @@ class RunGA():
 	self.child_counter = 0
 	self.success_counter = len(self.structure_coll)
 	self.min_energies_0 = []
+	self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
 	#Convergence settings from ui.conf  
 	self.full_relax_tol = float(self.ui.get('run_settings', 'full_relax_tol'))   
@@ -141,20 +142,27 @@ class RunGA():
 			 
             ########## Mutation Execution ##########
             # Expects: Structure, target_stoichiometry [decision] #Returns: Structure
-       	    self.output("--Mutation--")  	
-	    new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+       	    self.output("--Mutation--")  
+	    randnum = np.random.random()	
+	    randnum2 = np.random.random()
+	    #Single Parents have to be mutated	
+	    if new_struct.get_property('cross_type') == [1,1] or new_struct.get_property('cross_type') == [2,2]:
+	    	new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+		self.output("--Second Mutation--")
+		if randnum2 < self.doublemutate:
+			new_struct = mutation_module.main(new_struct, targ_stoic, self.replica) 
+	    else: #Otherwise stick to probabilty set in conf file
+		if randnum < self.singlemutate:
+			new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+			if randnum2 < self.doublemutate:
+				self.output("--Second Mutation--")
+                        	new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+		else:
+			self.output('No mutation applied')
+			new_struct.set_property('mutation_type', 'No_mutation')
             if new_struct is False: 
                  self.output('Mutation failure')
                  continue  # mutation failed, start with new selection
-
-	    ####### Possibile 2nd Mutation ##########
-	    randnum = np.random.random()
-	    if randnum < self.doublemutate:
-		self.output("--Second Mutation--")
-		new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
-	        if new_struct is False:
-                	self.output('Mutation failure')
-                 	continue  # mutation failed, start with new selection
 
 	    ####Structure modification of angles. Checks reasonable structure is fed into relaxation####
 	    #self.output("within GA, this is new_struct.properties"+str(new_struct.properties))
