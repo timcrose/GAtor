@@ -66,8 +66,9 @@ class RunGA():
         self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
         self.structure_coll = self.structure_supercoll.get((self.replica_stoic, 0))
 	self.child_counter = 0
+	
 	self.success_counter = len(self.structure_coll)
-	self.min_energies_0 = []
+	#self.min_energies_0 = []
 	self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
 	#Convergence settings from ui.conf  
@@ -75,8 +76,10 @@ class RunGA():
 	self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
 	self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 	self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
+	self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
+	self.number_of_replicas =int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
 	self.mod_iteration_counter = 0
-
+	self.global_iteration_counter = 0
     def start(self):
         '''
         Performs main genetic algorithm operations
@@ -105,15 +108,20 @@ class RunGA():
 #            self.restart(str(self.replica)+' '+str(restart_counter)+' started_iteration:  ' +str(datetime.datetime.now()))            
             ########## Check if finished/converged ##########
             try: 
-                if len(self.structure_coll.structures) >= self.number_of_structures:
- 			self.output("Length of collection has reached user-specified number:")
+                if len(self.structure_coll.structures)-self.number_of_IP >= self.number_of_structures:
+			self.output("~*~*~*~*~*~*~*~*~*~*~*~ GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*")
+ 			self.output("Number of additions to pool has reached user-specified number:")
+			self.output(str(len(self.structure_coll.structures)-self.number_of_IP))
+			self.output("Total size of collection:")
 			self.output(str(len(self.structure_coll.structures)))
+			self.output("GA ended at: "+str(datetime.datetime.now()))
 			return
 		if convergeTF == True:
 			self.output("~*~*~*~*~*~*~*~*~*~*~*~ GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*")
 			self.output("Top energies haven't changed in user-specfied number of iterations")
-			self.output("Length of Collection")
+			self.output("Total size of collection:")
                         self.output((len(self.structure_coll.structures)))
+			self.output("GA ended at: "+str(datetime.datetime.now()))
                         return
             except: pass
             if get_kill() == "kill": 
@@ -215,6 +223,7 @@ class RunGA():
 		convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter, restart_counter)
        	    end_time = datetime.datetime.now()
             self.output("GA Iteration time: -- " + str(end_time - begin_time))
+	    self.output("Current Wallclock: -- " + str(end_time))	
 
 
 ############################# Helper Functions used in start function above #######################################################  
@@ -248,13 +257,14 @@ class RunGA():
 	    self.check_if_global_minima(old_min_e, e_new) 		
 
 	    #Add Structure to Collection
+	    struct.set_property('child_counter', self.child_counter)
 	    index = structure_collection.add_structure(struct, key[0], key[1])			
 	    structure_collection.update_supercollection(self.structure_supercoll)
 
 	    #Check for Energy Convergence of GA
 	    new_list_top_en = np.array([])
 	    new_e_list = np.array([])
-            for index, structure in coll:
+            for index, structure in self.structure_supercoll.get((self.replica_stoic,0)):
                 energy = structure.get_property('energy')
                 new_e_list = np.append(energy,new_e_list)
                 new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
@@ -275,7 +285,14 @@ class RunGA():
             self.output("writing hierachy")
             data_tools.write_energy_hierarchy(self.structure_coll)		   	
 
+	    #End of Iteration Outputs
+	    additions = len(self.structure_coll.structures)-self.number_of_IP	
+	    avg_add = float(additions)/self.number_of_replicas	
 	    self.restart(str(self.replica)+' '+str(restart_counter-1)+' finished_iteration:  ' +str(datetime.datetime.now()))
+	    self.output(str(self.replica)+' finished iteration')
+	    self.output('Cumulative additions to common pool: '+str(additions))
+	    self.output('Avg addition per replica:            '+str(avg_add))
+	    self.output('Total size of common pool:           '+str(len(self.structure_coll.structures)))		 	
 	    if converged is "not_converged":
                 self.output("GA not converged yet.")
                 pass	
@@ -315,7 +332,6 @@ class RunGA():
 
     def output(self, message): output.local_message(message, self.replica)
     def restart(self, message): output.restart_message(message)	
-
 
 if __name__ == '__main__':
 	'''
