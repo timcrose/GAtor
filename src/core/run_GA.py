@@ -119,6 +119,7 @@ class RunGA():
 		if convergeTF == True:
 			self.output("~*~*~*~*~*~*~*~*~*~*~*~ GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*")
 			self.output("Top energies haven't changed in user-specfied number of iterations")
+			self.output(str(self.max_en_it))
 			self.output("Total size of collection:")
                         self.output((len(self.structure_coll.structures)))
 			self.output("GA ended at: "+str(datetime.datetime.now()))
