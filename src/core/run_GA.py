@@ -101,6 +101,7 @@ class RunGA():
             ########## Beginning of Iteration Tasks ##########
             output.move_to_shared_output(self.replica)
             self.output('Beginning iteration')
+            self.restart(str(self.replica)+' '+str(restart_counter)+' beginning iteration:    ' +str(datetime.datetime.now()))
             self.ui = user_input.get_config()
             begin_time = datetime.datetime.now()
 #            self.restart(str(self.replica)+' '+str(restart_counter)+' started_iteration:  ' +str(datetime.datetime.now()))            
