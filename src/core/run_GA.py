@@ -63,23 +63,21 @@ class RunGA():
         for i in range(INITIAL_POOL_REFID, len(self.control_list)):  # initializes the structure collections necessary for cascade
             self.structure_supercoll[(self.replica_stoic, i)] = StructureCollection(self.replica_stoic, i)
         structure_collection.update_supercollection(self.structure_supercoll)
-        self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
+        #self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
         self.structure_coll = self.structure_supercoll.get((self.replica_stoic, 0))
 	self.child_counter = 0
-	
 	self.success_counter = len(self.structure_coll)
-	#self.min_energies_0 = []
 	self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
 	#Convergence settings from ui.conf  
-	self.full_relax_tol = float(self.ui.get('run_settings', 'full_relax_tol'))   
+	#self.full_relax_tol = float(self.ui.get('run_settings', 'full_relax_tol'))   
 	self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
 	self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 	self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
 	self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
 	self.number_of_replicas =int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
 	self.mod_iteration_counter = 0
-	self.global_iteration_counter = 0
+
     def start(self):
         '''
         Performs main genetic algorithm operations
