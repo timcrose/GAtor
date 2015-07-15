@@ -7,6 +7,13 @@ import os
 
 from core.file_handler import cwd, output_file
 
+def restart_message(message):
+    out_file = os.path.join(cwd, 'restart_relaxations.dat')
+    data_file = open(out_file, 'a')
+    data_file.write(str(message) + '\n')
+    data_file.close()
+    os.system("chmod 771 "+out_file)
+
 
 def local_message(message, replica):
     out_file = os.path.join(cwd, str(replica) + '.out')
