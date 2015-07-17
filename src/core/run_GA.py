@@ -59,18 +59,16 @@ class RunGA():
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.verbose = self.ui.get_eval('run_settings', 'verbose')        
         self.control_list = self.ui.get_list('control', 'control_in_filelist')
-        self.max_cascade = len(self.control_list) - 1
-        for i in range(INITIAL_POOL_REFID, len(self.control_list)):  # initializes the structure collections necessary for cascade
-            self.structure_supercoll[(self.replica_stoic, i)] = StructureCollection(self.replica_stoic, i)
+        #for i in range(INITIAL_POOL_REFID, len(self.control_list)):  # initializes the structure collections necessary for cascade
+        #     self.structure_supercoll[(self.replica_stoic, i)] = StructureCollection(self.replica_stoic, i)
+	self.structure_supercoll[(self.replica_stoic, 0)] = StructureCollection(self.replica_stoic, 0)
         structure_collection.update_supercollection(self.structure_supercoll)
-        #self.ip_coll = self.structure_supercoll.get((self.replica_stoic, INITIAL_POOL_REFID))
         self.structure_coll = self.structure_supercoll.get((self.replica_stoic, 0))
 	self.child_counter = 0
 	self.success_counter = len(self.structure_coll)
 	self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 	self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
 	#Convergence settings from ui.conf  
-	#self.full_relax_tol = float(self.ui.get('run_settings', 'full_relax_tol'))   
 	self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
 	self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 	self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
@@ -136,13 +134,13 @@ class RunGA():
  
 	    ########## Mutation Decision ##########
             # Expects: None #Returns: stoichiometry or None. target_stoic in StoicDict format
-            if not hasattr(mutation_module, 'get_targ_stoic'): targ_stoic = self.replica_stoic
-            else: targ_stoic = mutation_module.get_targ_stoic()
+#            if not hasattr(mutation_module, 'get_targ_stoic'): targ_stoic = self.replica_stoic
+ #           else: targ_stoic = mutation_module.get_targ_stoic()
 
             ############# Crossover ###############
             # Expects: list_of_2_or_more<Structure>, target stochiometry #Returns Structure or False
 	    self.output("--Crossover--")
-            new_struct = crossover_module.main(structures_to_cross, targ_stoic, self.replica)
+            new_struct = crossover_module.main(structures_to_cross, self.replica_stoic, self.replica)
 	    if new_struct is False: 
            	self.output("Crossover failure")
              	continue  # crossover failed, start with new selection
@@ -156,16 +154,16 @@ class RunGA():
 	    randnum2 = np.random.random()
 	    #Single Parents have to be mutated	
 	    if new_struct.get_property('cross_type') == [1,1] or new_struct.get_property('cross_type') == [2,2]:
-	    	new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+	    	new_struct = mutation_module.main(new_struct, self.replica_stoic, self.replica)
 		self.output("--Second Mutation--")
 		if randnum2 < self.doublemutate:
-			new_struct = mutation_module.main(new_struct, targ_stoic, self.replica) 
+			new_struct = mutation_module.main(new_struct, self.replica_stoic, self.replica) 
 	    else: #Otherwise stick to probabilty set in conf file
 		if randnum < self.singlemutate:
-			new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+			new_struct = mutation_module.main(new_struct, self.replica_stoic, self.replica)
 			if randnum2 < self.doublemutate:
 				self.output("--Second Mutation--")
-                        	new_struct = mutation_module.main(new_struct, targ_stoic, self.replica)
+                        	new_struct = mutation_module.main(new_struct, self.replica_stoic, self.replica)
 		else:
 			self.output('No mutation applied.')
 			new_struct.set_property('mutation_type', 'No_mutation')
@@ -205,14 +203,14 @@ class RunGA():
 	    ########### Comparison Post Relaxation ####################
 	    self.output("--Comparison--")
             structure_collection.update_supercollection(self.structure_supercoll)
-            is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((struct.get_stoic(), cascade_counter)), self.replica)
+            is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica)
             if is_acceptable is False:
             	self.output('Newly relaxed structure is not acceptable') 
                 continue  # structure not acceptable start with new selection
 		
             #Add structure to a list of structures to be put in to collection
             self.set_parents(structures_to_cross, struct)
-            structures_to_add[(struct.get_stoic(), 0)] = struct
+            structures_to_add[(self.replica_stoic, 0)] = struct
 
 	    ########## End of iteration tasks/convergence checks#######
             if is_acceptable is False or struct is False: 
@@ -258,13 +256,16 @@ class RunGA():
 
 	    #Add Structure to Collection
 	    struct.set_property('child_counter', self.child_counter)
-	    index = structure_collection.add_structure(struct, key[0], key[1])			
-	    structure_collection.update_supercollection(self.structure_supercoll)
+	    index = structure_collection.add_structure(struct, key[0], key[1])		
+	    self.output("Structure index: "+str(index))
+            structure_collection.update_supercollection(self.structure_supercoll)
+	    #self.output("Added? :"+str(self.structure_supercoll.get((self.replica_stoic,0)).structures))	
 
 	    #Check for Energy Convergence of GA
 	    new_list_top_en = np.array([])
 	    new_e_list = np.array([])
-            for index, structure in self.structure_supercoll.get((self.replica_stoic,0)):
+	    coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
+            for index, structure in coll_new:
                 energy = structure.get_property('energy')
                 new_e_list = np.append(energy,new_e_list)
                 new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
