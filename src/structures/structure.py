@@ -197,7 +197,7 @@ class StoicDict(defaultdict):
     
     def get_string(self):
         keys = self.keys()
-        keys.sort()
+#        keys.sort()
         stoic_string = ''
         for item in keys:
             stoic_string += str(item) + ':' + str(self[item]) + '_'
