@@ -146,7 +146,7 @@ class RunGA():
             new_struct = crossover_module.main(structures_to_cross, self.replica_stoic, self.replica)
 	    if new_struct is False: 
            	self.output("Crossover failure")
-             	continue  # crossover failed, start with new selection
+             	continue  # crossover failed, start with new selection	
 	    #self.output("post crossover geo: ")
 	    #self.output(str(new_struct.get_geometry_atom_format()))       	    
 			 
@@ -171,8 +171,8 @@ class RunGA():
 			self.output('No mutation applied.')
 			new_struct.set_property('mutation_type', 'No_mutation')
             if new_struct is False: 
-                 self.output('Mutation failure')
-                 continue  # mutation failed, start with new selection
+            	self.output('Mutation failure')
+            	continue  # mutation failed, start with new selection
 
 	    ####Structure modification of angles. Checks reasonable structure is fed into relaxation####
 	    #self.output("within GA, this is new_struct.properties"+str(new_struct.properties))
@@ -348,7 +348,7 @@ class RunGA():
 	end_iter_count = 0
 	repeat = set()
         uniq_reps = []
-	arr =[]
+	arr = []
 	control_check_SPE_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
                                          self.control_list[0])
         control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
