@@ -174,8 +174,9 @@ def run_GA_master(replica):
 def clean():
     print 'resetting environment'
     directory_to_remove = [tmp_dir, structure_dir]
-    files_to_remove = [output_file, restart_relaxation_file]
+    files_to_remove = [output_file, restart_relaxation_file, restart_relaxation_in_file]
     p = subprocess.Popen(['rm *.out'], cwd=cwd, shell=True)
+    p = subprocess.Popen(['rm *.err'], cwd=cwd, shell=True)	
     p.wait()
     # tmp index is to keep track of replica number
     for directory in directory_to_remove:
