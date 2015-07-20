@@ -25,7 +25,7 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 	SPE_threshold = ui.get_eval('run_settings','SPE_threshold')
 
 	SPE = FHIAimsRelaxation(input_structure, working_dir, control_check_SPE_string, replica)
-	print "Replica %s executing FHI-aims and checking the SPE" % (replica)
+	output.local_message("Replica " +str(replica)+" executing FHI-aims and checking the SPE.", replica)
 	checkSPE = SPE.execute()
 	if SPE.is_successful():
 		SP_energy = SPE.extract_energy()
@@ -36,12 +36,12 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 			message = "Structure passed SPE check"
 			output.local_message(message, replica)
 			fullrelax = FHIAimsRelaxation(input_structure, working_dir, control_relax_full_string, replica)
-			print "Replica %s executing FHI-aims for a full unit cell relax" % (replica)
+			output.local_message("Replica " +str(replica)+" executing FHI-aims for a full unit cell relax",replica)
 			fullrelax.execute()
 			if fullrelax.is_successful(): 
 				return fullrelax.extract()
 	       		else:
-        	        	print "Relaxation failed!"
+        	        	output.local_message("Relaxation failed!",replica)
                 		return False
 		else:
 			print "Error with energy threshold"
