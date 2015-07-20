@@ -147,8 +147,8 @@ class RunGA():
 	    if new_struct is False: 
            	self.output("Crossover failure")
              	continue  # crossover failed, start with new selection	
-	    #self.output("post crossover geo: ")
-	    #self.output(str(new_struct.get_geometry_atom_format()))       	    
+	    self.output("post crossover geo: ")
+	    self.output(str(new_struct.get_geometry_atom_format()))       	    
 			 
             ########## Mutation Execution ##########
             # Expects: Structure, target_stoichiometry [decision] #Returns: Structure
@@ -188,7 +188,9 @@ class RunGA():
                                          self.control_list[0])
             control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
                                          self.control_list[1])
-		
+	
+	    self.output("pre relax geo: ")
+            self.output(str(new_struct.get_geometry_atom_format()))		
             ########## Check SPE and perform Full Relaxation ##########
             # Expects: Structure, working_dir, input_path #Returns: Structure
 	    self.output("--SPE Check and Full Relaxation--")
@@ -199,10 +201,17 @@ class RunGA():
 	    	self.output('SPE check not passed or full relaxation failure for '+ str(self.replica))
 		is_acceptable = False
                 continue  # optimization failed, start with new selection
+	    self.output("post relax geo: ")
+            self.output(str(struct.get_geometry_atom_format()))
 
 	    self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
 	    self.restart(str(self.replica)+' '+str(restart_counter)+' finished_relaxing:   ' +str(datetime.datetime.now()))
-	
+	    self.output("Ensuring cell is lower triangular...")
+	    struct=structure_handling.cell_lower_triangular(struct,False)	
+
+	    self.output("post second check geo: ")
+            self.output(str(struct.get_geometry_atom_format()))
+
 	    ########### Comparison Post Relaxation ####################
 	    self.output("--Comparison--")
             structure_collection.update_supercollection(self.structure_supercoll)
