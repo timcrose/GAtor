@@ -11,7 +11,7 @@ import numpy
 import random
 from core import user_input, output
 from structures.structure import StoicDict, Structure
-
+from structures import structure_handling
 
 def main(list_of_structures, targit_stoic, replica):
     '''
@@ -20,19 +20,28 @@ def main(list_of_structures, targit_stoic, replica):
     a StoicDict). It must return a single Structure with defined geometry
     or return False if the crossover fails and new structures are needed.
     '''
-
+	
     num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')	
-    if num_mols == 2:
-	cross_object = Crossover_2mol(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
-        return_struct = cross_object.cross()
-    elif num_mols == 4:
-	cross_object = Crossover_4mol(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
-        return_struct = cross_object.cross()			
-    elif num_mols == 8:
-	cross_object = Crossover_8mol(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
-        return_struct = cross_object.cross()
-    else:		
-	print('Havent defined crossover for this number of molecules')	
+    cross_attempts = 0
+    max_attempts = 6
+
+    while cross_attempts != max_attempts:
+	output.local_message("Attempting crossover: "+str(cross_attempts+1), replica)
+	if num_mols == 2:
+        	cross_object = Crossover_2mol(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
+        	return_struct = cross_object.cross()
+    	elif num_mols == 4:
+        	cross_object = Crossover_4mol(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
+        	return_struct = cross_object.cross()
+    	elif num_mols == 8:
+        	cross_object = Crossover_8mol(list_of_structures[0], list_of_structures[1], targit_stoic, replica)
+        	return_struct = cross_object.cross()
+	cell_check = structure_handling.cell_check(return_struct, replica) #unit cell considered not acceptable
+	if cell_check == False:
+		cross_attempts = cross_attempts + 1
+	if cell_check == True:
+		output.local_message("Crossover: "+str(cross_attempts+1)+" successful" , replica)
+		cross_attempts = max_attempts
 
     return return_struct
 
@@ -346,7 +355,6 @@ class Crossover_4mol(object):
 
 	#Setup lattice for child
 	child_lats = self.lat_options(cross_type, A_a, B_a, C_a, A_b, B_b, C_b)
-	
 	child_latA = child_lats[0]
 	child_latB = child_lats[1]
 	child_latC = child_lats[2]
