@@ -108,14 +108,13 @@ class Crossover_2mol(object):
         mol2_c = child_geo[atom_num_per_mol:len(temp_a)]
 	
 	#Closeness Check
-	tooclose = self.is_too_close(mol1_c, mol2_c)
-	if tooclose is True:
-		self.output("!child mols too close together!")
-		return False
+#	tooclose = self.is_too_close(mol1_c, mol2_c)
+#	if tooclose is True:
+#		self.output("!child mols too close together!")
+#		return False
 
 	#Setup lattice for child
 	child_lats = self.lat_options(cross_type, A_a, B_a, C_a, A_b, B_b, C_b)
-	
 	child_latA = child_lats[0]
 	child_latB = child_lats[1]
 	child_latC = child_lats[2]
@@ -156,8 +155,7 @@ class Crossover_2mol(object):
     def choose_crossover_type(self):
 	geom_opts = [1, 2, 3, 4]
         lat_opts = [1, 2, 3]
-	# 2/24 = 1/12 chance of single parent crossover [1,1] or [2,2] (note [3,3] and [4,3] weighted slightly heavier to match prob with 4 mol case
-	cross_types = [[1,2],[1,2],[1,3],[1,3],[2,1],[2,1],[2,3],[2,3],[3,1],[3,1],[3,2],[3,2],[3,3],[3,3],[4,1],[4,1],[4,2],[4,2],[4,3],[4,3],[3,3],[4,3]]
+	cross_types = [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3],[4,1],[4,2],[4,3]]
 	method = random.choice(cross_types)
 	return method
 
@@ -332,19 +330,19 @@ class Crossover_4mol(object):
         mol4_c = child_geo[3*atom_num_per_mol:len(temp_a)]
 
 	#Closeness Checks
-        tooclose = self.is_too_close(mol1_c, mol2_c)
-	if tooclose is True:
-		self.output("!child mols 1&2 too close together!")
-		return False
-	elif self.is_too_close(mol2_c, mol3_c) is True:
-		self.output("!child mols 2&3 too close together!")
-                return False
-        elif self.is_too_close(mol3_c, mol4_c) is True:
-                self.output("!child mols 3&4 too close together!")
-                return False
-        elif self.is_too_close(mol4_c, mol1_c) is True:
-                self.output("!child mols 4&1 too close together!")
-                return False
+#        tooclose = self.is_too_close(mol1_c, mol2_c)
+#	if tooclose is True:
+#		self.output("!child mols 1&2 too close together!")
+#		return False
+#	elif self.is_too_close(mol2_c, mol3_c) is True:
+#		self.output("!child mols 2&3 too close together!")
+#                return False
+#        elif self.is_too_close(mol3_c, mol4_c) is True:
+#                self.output("!child mols 3&4 too close together!")
+#                return False
+#        elif self.is_too_close(mol4_c, mol1_c) is True:
+#                self.output("!child mols 4&1 too close together!")
+#                return False
 
 	#Setup lattice for child
 	child_lats = self.lat_options(cross_type, A_a, B_a, C_a, A_b, B_b, C_b)
@@ -389,7 +387,6 @@ class Crossover_4mol(object):
     def choose_crossover_type(self):
 	geom_opts = [1, 2, 3, 4, 5, 6, 7, 8]
         lat_opts = [1, 2, 3]
-	#2/24=1/12 chance of single parent crossover [1,1] or [2,2]
 	cross_types = [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3],[4,1],[4,2],[4,3],[5,1],[5,2],[5,3],[6,1],[6,2],[6,3],[7,1],[7,2],[7,3],[8,1],[8,2],[8,3]]
 	method = random.choice(cross_types)
 	return method
@@ -590,31 +587,31 @@ class Crossover_8mol(object):
 
 
 	# Check if Child Molecules are too close together
-	tooclose = self.is_too_close(mol1_c, mol2_c)
-	if tooclose is True:
-		self.output("!child mols 1&2 too close together!")
-		return False
-	elif self.is_too_close(mol2_c, mol3_c) is True:
-                self.output("!child mols 2&3 too close together!")
-                return False
-        elif self.is_too_close(mol3_c, mol4_c) is True:
-                self.output("!child mols 3&4 too close together!")
-                return False
-	elif self.is_too_close(mol4_c, mol5_c) is True:
-                self.output("!child mols 4&5 too close together!")
-                return False
-        elif self.is_too_close(mol5_c, mol6_c) is True:
-	        self.output("!child mols 5&6 too close together!")
-        	return False
-        elif self.is_too_close(mol6_c, mol7_c) is True:
-                self.output("!child mols 6&7 too close together!")
-                return False
-        elif self.is_too_close(mol7_c, mol8_c) is True:
-                self.output("!child mols 7&8 too close together!")
-                return False
-        elif self.is_too_close(mol8_c, mol1_c) is True:
-                self.output("!child mols 8&1 too close together!")
-                return False
+#	tooclose = self.is_too_close(mol1_c, mol2_c)
+#	if tooclose is True:
+#		self.output("!child mols 1&2 too close together!")
+#		return False
+#	elif self.is_too_close(mol2_c, mol3_c) is True:
+#                self.output("!child mols 2&3 too close together!")
+#                return False
+#        elif self.is_too_close(mol3_c, mol4_c) is True:
+#                self.output("!child mols 3&4 too close together!")
+#                return False
+#	elif self.is_too_close(mol4_c, mol5_c) is True:
+#                self.output("!child mols 4&5 too close together!")
+#                return False
+#        elif self.is_too_close(mol5_c, mol6_c) is True:
+#	        self.output("!child mols 5&6 too close together!")
+#        	return False
+#        elif self.is_too_close(mol6_c, mol7_c) is True:
+#                self.output("!child mols 6&7 too close together!")
+#                return False
+#        elif self.is_too_close(mol7_c, mol8_c) is True:
+#                self.output("!child mols 7&8 too close together!")
+#                return False
+#        elif self.is_too_close(mol8_c, mol1_c) is True:
+#                self.output("!child mols 8&1 too close together!")
+#                return False
 
 	#Setup lattice for child
 	child_lats = self.lat_options(cross_type, A_a, B_a, C_a, A_b, B_b, C_b)
@@ -659,7 +656,6 @@ class Crossover_8mol(object):
     def choose_crossover_type(self):
 	geom_opts = [1, 2, 3, 4, 5, 6, 7, 8]
         lat_opts = [1, 2, 3]
-	#2/24=1/12 chance of single parent crossover [1,1] or [2,2]
 	cross_types = [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3],[4,1],[4,2],[4,3],[5,1],[5,2],[5,3],[6,1],[6,2],[6,3],[7,1],[7,2],[7,3],[8,1],[8,2],[8,3]]
 	method = random.choice(cross_types)
 	return method
