@@ -216,7 +216,6 @@ class RunGA():
 	    struct.set_property('lattice_vector_a',list(a))
 	    struct.set_property('lattice_vector_b',list(b))
 	    struct.set_property('lattice_vector_c',list(c))
-	    self.output(str(list(a)))
 	    self.output("post second check geo: ")
             self.output(str(struct.get_geometry_atom_format()))
 
@@ -450,9 +449,12 @@ class RunGA():
 	       	#Pass relaxed struct throught cell checks
 		self.output("--Comparison of relaxed restart geometry--")
 		new_struct = structure_handling.cell_lower_triangular(new_struct,False)
-            	#new_struct.set_property('lattice_vector_a',list(new_struct.get_property('lattice_vector_a'))
-            	#new_struct.set_property('lattice_vector_b',list(new_struct.get_property('lattice_vector_b'))
-            	#new_struct.set_property('lattice_vector_c',list(new_struct.get_property('lattice_vector_c'))
+	        a=new_struct.get_property('lattice_vector_a')
+            	b=new_struct.get_property('lattice_vector_b')
+            	c=new_struct.get_property('lattice_vector_c')
+                new_struct.set_property('lattice_vector_a',list(a))
+                new_struct.set_property('lattice_vector_b',list(b))
+                new_struct.set_property('lattice_vector_c',list(c))
         	structure_collection.update_supercollection(self.structure_supercoll)
         	is_acceptable = comparison_module.main(new_struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica)
         	if is_acceptable is False:
