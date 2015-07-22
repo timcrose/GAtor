@@ -1,0 +1,117 @@
+
+Beginning iteration
+No restart file found
+--Structure selection--
+--Crossover--
+Attempting crossover: 1
+cross_type:     [3, 2]
+Parent A lattice vectors:  16.4765874024 4.99024532683 7.25722869769
+Parent B lattice vectors:  12.0392345582 3.94736821317 11.8583646694
+Child lattice vectors:  12.0392345582 3.94736821317 11.8583646694
+Child angles:    89.9969673612 96.6165543456 90.0076773804
+No volume check is called.
+No lattice vector length check is called.
+No center of mass distance check is called.
+The new structure has stoms from different molecules sitting too close to each other.
+Restarting iteration.
+
+Attempting crossover: 2
+cross_type:     [4, 1]
+Parent A lattice vectors:  16.4765874024 4.99024532683 7.25722869769
+Parent B lattice vectors:  12.0392345582 3.94736821317 11.8583646694
+Child lattice vectors:  16.4765874024 4.99024532683 7.25722869769
+Child angles:    109.968483052 83.9159302575 90.9718225427
+No volume check is called.
+No lattice vector length check is called.
+No center of mass distance check is called.
+The new structure has passed the interatomic distance check.
+The new structure has passed through all the cell check being called.
+Crossover: 2 successful
+post crossover geo: 
+lattice_vector 16.31772119 -2.17082453 0.70528608
+lattice_vector 0.59417539 4.92090823 -0.57807112
+lattice_vector 0.24392225 -1.71485397 7.04749219
+atom -4.80238 0.27352 10.53383 S
+atom -2.59868 1.43186 11.91295 C
+atom -2.63174 1.54176 9.14458 C
+atom -1.59993 1.92751 10.54191 S
+atom -3.91757 0.93043 9.15552 C
+atom -3.80982 0.78892 11.90396 C
+atom -4.44175 0.41919 13.11843 C
+atom -1.98929 1.77845 13.14797 C
+atom -5.02790 0.05088 14.06126 N
+atom -1.44467 2.09632 14.13403 N
+atom -4.41397 0.86349 7.85812 C
+atom -5.63339 0.29985 7.43961 C
+atom -6.62899 -0.19897 7.08756 N
+atom -2.15280 1.90695 7.97390 N
+atom -3.22738 1.54027 6.75729 S
+atom 5.29475 -2.72846 7.48536 S
+atom 2.45332 -2.53166 7.60302 C
+atom 3.79249 -1.09159 5.67687 C
+atom 2.15575 -1.40384 6.28195 S
+atom 5.02612 -1.64899 6.12017 C
+atom 3.64358 -3.05709 8.03857 C
+atom 3.65831 -4.01491 9.08126 C
+atom 1.24337 -2.92476 8.23930 C
+atom 3.73412 -4.82759 9.91866 N
+atom 0.23666 -3.22967 8.75049 N
+atom 6.05925 -1.17433 5.31804 C
+atom 7.43754 -1.43134 5.45013 C
+atom 8.58733 -1.61984 5.56739 N
+atom 3.84423 -0.25086 4.66283 N
+atom 5.40599 -0.08602 4.10842 S
+
+--Mutation--
+No mutation applied.
+--Cell Checks--
+Cell checked! Reasonable angles observed!
+No volume check is called.
+No lattice vector length check is called.
+No center of mass distance check is called.
+The new structure has passed the interatomic distance check.
+The new structure has passed through all the cell check being called.
+pre relax geo: 
+lattice_vector 16.4765874024 -7.21644966006e-16 0.0
+lattice_vector -0.0846380032291 4.98952751574 1.11022302463e-16
+lattice_vector 0.769176296157 -2.46567566468 6.78204834195
+atom 11.36620 0.86949 3.83423 S
+atom 13.45508 2.14997 5.28232 C
+atom 13.28936 2.57235 2.54898 C
+atom 14.32021 2.93127 3.95414 S
+atom 12.09693 1.79481 2.52123 C
+atom 12.33994 1.35377 5.22900 C
+atom 11.81480 0.76426 6.40699 C
+atom 14.06579 2.43164 6.53310 C
+atom 11.32319 0.21365 7.31435 N
+atom 14.60549 2.70491 7.53510 N
+atom 11.55861 1.81086 1.23901 C
+atom 10.40728 1.13872 0.78899 C
+atom 9.47194 0.55312 0.40666 N
+atom 13.66544 3.13156 1.41801 N
+atom 12.59746 2.76480 0.19564 S
+atom 5.92359 -2.82716 6.95900 S
+atom 3.08867 -3.03316 7.17594 C
+atom 4.14275 -1.21238 5.40085 C
+atom 2.58883 -1.81171 6.00804 S
+atom 5.45689 -1.64428 5.74075 C
+atom 4.35532 -3.43859 7.51314 C
+atom 4.54074 -4.49915 8.43275 C
+atom 1.96941 -3.65764 7.79290 C
+atom 4.75874 -5.38495 9.16438 N
+atom 1.03446 -4.15333 8.29081 N
+atom 6.38319 -0.94447 4.97373 C
+atom 7.78770 -1.02529 5.03687 C
+atom 8.95627 -1.06804 5.09966 N
+atom 4.03981 -0.26132 4.49385 N
+atom 5.54106 0.17694 3.92129 S
+
+--SPE Check and Full Relaxation--
+Replica 3580ce1c07 executing FHI-aims and checking the SPE.
+Aims relaxation being called. out_location=/lustre/project/nmarom/fcurtis/gator/run_calcs/tmp/3580ce1c07
+Binary location is/home/fcurtis/fhi-aims.150205/bin/aims.150205.scalapack.mpi.x
+SPE extracted
+Structure passed SPE check
+Replica 3580ce1c07 executing FHI-aims for a full unit cell relax
+Aims relaxation being called. out_location=/lustre/project/nmarom/fcurtis/gator/run_calcs/tmp/3580ce1c07
+Binary location is/home/fcurtis/fhi-aims.150205/bin/aims.150205.scalapack.mpi.x

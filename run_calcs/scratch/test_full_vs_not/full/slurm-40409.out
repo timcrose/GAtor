@@ -1,0 +1,1307 @@
+Start Job
+srun: Job step aborted: Waiting up to 2 seconds for job step to finish.
+srun: got SIGCONT
+slurmstepd: error: *** STEP 40409.0 CANCELLED AT 2015-07-20T17:02:55 ***
+slurmstepd: error: *** JOB 40409 CANCELLED AT 2015-07-20T17:02:55 ***
+srun: forcing job termination
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+
+Stack trace terminated abnormally.
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4B450F  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4F9964  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE57D459  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4F751C  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  000000000154FEFD  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038C56  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE5C046F  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038C5D  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE57FA59  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001044A32  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  000000000154FED3  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038C56  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046D7D  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000F5C9D0  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001039468  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001153815  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001039BA4  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046DFC  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000CE4695  Unknown               Unknown  Unknown
+aims.150205.scala  000000000050679D  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038E06  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  000000000067DF41  Unknown               Unknown  Unknown
+aims.150205.scala  00000000010395D3  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  00000000011539C9  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001039D43  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  000000000154F960  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038C56  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046C6A  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE53C3E2  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE41E459  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046DEF  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE53C54E  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4F9403  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE43F6BD  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4FB964  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE43F54E  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE3FC58D  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE5C24C3  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE53EA6F  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE53C3F5  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE53EA3E  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  000000000154FE72  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038C56  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046DEF  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046CB8  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046D9A  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  00000000011539FC  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001039D43  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001046CB8  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103B497  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE29A609  Unknown               Unknown  Unknown
+libmkl_core.so     00002AAAACA76BE2  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB7236D4  Unknown               Unknown  Unknown
+libmkl_intel_lp64  00002AAAAADDF9E8  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001041C44  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE58026D  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE57D209  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB7548CD  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB750F5B  Unknown               Unknown  Unknown
+libmkl_intel_lp64  00002AAAAADD961D  Unknown               Unknown  Unknown
+aims.150205.scala  000000000104275F  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001546F00  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE8649E8  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE42A45D  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE3B7564  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE41D9B8  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4EC9D6  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE42A43E  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE5C7A81  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4F7407  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE452995  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE467964  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001041332  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001041973  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001153123  Unknown               Unknown  Unknown
+aims.150205.scala  000000000103C89E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  00000000015503ED  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001038CA4  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+aims.150205.scala  000000000067DF06  Unknown               Unknown  Unknown
+aims.150205.scala  00000000010395D3  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE429539  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4B51A1  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE4B2209  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB7548CD  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB750F5B  Unknown               Unknown  Unknown
+libmkl_intel_lp64  00002AAAAADD961D  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001040E58  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAAC450C82E  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAAC466C07D  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB7548CD  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB750F5B  Unknown               Unknown  Unknown
+libmkl_intel_lp64  00002AAAAADD961D  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001040E58  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE30F88A  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE46F07D  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB7548CD  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB750F5B  Unknown               Unknown  Unknown
+libmkl_intel_lp64  00002AAAAADD961D  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001040E58  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+forrtl: error (78): process killed (SIGTERM)
+Image              PC                Routine            Line        Source             
+aims.150205.scala  0000000001546681  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001544DD7  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4FC4  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014F4DD6  Unknown               Unknown  Unknown
+aims.150205.scala  000000000149F51F  Unknown               Unknown  Unknown
+aims.150205.scala  00000000014A567B  Unknown               Unknown  Unknown
+libpthread.so.0    00002AAAAFAFE710  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE2CE2BF  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE359FB3  Unknown               Unknown  Unknown
+libmkl_avx.so      00002AAABE357209  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB7548CD  Unknown               Unknown  Unknown
+libmkl_intel_thre  00002AAAAB750F5B  Unknown               Unknown  Unknown
+libmkl_intel_lp64  00002AAAAADD961D  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001040E58  Unknown               Unknown  Unknown
+aims.150205.scala  0000000001034470  Unknown               Unknown  Unknown
+aims.150205.scala  00000000008B0402  Unknown               Unknown  Unknown
+aims.150205.scala  000000000040871E  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407C34  Unknown               Unknown  Unknown
+aims.150205.scala  0000000000407AEE  Unknown               Unknown  Unknown
+libc.so.6          00002AAAB0D79D5D  Unknown               Unknown  Unknown
+aims.150205.scala  00000000004079F9  Unknown               Unknown  Unknown
+srun: error: _server_read: fd 22 got error or unexpected eof reading header
+srun: error: step_launch_notify_io_failure: aborting, io error with slurmstepd on node 2
+srun: error: _server_read: fd 20 got error or unexpected eof reading header
+srun: error: step_launch_notify_io_failure: aborting, io error with slurmstepd on node 1
+srun: error: _server_read: fd 21 got error or unexpected eof reading header
+srun: error: step_launch_notify_io_failure: aborting, io error with slurmstepd on node 3
+srun: error: _server_read: fd 19 got error or unexpected eof reading header
+srun: error: step_launch_notify_io_failure: aborting, io error with slurmstepd on node 4
+srun: error: _server_read: fd 18 got error or unexpected eof reading header
+srun: error: step_launch_notify_io_failure: aborting, io error with slurmstepd on node 5
