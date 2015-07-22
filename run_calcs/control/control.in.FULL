@@ -31,7 +31,7 @@
     k_grid 3 3 3
 
 #  Relaxation
-    relax_geometry trm 5.e4
+    relax_geometry trm 5.e-2
     relax_unit_cell full 
     hessian_to_restart_geometry .false
     # relax_unit_cell fixed_angles #uncomment for unit cell relaxation with fixed angles
