@@ -3,17 +3,14 @@
 #   input file control.in light for relaxation
 #
 #########################################################################################
-#
 #  Physical model
-#
   xc                 pbe
   spin               none
   relativistic       none 
   override_relativity .true.
   charge             0.
-#
+
 #  SCF convergence
-# 
   occupation_type    gaussian 0.005
   mixer              pulay
     n_max_pulay        10
@@ -22,34 +19,27 @@
   sc_accuracy_eev    1E-2
   sc_accuracy_etot   1E-6
   sc_accuracy_forces 1E-4 #uncomment for relaxation
-  sc_iter_limit      20
-  load_balancing .true. 
-  
+  sc_iter_limit      500
+  load_balancing .true. 	
+
 #  Eigenvalue solution
-#
   KS_method	     scalapack_fast
     empty_states       6
     basis_threshold    1.e-5
 
-#Relaxation
-relax_geometry trm 1.e-2
-relax_unit_cell full
-max_relaxation_steps 50
-hessian_to_restart_geometry .false.
-
-
 #  For periodic boundary conditions
     k_grid 3 3 3
 
-#vdW corrections
- vdw_correction_hirshfeld
-#many_body_dispersion
+#  Relaxation
+    relax_geometry trm 5.e4
+    relax_unit_cell full 
+    hessian_to_restart_geometry .false
+    # relax_unit_cell fixed_angles #uncomment for unit cell relaxation with fixed angles
+    # restart_relaxations .true.
 
-
-# restart_relaxations .true. produces a file which will slow things down
-# harmonic_length_scale 0.01 #uncomment in case of relaxation errors
-# energy_tolerance 5.e-4  #uncomment in case of relaxation errors
-# init_hess diag
+# Vdw Corrections
+    vdw_correction_hirshfeld
+    #many_body_dispersion
 
 ################################################################################
 #
@@ -431,6 +421,4 @@ hessian_to_restart_geometry .false.
 #     hydro 4 d 10
 #     hydro 5 g 19.2
 #     hydro 4 s 12
-
-################################################################################
 
