@@ -15,6 +15,7 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
+from selection import structure_selection 
 # from external_libs import asizeof
 # from profilestats import profile  # for time profiling
 
@@ -290,9 +291,23 @@ class RunGA():
                 new_e_list = np.append(energy,new_e_list)
             new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
             new_list_top_en = new_e_list[:self.top_en_count]
+	    min_e = new_e_list[0][0]
+	    max_e = new_e_list[-1][0]
 	    self.output("old top energies:    "+ str(old_list_top_en))
 	    self.output("new top energies:    "+ str(new_list_top_en))
 	    converged = self.check_convergence(old_list_top_en,new_list_top_en,len(self.structure_coll.structures)) 
+	
+	    #Write out avg fitness
+	    sum = 0
+	    fit_array = self.avg_fitness(min_e, max_e, coll_new)
+	    self.output("test!!! "+str(fit_array))
+
+	    for index, fitness in fit_array: sum += fitness
+	    fit_avg = float(fitness)/len(fit_array)
+
+	    self.output("average "+str(fit_avg))
+	    data_tools.write_avg_fitness(ID, fit_avg, coll_new)
+
 
 	    #Output success message to screen and write energy hierarchy        
             prev_struct_index = str(key) + str(index)
@@ -344,6 +359,30 @@ class RunGA():
 	self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
 	if self.mod_iteration_counter == self.max_en_it:
 		return "converged" 
+
+    def avg_fitness(self, min_e, max_e, structure_coll):
+        fitness = {}
+        for index, struct in structure_coll:
+            try: energy = float(struct.get_property('energy'))
+            except: pass
+            rho = (max_e - energy) / (max_e - min_e)
+            if self.ui.get('selection', 'fitness_function') == 'standard':
+                fitness[struct] = rho
+	sorted_fit = sorted(fitness.iteritems(), key=lambda x:x[1])
+
+	f_sum = 0
+        tmp = []
+        total = 0
+        normalized_fit = []
+
+        # sum and reduce all fitnesses
+        for index, fitness in sorted_fit: f_sum += fitness
+        for index, fitness in sorted_fit: tmp.append((index, fitness / f_sum))
+        for index, t_fitness in tmp:
+            normalized_fit.append((index, t_fitness + total))
+            total = t_fitness + total
+        return normalized_fit
+
 
     def set_parents(self, structures_to_cross, struct):
         for i in range(len(structures_to_cross)): 
