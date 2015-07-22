@@ -1,3 +1,3 @@
 ### run in /bin/bash
 
-python /home/xli20/gator/src/core/master.py -f multi-ui.conf
+python /lustre/project/nmarom/fcurtis/gator/src/core/master.py -c -f btm.conf -i 

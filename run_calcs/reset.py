@@ -1,4 +1,5 @@
 ### run in /bin/bash
 
-python /Users/FarrenSCurtis/GA/GAtor_5_14/src/core/master.py clean 
-
+rm *.err
+rm *.log
+python /lustre/project/nmarom/fcurtis/gator/src/core/master.py -c -n 
