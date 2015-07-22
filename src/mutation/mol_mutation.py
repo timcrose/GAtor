@@ -111,7 +111,7 @@ class RandomTranslationMutation(object):
         new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
         new_struct.set_property('beta', self.input_structure.get_property('beta'))
         new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
-        new_struct.set_property('mutation', 'Trans_mol')
+        new_struct.set_property('mutation_type', 'Trans_mol')
 	return new_struct
 
     def displace_center_geometry(self, geometry, st_dev):
@@ -475,7 +475,7 @@ class RandomStrainMutation(object):
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
         new_struct.set_property('beta', self.angle(lata_out, latc_out))
         new_struct.set_property('gamma', self.angle(lata_out, latb_out))
-        new_struct.set_property('mutation', 'RandS_nom')
+        new_struct.set_property('mutation_type', 'RandS_nom')
         return new_struct
 
     def rand_vstrain(self, lat_mat):
@@ -958,7 +958,7 @@ class RandomTranslationMutation_4mol(object):
         new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
         new_struct.set_property('beta', self.input_structure.get_property('beta'))
         new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
-	new_struct.set_property('mutation', 'Trans_mol')
+	new_struct.set_property('mutation_type', 'Trans_mol')
 	return new_struct
 
     def displace_center_geometry(self, geometry, st_dev):
@@ -1334,7 +1334,7 @@ class RandomStrainMutation_4mol(object):
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
         new_struct.set_property('beta', self.angle(lata_out, latc_out))
         new_struct.set_property('gamma', self.angle(lata_out, latb_out))
-	new_struct.set_property('mutation', 'RandS_nom')
+	new_struct.set_property('mutation_type', 'RandS_nom')
         return new_struct
 
     def rand_vstrain(self, lat_mat):
@@ -1829,7 +1829,7 @@ class RandomTranslationMutation_8mol(object):
         new_struct.set_property('alpha',self.input_structure.get_property('alpha'))
         new_struct.set_property('beta', self.input_structure.get_property('beta'))
         new_struct.set_property('gamma', self.input_structure.get_property('gamma'))
-	new_struct.set_property('mutation', 'Trans_mol')
+	new_struct.set_property('mutation_type', 'Trans_mol')
 	return new_struct
 
     def displace_center_geometry(self, geometry, st_dev):
@@ -2233,7 +2233,7 @@ class RandomStrainMutation_8mol(object):
         new_struct.set_property('alpha',self.angle(latb_out, latc_out))
         new_struct.set_property('beta', self.angle(lata_out, latc_out))
         new_struct.set_property('gamma', self.angle(lata_out, latb_out))
-	new_struct.set_property('mutation', 'RandS_nom')
+	new_struct.set_property('mutation_type', 'RandS_nom')
         return new_struct
 
     def rand_vstrain(self, lat_mat):
