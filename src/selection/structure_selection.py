@@ -69,11 +69,11 @@ class StructureSelection():
         	energy = structure.get_property('energy')
                 e_list = np.append(energy,e_list)
         e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
-	output.local_message("e_list" +str(e_list), self.replica)
-        min_e = e_list[0][0]
-  	max_e = e_list[-1][0] 
-	output.local_message("min e" +str(min_e),self.replica)
-	output.local_message("max " +str(max_e), self.replica) 
+#	output.local_message("e_list" +str(e_list), self.replica)
+#        min_e = e_list[0][0]
+#  	max_e = e_list[-1][0] 
+#	output.local_message("min e" +str(min_e),self.replica)
+#	output.local_message("max " +str(max_e), self.replica) 
         fitness = {}
         for index, struct in structure_coll:
             try: energy = float(struct.get_property('energy'))
