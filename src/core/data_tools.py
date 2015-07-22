@@ -55,8 +55,13 @@ def main(argv):
     print structure_coll.get_struct(energy_tuples[0][0]).get_geometry_atom_format()
     write_energy_hierarchy(structure_coll)
 
-
-#modified from original to include max distances for checking    
+def write_avg_fitness(ID, fit_avg, structure_coll):
+    to_write = ''
+    to_write += str(ID)+ ' '+ str(fit_avg)
+    to_write += '\n'	
+    with open(os.path.join(tmp_dir, 'fitness.' + str(structure_coll.get_input_ref()) + '.dat'), 'a+') as f: f.write(to_write)
+    os.system("chmod 771 "+os.path.join(tmp_dir,'fitness.'+str(structure_coll.get_input_ref())+'.dat'))
+ 
 def get_energy_tuples(structure_coll):
     energy_tuples = []
     for index, structure in structure_coll:
