@@ -6,7 +6,7 @@ import os
 import shutil
 import time
 import numpy
-from core import user_input, data_tools
+from core import user_input, data_tools, output
 from core.file_handler import cwd, set_progress, my_import, tmp_dir, read_data
 from external_libs.filelock import FileLock
 from structures import structure_collection
@@ -53,6 +53,8 @@ def main():
 		struct.set_property('u_def_filename', filename)
 		struct.set_property('ID', ip_count)	
 		struct.set_property('replica', 'init__pool')
+	        message= "Stoic of IP struct: "  +str(struct.get_stoic())
+		print message
 		structure_collection.add_structure(struct, struct.get_stoic(), 0) #add struct to common FF pool
 		print "IP structure added. ID: ", ip_count
         return	ip_count

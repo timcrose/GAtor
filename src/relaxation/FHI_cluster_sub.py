@@ -10,7 +10,7 @@ from core import user_input, output
 from core.file_handler import mkdir_p_clean
 from structures.structure import Structure
 from copy import deepcopy
-
+import re
 
 def main(input_structure, working_dir, control_check_SPE_string, control_relax_full_string, replica):
 	'''	
@@ -300,23 +300,43 @@ class FHIAimsRelaxation():
         checks if relaxation/optimization was successful
         '''
         # TODO: need proper check
-#	aims_out = open(os.path.join(self.working_dir, 'aims.out'))
         aims_out = os.path.join(self.working_dir, 'aims.out')
-#	self.wait_on_file(aims_out)
 	aims_out = open(aims_out)
+	count = 0
+	count_max = 10000000
+        while True:
+	    count = count + 1
+            line = aims_out.readline()
+	    match = re.search('Leaving FHI-aims.', line)
+    	    if match is not None:
+		return True
+	    if count == count_max:
+		return False
+	
+		
+    def is_successful_old(self):
+        '''
+        checks if relaxation/optimization was successful
+        '''
+        # TODO: need proper check
+#       aims_out = open(os.path.join(self.working_dir, 'aims.out'))
+        aims_out = os.path.join(self.working_dir, 'aims.out')
+#       self.wait_on_file(aims_out)
+        aims_out = open(aims_out)
         while True:
             line = aims_out.readline()
-	    if line == '':
-#		print "In is_successful, still waiting for aims to finish output."
-#	    else:
-#		print "Read: ", line
-		break
+            if line == '':
+#               print "In is_successful, still waiting for aims to finish output."
+#           else:
+#               print "Read: ", line
+                break
         #    if not line: return False  # energy not converged
 #            if 'Have a nice day' in line:
 #                return True
-	    if 'Leaving FHI-aims.' in line:
-		return True
+            if 'Leaving FHI-aims.' in line:
+                return True
         return False
+
 
     def wait_on_file(self,wait_file,sleeptime=1):
 	"""

@@ -50,7 +50,7 @@ ui_conf = os.path.join(cwd, options.user_input)
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
 restart_relaxation_file = os.path.join(cwd, 'restart_relaxations.dat')
-
+restart_relaxation_in_file = os.path.join(cwd, 'restart_relaxations.in')
 # constants
 INITIAL_POOL_REFID = -1
 

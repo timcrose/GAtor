@@ -21,9 +21,9 @@ def main(list_of_structures, targit_stoic, replica):
     or return False if the crossover fails and new structures are needed.
     '''
 	
-    num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')	
+    num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
+    max_attempts = int(user_input.get_config().get_eval('crossover', 'max_attempts'))	
     cross_attempts = 0
-    max_attempts = 6
 
     while cross_attempts != max_attempts:
 	output.local_message("Attempting crossover: "+str(cross_attempts+1), replica)
