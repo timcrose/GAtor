@@ -300,14 +300,10 @@ class RunGA():
 	    #Write out avg fitness
 	    sum = 0
 	    fit_array = self.avg_fitness(min_e, max_e, coll_new)
-	    self.output("test!!! "+str(fit_array))
-
 	    for index, fitness in fit_array: sum += fitness
 	    fit_avg = float(fitness)/len(fit_array)
-
-	    self.output("average "+str(fit_avg))
+	    self.output("Fitness average: "+str(fit_avg))
 	    data_tools.write_avg_fitness(ID, fit_avg, coll_new)
-
 
 	    #Output success message to screen and write energy hierarchy        
             prev_struct_index = str(key) + str(index)
