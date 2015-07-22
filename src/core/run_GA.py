@@ -103,13 +103,15 @@ class RunGA():
             begin_time = datetime.datetime.now()
 
 	    ###### Check for unfinished relaxations #########	
-	    try:
+	    try:     #put full path
 		    filename = "restart_relaxations.in"
-		    self.run_restart_replicas(filename, relaxation_module, comparison_module)
+	 	    filepath = os.path.join(cwd, filename)
+		    self.run_restart_replicas(filepath, relaxation_module, comparison_module)
 	    	    #os.remove("restart_relaxations.dat")	
 	    except:
 		self.output("No restart file found")
-		pass	
+		pass 
+	    	#break	
   
             ########## Check if GA finished/converged ##########
             try: 
@@ -380,7 +382,7 @@ class RunGA():
  		for line in lines:
       			items = line.split()
       			arr.append(items)
-	os.remove("restart_relaxations.in")
+	os.remove(filename)
 
 	#Make arrays for each replica that may need to be restarted
 	rep_ars =[[] for i in range(len(uniq_reps))]
