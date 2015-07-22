@@ -103,11 +103,10 @@ class RunGA():
             begin_time = datetime.datetime.now()
 
 	    ###### Check for unfinished relaxations #########	
-	    try:     #put full path
+	    try:     
 		    filename = "restart_relaxations.in"
 	 	    filepath = os.path.join(cwd, filename)
 		    self.run_restart_replicas(filepath, relaxation_module, comparison_module)
-	    	    #os.remove("restart_relaxations.dat")	
 	    except:
 		self.output("No restart file found")
 		pass 
@@ -266,9 +265,9 @@ class RunGA():
             for index, structure in coll:
                 energy = structure.get_property('energy')
                 old_e_list = np.append(energy,old_e_list)
-                old_e_list= np.sort(old_e_list.reshape(len(old_e_list),1),axis=0)
-                old_list_top_en = old_e_list[:self.top_en_count]
-                old_min_e = old_list_top_en[0][0]		
+            old_e_list= np.sort(old_e_list.reshape(len(old_e_list),1),axis=0)
+            old_list_top_en = old_e_list[:self.top_en_count]
+            old_min_e = old_list_top_en[0][0]		
 
 	    #Check if new structure's energy is a new global minima
             e_new = struct.get_property('energy') 		
@@ -289,8 +288,8 @@ class RunGA():
             for index, structure in coll_new:
                 energy = structure.get_property('energy')
                 new_e_list = np.append(energy,new_e_list)
-                new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
-                new_list_top_en = new_e_list[:self.top_en_count]
+            new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
+            new_list_top_en = new_e_list[:self.top_en_count]
 	    self.output("old top energies:    "+ str(old_list_top_en))
 	    self.output("new top energies:    "+ str(new_list_top_en))
 	    converged = self.check_convergence(old_list_top_en,new_list_top_en,len(self.structure_coll.structures)) 
