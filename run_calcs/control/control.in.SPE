@@ -15,12 +15,12 @@
   mixer              pulay
     n_max_pulay        10
     charge_mix_param   0.6
-  sc_accuracy_rho    1E-5
-  sc_accuracy_eev    1E-3
+  sc_accuracy_rho    1E-4
+  sc_accuracy_eev    1E-2
   sc_accuracy_etot   1E-6
 #  sc_accuracy_forces 1E-4 #uncomment for relaxation
   sc_iter_limit      500
-#  restart restart_file
+  load_balancing .true.
 
 #  Eigenvalue solution
   KS_method	     scalapack_fast
@@ -28,21 +28,11 @@
     basis_threshold    1.e-5
 
 #  For periodic boundary conditions
-    k_grid 3 3 3
+    k_grid 1 1 1
 
-#  Relaxation
-# relax_geometry trm 1.e0 #uncomment for internal relaxation
-# relax_unit_cell full #uncomment for unit cell relaxation
-# relax_unit_cell fixed_angles #uncomment for unit cell relaxation with fixed angles
-# restart_relaxations .true.
-# hessian_to_restart_geometry .false.
-# harmonic_length_scale 0.01 #uncomment in case of relaxation errors
-# energy_tolerance 5.e-4  #uncomment in case of relaxation errors
-# init_hess diag
-
-#Vdw Corrections
- vdw_correction_hirshfeld
-# many_body_dispersion
+#  Vdw Corrections
+   vdw_correction_hirshfeld
+   #many_body_dispersion
 
 ################################################################################
 #
