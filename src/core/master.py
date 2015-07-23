@@ -124,7 +124,7 @@ python %s -f %s --rn %s
                         ss.write(exe_string)
                         ss.close()
                         os.system("qsub submit.ss")
-	elif environment=="Cetus" or environment=="cetus":
+	elif environment=="Cetus" or environment=="cetus" or environment=="mira" or environment=="Mira":
 		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
 		from external_libs import bgqtools
 		if block_size>=128:
@@ -142,7 +142,10 @@ python %s -f %s --rn %s
 		else:
 		#Will need to get corners; will boot blocks of 128
 			partsize, partition, job_id = bgqtools.get_cobalt_info()
-			blocks=bgqtools.get_bootable_blocks(partition,partsize,128)
+			if environment=="Cetus" or environment=="cetus":
+				blocks=bgqtools.get_bootable_blocks(partition,partsize,128)
+			else:
+				blocks=bgqtools.get_bootable_blocks(partition,partsize,512)
 			bgqtools.boot_blocks(blocks)
 			corners = bgqtools.block_corner_iter(blocks,block_size)
 			replica_name=[]
