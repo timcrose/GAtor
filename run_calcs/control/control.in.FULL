@@ -36,7 +36,8 @@
     hessian_to_restart_geometry .false
     # relax_unit_cell fixed_angles #uncomment for unit cell relaxation with fixed angles
     # restart_relaxations .true.
-
+    harmonic_length_scale 0.01 #uncomment in case of relaxation errors
+    energy_tolerance 5.e-4  #uncomment in case of relaxation errors
 # Vdw Corrections
     vdw_correction_hirshfeld
     #many_body_dispersion
