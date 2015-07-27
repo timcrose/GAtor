@@ -8,7 +8,7 @@ import subprocess
 import time
 import numpy as np
 from core import user_input, output
-from core.file_handler import mkdir_p_clean
+from core.file_handler import *
 from structures.structure import Structure
 from copy import deepcopy
 

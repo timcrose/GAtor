@@ -33,6 +33,9 @@ res_dir = os.path.join(GA_dir, 'res')
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
 
+#failure directory
+fail_dir = os.path.join(cwd, 'failed_relaxations')
+
 # filesystem storage
 structure_dir = os.path.join(cwd, 'structures')
 
@@ -50,7 +53,7 @@ ui_conf = os.path.join(cwd, options.user_input)
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
 restart_relaxation_file = os.path.join(cwd, 'restart_relaxations.dat')
-restart_relaxation_in_file = os.path.join(cwd, 'restart_relaxations.in')
+restart_replica_file = os.path.join(cwd, 'restart_replicas.dat')
 # constants
 INITIAL_POOL_REFID = -1
 

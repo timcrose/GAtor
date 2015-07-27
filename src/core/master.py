@@ -41,8 +41,24 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 	from core import user_input
 	ui=user_input.get_config()
 	number_of_multi=ui.get_eval('parallel_settings','number_of_multiprocesses')
+	restart_true = ui.get_eval('parallel_settings','restart_replicas')
 	environment=ui.get('parallel_settings','system')
 	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,environment)
+
+	if restart_true == True:
+                restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
+                number_of_restarts = len(restart_files)
+                restart_data_file = open(restart_replica_file, 'a')
+                for item in restart_files:
+                        restart_data_file.write("%s\n" % item)
+		print "Number of restarts: "+str(number_of_restarts)
+	else:
+		print "No restarts"
+		restart_data_file = open(restart_replica_file, 'a')
+                number_of_restarts = 0
+
+	# Currently Not Used #
+	#############################################################################
 	mole_list=ui.get_eval('unit_cell_settings','molecule_list')
 	for (molename,napm,occurance) in mole_list:
 		if os.path.isfile(os.path.join(molecules_dir,molename+"_com_adjusted")):
@@ -68,8 +84,11 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 				f.write('%f %f %f %s\n' % (atom_list[i][0],atom_list[i][1],atom_list[i][2],atom_list[i][3])) 
 			#fix
 			f.close()
+	#######################################################################################
+
 	mkdir_p(tmp_dir)
 	mkdir_p(structure_dir)
+	mkdir_p(fail_dir)
 	set_unkill()
 	if environment=='Cypress' or environment=='cypress' or environment=='1':
 		#Replica name will be a random string
@@ -77,9 +96,36 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 		replica_name_list=[get_random_index() for i in range (number_of_multi)]
 		pool.map(run_GA_master,replica_name_list)
 	elif environment=='Cypress_login' or environment=='cypress_login' or environment=='CYpress-login' or environment=='cypress-login':
-		for i in range (number_of_multi):
+
+		if number_of_restarts >0:
+                	for i in range (number_of_restarts):
+                        	#replica_name=get_random_index()
+				replica_name= restart_files[i]
+                        	print "In master.py, this is (restarted) replica_name", replica_name
+                        	exe_string='''#!/bin/bash
+#SBATCH --qos=normal
+#SBATCH --job-name=fhi_aims
+
+#SBATCH --time=%s
+#SBATCH -e %s.err
+#SBATCH --nodes=%i
+#SBATCH --ntasks-per-node=20
+#SBATCH --workdir=%s
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export MKL_DYNAMIC=FALSE
+
+python %s -f %s --rn %s
+''' % (ui.get('parallel_settings','replica_walltime'),replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)
+                        	ss=open('submit.ss','w')
+                        	ss.write(exe_string)
+                        	ss.close()
+                        	os.system("sbatch submit.ss")
+
+		for i in range(number_of_multi-number_of_restarts):
 			replica_name=get_random_index()
-			print "In master.py, this is replica_name", replica_name
+			print "In master.py, this is (no restart) replica_name", replica_name
 			exe_string='''#!/bin/bash
 #SBATCH --qos=normal
 #SBATCH --job-name=fhi_aims
@@ -177,7 +223,9 @@ def run_GA_master(replica):
 def clean():
     print 'resetting environment'
     directory_to_remove = [tmp_dir, structure_dir]
-    files_to_remove = [output_file, restart_relaxation_file, restart_relaxation_in_file]
+    try:
+	files_to_remove = [output_file, restart_relaxation_file,restart_replica_file]
+    except: pass
     p = subprocess.Popen(['rm *.out'], cwd=cwd, shell=True)
     p = subprocess.Popen(['rm *.err'], cwd=cwd, shell=True)	
     p.wait()

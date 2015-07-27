@@ -5,12 +5,14 @@ Created on Jul 29, 2013
 import os
 import subprocess
 import time
+import datetime
 import numpy as np
+import shutil
 from core import user_input, output
-from core.file_handler import mkdir_p_clean
+from core.file_handler import mkdir_p_clean, fail_dir
 from structures.structure import Structure
 from copy import deepcopy
-import re
+
 
 def main(input_structure, working_dir, control_check_SPE_string, control_relax_full_string, replica):
 	'''	
@@ -27,7 +29,7 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 	SPE = FHIAimsRelaxation(input_structure, working_dir, control_check_SPE_string, replica)
 	output.local_message("Replica " +str(replica)+" executing FHI-aims and checking the SPE.", replica)
 	checkSPE = SPE.execute()
-	if SPE.is_successful():
+	if SPE.is_successful_spe():
 		SP_energy = SPE.extract_energy()
 		output.local_message("SPE extracted", replica)
 		if SP_energy >= SPE_threshold:
@@ -113,7 +115,7 @@ class FHIAimsRelaxation():
 	elif environment=="cetus" or environment=="Cetus" or environment=="mira" or environment=="Mira":
 		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
 		#Will run it with modes=4 and thre=4
-		modes=4; thres=4
+		modes=4; thres=1
 		try:
 			l=self.replica.index("%")
 			block=self.replica[0:l]
@@ -127,6 +129,61 @@ class FHIAimsRelaxation():
 		os.system(command)
 
     def output(self, message): output.local_message(message, self.replica)
+
+    def is_successful(self):
+        '''
+        checks if relaxation/optimization was successful
+        '''
+        aims_path = os.path.join(self.working_dir, 'aims.out')
+        aims_out = open(aims_path,"r")
+        counter = 0
+        while True:
+                line = aims_out.readline()
+                if "Have a nice day" in line:
+			return True
+                elif line == '':
+                        time.sleep(60)
+                        counter += 1
+                if counter > 3:
+                        break
+	shutil.copy(aims_path, os.path.join(fail_dir, str(datetime.datetime.now())+'_'+str(self.replica)+".aims.out"))
+        return False
+
+
+
+    def is_successful_2(self):
+	fileBytePos = 0
+	aims_out = os.path.join(self.working_dir, 'aims.out')
+	file = open(aims_out,"r")
+	while 1:
+		#file = open(aims_out,"r")
+    		where = file.tell()
+    		line = file.readline()
+    		if not line:
+        		time.sleep(30)
+        		file.seek(where)
+			line = file.readline()
+			if not line:
+				self.output("Output is stuck")
+    		else:
+        		self.output(line) # already has newline
+
+
+
+    def is_successful_spe(self):
+        '''
+        checks if relaxation/optimization was successful
+        '''
+        aims_out = os.path.join(self.working_dir, 'aims.out')
+        aims_out = open(aims_out)
+        while True:
+            line = aims_out.readline()
+            if line == '':
+	    	break
+            if 'Leaving FHI-aims.' in line:
+                return True
+        return False
+
     def extract(self):
         '''
         Reads the output files from relaxation and specifies properties of the structure (e.g. energy)
@@ -295,49 +352,6 @@ class FHIAimsRelaxation():
             self.result_struct.geometry[i]['charge'] = float(reduced_charge_list[i].split()[-1])
         return True
     
-    def is_successful(self):
-        '''
-        checks if relaxation/optimization was successful
-        '''
-        # TODO: need proper check
-        aims_out = os.path.join(self.working_dir, 'aims.out')
-	aims_out = open(aims_out)
-	count = 0
-	count_max = 10000000
-        while True:
-	    count = count + 1
-            line = aims_out.readline()
-	    match = re.search('Leaving FHI-aims.', line)
-    	    if match is not None:
-		return True
-	    if count == count_max:
-		return False
-	
-		
-    def is_successful_old(self):
-        '''
-        checks if relaxation/optimization was successful
-        '''
-        # TODO: need proper check
-#       aims_out = open(os.path.join(self.working_dir, 'aims.out'))
-        aims_out = os.path.join(self.working_dir, 'aims.out')
-#       self.wait_on_file(aims_out)
-        aims_out = open(aims_out)
-        while True:
-            line = aims_out.readline()
-            if line == '':
-#               print "In is_successful, still waiting for aims to finish output."
-#           else:
-#               print "Read: ", line
-                break
-        #    if not line: return False  # energy not converged
-#            if 'Have a nice day' in line:
-#                return True
-            if 'Leaving FHI-aims.' in line:
-                return True
-        return False
-
-
     def wait_on_file(self,wait_file,sleeptime=1):
 	"""
    	Simple function that sleeps until a file path exists and any writes

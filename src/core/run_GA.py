@@ -95,6 +95,7 @@ class RunGA():
         structure_collection.update_supercollection(self.structure_supercoll)
         self.output("***************** USER INITIAL POOL FILLED *****************") 
 	restart_counter = 0
+	restart_replica = True
         while True:
             ########## Beginning of Iteration Tasks ##########
             output.move_to_shared_output(self.replica)
@@ -103,16 +104,18 @@ class RunGA():
             self.ui = user_input.get_config()
             begin_time = datetime.datetime.now()
 
-	    ###### Check for unfinished relaxations #########	
-	    try:     
-		    filename = "restart_relaxations.in"
-	 	    filepath = os.path.join(cwd, filename)
-		    self.run_restart_replicas(filepath, relaxation_module, comparison_module)
-	    except:
-		self.output("No restart file found")
-		pass 
-	    	#break	
-  
+	    ######### Check if replica is a restart replica #######
+	    if restart_replica is True and os.stat(restart_replica_file).st_size >0: 	
+	    	restart_list = [i.rstrip('\n') for i in open(restart_replica_file).readlines()]
+	    	self.output("Restart list" +str(restart_list))
+	    	self.output("Current replica name "+str(self.replica))
+	    	for rep in restart_list:	
+	    		if self.replica == rep:
+				filepath = os.path.join(tmp_dir, rep)
+				self.output("Restarting replica "+str(self.replica))
+ 				self.run_restart_replicas(filepath, self.replica, relaxation_module, comparison_module)
+	    restart_replica = False
+ 
             ########## Check if GA finished/converged ##########
             try: 
                 if len(self.structure_coll.structures)-self.number_of_IP >= self.number_of_structures:
@@ -149,8 +152,8 @@ class RunGA():
 	    if new_struct is False: 
            	self.output("Crossover failure")
              	continue  # crossover failed, start with new selection	
-	    self.output("post crossover geo: ")
-	    self.output(str(new_struct.get_geometry_atom_format()))       	    
+#	    self.output("post crossover geo: ")
+#	    self.output(str(new_struct.get_geometry_atom_format()))       	    
 			 
             ########## Mutation Execution ##########
             # Expects: Structure, target_stoichiometry [decision] #Returns: Structure
@@ -191,8 +194,8 @@ class RunGA():
             control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
                                          self.control_list[1])
 	
-	    self.output("pre relax geo: ")
-            self.output(str(new_struct.get_geometry_atom_format()))		
+#	    self.output("pre relax geo: ")
+#            self.output(str(new_struct.get_geometry_atom_format()))		
             ########## Check SPE and perform Full Relaxation ##########
             # Expects: Structure, working_dir, input_path #Returns: Structure
 	    self.output("--SPE Check and Full Relaxation--")
@@ -203,8 +206,8 @@ class RunGA():
 	    	self.output('SPE check not passed or full relaxation failure for '+ str(self.replica))
 		is_acceptable = False
                 continue  # optimization failed, start with new selection
-	    self.output("post relax geo: ")
-            self.output(str(struct.get_geometry_atom_format()))
+#	    self.output("post relax geo: ")
+#            self.output(str(struct.get_geometry_atom_format()))
 
 	    self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
 	    self.restart(str(self.replica)+' '+str(restart_counter)+' finished_relaxing:   ' +str(datetime.datetime.now()))
@@ -277,8 +280,8 @@ class RunGA():
 
 	    #Add Structure to Collection
 	    struct.set_property('child_counter', self.child_counter)
-	    index = structure_collection.add_structure(struct, key[0], key[1])		
-	    self.output("Structure index: "+str(index))
+	    struct_index = structure_collection.add_structure(struct, key[0], key[1])		
+	    self.output("Structure index: "+str(struct_index))
             structure_collection.update_supercollection(self.structure_supercoll)
 	    #self.output("Added? :"+str(self.structure_supercoll.get((self.replica_stoic,0)).structures))	
 
@@ -309,7 +312,7 @@ class RunGA():
             prev_struct_index = str(key) + str(index)
             message = 'Success!: \n  stoichiometry-- ' + key[0].get_string() + \
                       '\n  cascade-- ' + str(key[1]) + \
-                      '\n  structure index-- ' + str(index) + \
+                      '\n  structure index-- ' + str(struct_index) + \
                       '\n  replica child count-- ' + str(self.child_counter) + \
                       '\n  collection count -- ' + str(ID) + \
                       '\n  replica-- ' + str(self.replica)
@@ -388,9 +391,63 @@ class RunGA():
 
     def output(self, message): output.local_message(message, self.replica)
 
-    def restart(self, message): output.restart_message(message)	
+    def restart(self, message): output.restart_message(message)
+
+    def run_restart_replicas(self, replica_name, filename, relaxation_module, comparison_module):
+    	self.output("Found replica " +str(replica_name)+" which didn't finished relaxing. Calling FHI-aims for relaxation.")
+        #replica_name = final[i][0][0]
+	control_check_SPE_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
+                                         self.control_list[0])
+        control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
+                                         self.control_list[1])
+        path_to_geo = os.path.join(tmp_dir, str(replica_name))
+        path_to_geo_next_step = os.path.join(path_to_geo, "geometry.in.next_step")
+        path_to_geo_old = os.path.join(path_to_geo, "geometry.in")
+        if os.path.exists(path_to_geo_next_step) is True:
+        	self.output("Path to unfinished aims calculation: "+str(path_to_geo_next_step))
+                struct = Structure()
+                struct.build_geo_from_atom_file(path_to_geo_next_step)
+                new_struct = relaxation_module.main(struct, path_to_geo, control_check_SPE_string, control_relax_full_string, replica_name)
+        elif os.path.exists(path_to_geo_old) is True:
+        	self.output("Path to unfinished aims calculation: "+str(path_to_geo_old))
+                struct = Structure()
+                struct.build_geo_from_atom_file(path_to_geo_old)
+                new_struct = relaxation_module.main(struct, path_to_geo, control_check_SPE_string, control_relax_full_string, replica_name)
+
+        #Pass relaxed struct throught cell checks
+        self.output("--Comparison of relaxed restart geometry--")
+        new_struct = structure_handling.cell_lower_triangular(new_struct,False)
+        a=new_struct.get_property('lattice_vector_a')
+        b=new_struct.get_property('lattice_vector_b')
+        c=new_struct.get_property('lattice_vector_c')
+        new_struct.set_property('lattice_vector_a',list(a))
+        new_struct.set_property('lattice_vector_b',list(b))
+        new_struct.set_property('lattice_vector_c',list(c))
+        structure_collection.update_supercollection(self.structure_supercoll)
+        is_acceptable = comparison_module.main(new_struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica)
+        if is_acceptable is False:
+        	self.output('Newly relaxed structure is not acceptable')
+        else:
+        	#Add restarted relaxation structure to main collection
+        	self.output("Restart relaxation successful. Structure added to collection")
+                ID = len(self.structure_coll.structures) + 1
+                new_struct.set_property('replica', replica_name)
+                new_struct.set_property('ID', ID)
+                index = structure_collection.add_structure(new_struct, self.replica_stoic, 0)
+                self.output("Structure index: "+str(index))
+                structure_collection.update_supercollection(self.structure_supercoll)
+                data_tools.write_energy_hierarchy(self.structure_coll)
+
+
+
+
+
+
+
+
+	
  	
-    def run_restart_replicas(self, filename, relaxation_module, comparison_module):
+    def run_restart_replicas_old(self, filename, relaxation_module, comparison_module):
 	'''
 	Created by farren to re-relax structures unfinished when walltime is up.
 	'''
