@@ -6,6 +6,7 @@ Created on Dec 19, 2013
 import os
 
 from core.file_handler import cwd, output_file
+import time
 
 def restart_message(message):
     out_file = os.path.join(cwd, 'restart_relaxations.dat')
@@ -20,6 +21,12 @@ def local_message(message, replica):
     data_file = open(out_file, 'a')
     data_file.write(str(message) + '\n')
     data_file.close()
+
+def time_log(message,replica,file="time_log"):
+	f=open(os.path.join(cwd,file),"a")
+	message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+":"+message+"\n"
+	f.write(message)
+	f.close()
 
 def error(message, replica=None):
     if replica == None: r = ''

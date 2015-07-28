@@ -189,9 +189,36 @@ def print_to_file(message):
         data_file.write(str(message) + '\n')
         data_file.close()
     try:
-	os.system("chmod 775 "+output_file)
+	os.system("chmod g=u "+output_file)
     except:
 	pass
+
+def get_execute_clearance(buffer=3,max_wait=1000):
+        '''
+        Reads the execute.info in the working directory and gets clearance for executing commands such as runjob and mpirun
+        '''
+        for i in range (max_wait):
+                with FileLock("execute.info",15):
+                        if not os.path.exists(os.path.join(cwd,"execute.info")):
+                                data_file=open(os.path.join(cwd,"execute.info"),"w")
+                                data_file.write(str(time.time()))
+                                data_file.close()
+                                return True
+
+                        data_file=open(os.path.join(cwd,"execute.info"))
+                        last_time=float(data_file.read())
+                        data_file.close()
+                        current_time=time.time()
+                        if (current_time-last_time>buffer) or (i==max_wait):
+                                data_file=open(os.path.join(cwd,"execute.info"),"w")
+                                data_file.write(str(time.time()))
+                                data_file.close()
+                                if i==1000 and current_time-last_time<=buffer:
+                                        return False
+                                return True
+#                if request_folder!="":
+#                        write_active(request_folder)
+                time.sleep(buffer)
 
 if __name__ == '__main__':
     print cwd
