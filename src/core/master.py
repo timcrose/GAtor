@@ -78,12 +78,10 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
         if restart_true == True:
         	restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
                 number_of_restarts = len(restart_files)
-        print "Number of restarts: "+str(number_of_restarts)
         else:
-                print "No restarts"
                 restart_data_file = open(restart_replica_file, 'a')
                 number_of_restarts = 0
-
+	print "Number of restarts: "+str(number_of_restarts)
 	if environment=='Cypress' or environment=='cypress' or environment=='1':
 		#Replica name will be a random string
 		pool=multiprocessing.Pool(processes=number_of_multi)
