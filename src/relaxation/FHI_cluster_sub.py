@@ -144,10 +144,13 @@ class FHIAimsRelaxation():
                 elif line == '':
                         time.sleep(60)
                         counter += 1
-                if counter > 3:
+                if counter > 8:
                         break
-	shutil.copy(aims_path, os.path.join(fail_dir, str(datetime.datetime.now())+'_'+str(self.replica)+".aims.out"))
-        return False
+	try:
+		shutil.copy(aims_path, os.path.join(fail_dir, str(datetime.datetime.now())+'_'+str(self.replica)+".aims.out"))
+        except: 
+		pass
+	return False
 
 
 
