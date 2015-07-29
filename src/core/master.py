@@ -39,23 +39,12 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 	return
     if run_e:
 	from core import user_input
+	mkdir_p(fail_dir)
 	ui=user_input.get_config()
 	number_of_multi=ui.get_eval('parallel_settings','number_of_multiprocesses')
 	restart_true = ui.get_eval('parallel_settings','restart_replicas')
 	environment=ui.get('parallel_settings','system')
 	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,environment)
-
-	if restart_true == True:
-                restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
-                number_of_restarts = len(restart_files)
-                restart_data_file = open(restart_replica_file, 'a')
-                for item in restart_files:
-                        restart_data_file.write("%s\n" % item)
-		print "Number of restarts: "+str(number_of_restarts)
-	else:
-		print "No restarts"
-		restart_data_file = open(restart_replica_file, 'a')
-                number_of_restarts = 0
 
 	# Currently Not Used #
 	#############################################################################
@@ -86,10 +75,13 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 			f.close()
 	#######################################################################################
 
-	mkdir_p(tmp_dir)
-	mkdir_p(structure_dir)
-	mkdir_p(fail_dir)
-	set_unkill()
+        if restart_true == True:
+        	restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
+                number_of_restarts = len(restart_files)
+        else:
+                restart_data_file = open(restart_replica_file, 'a')
+                number_of_restarts = 0
+	print "Number of restarts: "+str(number_of_restarts)
 	if environment=='Cypress' or environment=='cypress' or environment=='1':
 		#Replica name will be a random string
 		pool=multiprocessing.Pool(processes=number_of_multi)
@@ -97,12 +89,29 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 		pool.map(run_GA_master,replica_name_list)
 	elif environment=='Cypress_login' or environment=='cypress_login' or environment=='CYpress-login' or environment=='cypress-login':
 
+	        if restart_true == True:
+        	        restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
+                	number_of_restarts = len(restart_files)
+                	print "Number of restarts: "+str(number_of_restarts)
+	        else:
+        	        print "No restarts"
+                	restart_data_file = open(restart_replica_file, 'a')
+                	number_of_restarts = 0
+
 		if number_of_restarts >0:
-                	for i in range (number_of_restarts):
-                        	#replica_name=get_random_index()
+			for d in os.listdir(tmp_dir):
+				if os.path.isdir(os.path.join(tmp_dir, d)):
+		                       	replica_name=get_random_index()
+					shutil.move(os.path.join(tmp_dir,d), os.path.join(tmp_dir, replica_name))
+			restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
+			restart_data_file = open(restart_replica_file, 'a')
+                	for item in restart_files:
+                        	restart_data_file.write("%s\n" % item)
+
+			for i in range(number_of_restarts):
 				replica_name= restart_files[i]
-                        	print "In master.py, this is (restarted) replica_name", replica_name
-                        	exe_string='''#!/bin/bash
+        	               	print "In master.py, this is (restarted) replica_name", replica_name
+                	        exe_string='''#!/bin/bash
 #SBATCH --qos=normal
 #SBATCH --job-name=fhi_aims
 
@@ -201,9 +210,16 @@ python %s -f %s --rn %s
 					replica_name.append(corner[0]+'%'+corner[1]+'%'+corner[2])
 				except:
 					break
+
+			# Rename folders in tmp file to be the names of new replica names
 			number_of_multi=int(partsize/block_size)
 			pool=multiprocessing.Pool(processes=number_of_multi)
 			pool.map(run_GA_master,replica_name)
+
+	#mkdir_p(tmp_dir)
+        #mkdir_p(structure_dir)
+        #mkdir_p(fail_dir)
+        #set_unkill()
 	else:
 		raise RuntimeError("parallel_settings.system not recognized!")
         
