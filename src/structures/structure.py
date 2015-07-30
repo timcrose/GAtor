@@ -158,6 +158,9 @@ class Structure(object):
     
     # json data handling packing
     def dumps(self):
+	self.properties["lattice_vector_a"]=list(self.properties["lattice_vector_a"])
+	self.properties["lattice_vector_b"]=list(self.properties["lattice_vector_b"])
+	self.properties["lattice_vector_c"]=list(self.properties["lattice_vector_c"])
         data_dictionary = {}
         data_dictionary['properties'] = self.properties
         data_dictionary['struct_id'] = self.struct_id
