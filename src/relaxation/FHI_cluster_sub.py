@@ -9,7 +9,7 @@ import datetime
 import numpy as np
 import shutil
 from core import user_input, output
-from core.file_handler import mkdir_p_clean, fail_dir
+from core.file_handler import mkdir_p_clean, fail_dir, get_execute_clearance
 from structures.structure import Structure
 from copy import deepcopy
 
@@ -38,15 +38,30 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 			message = "Structure passed SPE check"
 			output.local_message(message, replica)
 			fullrelax = FHIAimsRelaxation(input_structure, working_dir, control_relax_full_string, replica)
-			output.local_message("Replica " +str(replica)+" executing FHI-aims for a full unit cell relax",replica)
-			fullrelax.execute()
-			if fullrelax.is_successful(): 
-				return fullrelax.extract()
-	       		else:
-        	        	output.local_message("Relaxation failed!",replica)
-                		return False
+			attempts = 3
+			for i in range (attempts):
+				output.local_message("Replica " +str(replica)+" executing FHI-aims for a full unit cell relax ; attempt "+str(i),replica)
+				output.time_log("Attempt %i for full unit cell relax" % i,replica)
+				fullrelax.execute()
+				if fullrelax.is_successful(): 
+					return fullrelax.extract()
+		       		output.local_message("Relaxation failed!",replica)
+				output.time_log("aims relaxation determined as failed",replica)
+                		if i==attempts-1:
+					output.time_log("aims job maxed out on attempts",replica)
+					return False
+				if os.path.isfile(os.path.join(working_dir,"geometry.in.next_step")):
+					output.time_log("geometry.in.next_step found",replica)
+					try:
+						os.remove(os.path.join(working_dir,"geometry.in"))
+					except:
+						output.time_log("WARNING! geometry.in file missing for some reason",replica)
+					os.rename(os.path.join(working_dir,"geometry.in.next_step"),os.path.join(working_dir,"geometry.in"))
+
+				
 		else:
 			print "Error with energy threshold"
+	return False
 
 class FHIAimsRelaxation():
     '''
@@ -100,22 +115,25 @@ class FHIAimsRelaxation():
         ui=user_input.get_config()
         bin=ui.get('FHI-aims','path_to_aims_executable')
 	environment=ui.get('parallel_settings','system')
+	output.time_log("Beginning aims execution",self.replica)
+	output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
+	output.local_message("Binary location is"+bin,self.replica)
+
 	if environment=='Cypress_login' or environment=="cypress_login" or environment=="Cypress-login" or environment=="cypress-login":
-		output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
-		output.local_message("Binary location is"+bin,self.replica)
-		command='mpirun -wdir %s %s > %s' % (out_location,bin,os.path.join(out_location,'aims.out'))
-		os.system(command)
+		arglist=["mpirun","-wdir",self.working_dir,self.bin]
+
 	elif environment=='Edison_login':
 		nodes = ui.get_eval('parallel_settings','nodes_per_replica')
                 ppn_edison = 24
                 width = ppn_edison*nodes
-		command='aprun -n ' +str(width)+' '+str(bin)+' > '+str(os.path.join(out_location,'aims.out'))
-		os.chdir(out_location)
-		os.system(command) #Without the & at the end, will wait until FHI relaxation is done
+		arglist=["aprun","-n",str(width),self.bin]
+		current_dir=os.getcwd()
+		os.chdir(out_location) #aprun does not allow -wdir option
+
 	elif environment=="cetus" or environment=="Cetus" or environment=="mira" or environment=="Mira":
 		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
 		#Will run it with modes=4 and thre=4
-		modes=4; thres=1
+		modes=4; thres=4
 		try:
 			l=self.replica.index("%")
 			block=self.replica[0:l]
@@ -123,10 +141,57 @@ class FHIAimsRelaxation():
 			l=rest.index("%")
 			corner=rest[:l]
 			shape=rest[l+1:]
-			command='runjob --np %i -p %i --envs OMP_NUM_THREADS=%i --block %s --corner %s --shape %s --cwd %s : %s > %s' % (modes*block_size,modes,thres,block,corner,shape,out_location,bin,os.path.join(out_location,'aims.out'))
+			arglist=["runjob","--np",str(modes*block_size),"-p",str(modes),"--envs","OMP_NUM_THREADS="+str(thres),"--verbose","INFO","--block",block,"--corner",corner,"--shape",shape,"--cwd",self.working_dir,"--exe",self.bin]
 		except: #Only has a block name
-			command='runjob --np %i -p %i --envs OMP_NUM_THREADS=%i --block %s --cwd %s : %s > %s' % (modes*block_size,modes,thres,self.replica,out_location,bin,os.path.join(out_location,'aims.out')) 
-		os.system(command)
+			arglist=["runjob","--np",str(modes*block_size),"-p",str(modes),"--envs","OMP_NUM_THREADS="+str(thres),"--verbose","INFO","--block",block,"--cwd",self.working_dir,"--exe",self.bin]
+
+	aimsout=os.path.join(self.working_dir,"aims.out")
+	for i in range (10):
+		outfile=open(aimsout,"w")
+		get_execute_clearance(request_folder=self.working_dir)
+		output.time_log("aims job execute clearance acquired",self.replica)
+		p=subprocess.Popen(arglist,stdout=outfile)
+		time_limit=60
+		for j in range (time_limit): #Allow 60 seconds for aims to start outputting
+			if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
+				break
+			write_active(self.working_dir)
+			time.sleep(1)
+		if (os.stat(aimsout).st_size>512):
+			output.time_log("aims.out begins output" % self.replica)
+			break
+		outfile.close()
+
+		try:
+			p.kill()
+		except:
+			pass
+
+		output.time_log("aims job launch failure",self.replica)
+		if i==9:
+			output.time_log("Repeated launch failure ; exiting",self.replica)
+			raise RuntimeError("Repeated failure to launch aims job in execute()")
+	counter=0; last=os.stat(aimsout).st_size
+	while counter<60 and p.poll()==None: #The output file needs to update at least once in every 5 minutes
+		write_active(self.working_dir)
+		time.sleep(10)
+		if os.stat(aimsout).st_size>last:
+			last=os.stat(aimsout).st_size
+			counter=0
+		else:
+			counter+=1
+	if counter==60:
+		output.time_log("aims job hung",self.replica)
+		try:
+			p.kill()
+		except:
+			pass
+	outfile.close()
+	output.local_message("aims job exited with status "+str(p.poll()),self.replica)
+	output.time_log("aims job exited with status "+str(p.poll()),self.replica)
+	
+	if environment=="Edison_login": #change it back to the current directory
+		os.chdir(current_dir)
 
     def output(self, message): output.local_message(message, self.replica)
 
