@@ -166,7 +166,7 @@ class FHIAimsRelaxation():
 
 		try:
 			p.send_signal(2)
-			time.sleep(30)
+			time.sleep(60)
 		except:
 			pass
 
@@ -187,7 +187,7 @@ class FHIAimsRelaxation():
 		output.time_log("aims job hung",self.replica)
 		try:
 			p.send_signal(2)
-			time.sleep(30)
+			time.sleep(60)
 		except:
 			pass
 	outfile.close()
