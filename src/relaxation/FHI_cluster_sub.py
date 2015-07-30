@@ -163,7 +163,8 @@ class FHIAimsRelaxation():
 		outfile.close()
 
 		try:
-			p.kill()
+			p.send_signal(2)
+			time.sleep(30)
 		except:
 			pass
 
@@ -183,7 +184,8 @@ class FHIAimsRelaxation():
 	if counter==60:
 		output.time_log("aims job hung",self.replica)
 		try:
-			p.kill()
+			p.send_signal(2)
+			time.sleep(30)
 		except:
 			pass
 	outfile.close()
