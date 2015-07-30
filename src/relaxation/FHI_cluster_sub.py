@@ -9,7 +9,9 @@ import datetime
 import numpy as np
 import shutil
 from core import user_input, output
-from core.file_handler import mkdir_p_clean, fail_dir, get_execute_clearance
+from core.file_handler import mkdir_p_clean, fail_dir
+from core.utilities import *
+
 from structures.structure import Structure
 from copy import deepcopy
 
