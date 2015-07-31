@@ -12,6 +12,7 @@ from hashlib import sha1
 from external_libs.filelock import FileLock
 from core import user_input
 from core.file_handler import *
+from core import output
 
 cwd = os.getcwd()
 
@@ -77,6 +78,47 @@ def request_folder_to_check():
 			f.write(info+"\n")
 		f.close()
 	return result
+
+def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_index()):
+        '''
+        Backs up a folder in the bk_folder
+        '''
+        if naming_scheme=="original":
+                nname=folder
+        elif naming_scheme=="random":
+                nname=get_random_index(seed=folder)
+        elif naming_scheme=="const":
+                nname=nname
+        else:
+                raise ValueError("Unknown naming_scheme in bk_folder")
+
+        try:
+                shutil.copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
+		output.timelog("bk_folder success: from %s to %S" % (os.path.join(fdir,folder),bk_path),"utility")
+		return True
+        except:
+		output.timelog("bk_folder failure: from %s to %S" % (os.path.join(fdir,folder),bk_path),"utility!!!")
+		return False
+
+def write_active(fdir):
+	'''
+	Creates or overwrite a active.info file
+	Recording current time stamp
+	'''
+	f=open(os.path.join(fdir,"active.info"),"w")
+	f.write(str(time.time()))
+	f.close()
+
+def read_active(folder):
+        '''
+        Reads the active.info in the folder and returns the time
+        '''
+        try:
+                f=open(os.path.join(folder,"active.info"))
+                last_time=float(f.read())
+                return last_time
+        except:
+                return False
 					
 		
 
