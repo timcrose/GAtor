@@ -8,7 +8,7 @@ import time
 import numpy as np
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) # add source directory to python path
 sys.path.append(src_dir)
-from core import user_input, data_tools, output, utilities
+from core import user_input, data_tools, output, utility
 from file_handler import *
 from kill import *
 from structures import structure_collection, structure_handling
@@ -91,7 +91,7 @@ class RunGA():
         	structure_collection.update_supercollection(self.structure_supercoll)
 	        self.output("***************** USER INITIAL POOL FILLED *****************") 
 		self.restart_counter = 0
-		restart_replica = self.ui.get_eval("parallel_settings","restart_replica")
+		restart_replica = self.ui.get_eval("parallel_settings","restart_replicas")
 	        while True:
 			########## Beginning of Iteration Tasks ##########
 			output.move_to_shared_output(self.replica)
@@ -123,13 +123,14 @@ class RunGA():
 				self.output('replica ' + str(self.replica) + ' killed')
 				return
 			structures_to_add = {}	
+			struct=False
 			if os.path.isdir(self.working_dir): 
 				#First check if there is a risk of overwriting a name_sake replica's leftover folder
 				struct=self.structure_scavenge_old(self.working_dir)
-			folder_to_scavenge = utilities.request_folder_to_check()
+			folder_to_scavenge = utility.request_folder_to_check()
 			while struct==False and folder_to_scavenge!=False:
-				struct=self.structure_scavenge_old(folder_to_scavenge)
-				folder_to_scavenge=utilities.request_folder_to_check()
+				struct=self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+				folder_to_scavenge=utility.request_folder_to_check()
 			
 			failed_counter = 0
 			while struct==False:
@@ -137,7 +138,8 @@ class RunGA():
 				if failed_counter==101:
 					raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
 				struct=self.structure_create_new()
-
+			
+			mkdir_p(self.working_dir)
 			struct = self.structure_relax(struct)
 			if self.structure_comparison(struct)==False:
 				convergeTF = False
@@ -147,7 +149,9 @@ class RunGA():
 			convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter, self.restart_counter)
 			end_time = datetime.datetime.now()
 			self.output("GA Iteration time: -- " + str(end_time - begin_time))
-			self.output("Current Wallclock: -- " + str(end_time))				
+			self.output("Current Wallclock: -- " + str(end_time))
+			mkdir_p_clean(self.working_dir)
+					
 	def module_init(self):
 		'''
 		This routine reads in the modules defined in ui.conf
@@ -179,7 +183,7 @@ class RunGA():
 		if new_struct is False: 
 			self.output("Crossover failure")
 			return False  
-		self.set_parents(structures_to_cross, struct)
+		self.set_parents(structures_to_cross, new_struct)
 	
 		########## Mutation Execution ##########
 		# Expects: Structure, target_stoichiometry [decision] #Returns: Structure
@@ -188,10 +192,10 @@ class RunGA():
 		randnum2 = np.random.random()
 		#Single Parents have to be mutated	
 		if new_struct.get_property('cross_type') == [1,1] or new_struct.get_property('cross_type') == [2,2] or randnum<self.singlemutate:
-			new_struct = mutation_module.main(new_struct, self.replica_stoic, self.replica)
+			new_struct = self.mutation_module.main(new_struct, self.replica_stoic, self.replica)
 			if new_struct!=False and randnum2 < self.doublemutate:
 				self.output("--Second Mutation--")
-				new_struct = mutation_module.main(new_struct, self.replica_stoic, self.replica) 
+				new_struct = self.mutation_module.main(new_struct, self.replica_stoic, self.replica) 
 		else:
 			self.output('No mutation applied.')
 			new_struct.set_property('mutation_type', 'No_mutation')
@@ -217,7 +221,7 @@ class RunGA():
 		'''
 		self.output("--Scavenging folder %s--" % folder)
 		if next_step and not os.path.isfile(os.path.join(folder,"geometry.in.next_step")):
-			self.output("next_step=True, but not geometry.in.next_step found")
+			self.output("next_step=True, but no geometry.in.next_step found")
 			return False
 
 		if os.path.isfile(os.path.join(folder,"geometry.in.next_step")):
@@ -227,16 +231,16 @@ class RunGA():
 		else:
 			self.output("Neither geometry.in.next_step nor geometry.in is found in the folder")
 			return False
-		struct = structure.Structure()
+		struct = Structure()
 		try:
-			struct.build_geo_from_atom_file(geostring)
+			struct.build_geo_whole_atom_format(geostring)
 		except:
 			self.output("Attempt to build_geo_from_atom_file failed. File possibly corrupted")
 			return False
 
 		if os.path.isfile(os.path.join(folder,"struct.json")):
 			infostring = read_data(folder,"struct.json")
-			struct_info = structure.Structure()
+			struct_info = Structure()
 			success = False
 			try:
 				struct_info.loads(infostring)
@@ -256,9 +260,15 @@ class RunGA():
 					self.output("struct.json found and information extracted")
 		
 		self.output("Scavenge folder success!")
+		fdir = os.path.abspath(os.path.join(folder,os.pardir))
+		if utility.bk_folder(fdir,folder[len(fdir)+1:],scavenge_dir,"random"):
+			self.output("Successfully backed up scavenged folder")
+		else:
+			self.output("Failed to back up scavenged folder")
+		
 		if cleanup:
 			self.output("Folder %s removed" % folder)
-			remove_directory_silent(folder)
+			rmdir_silence(folder)
 		
 		return struct	
 			
@@ -280,7 +290,7 @@ class RunGA():
 		self.output("--SPE Check and Full Relaxation--")
 		self.restart(str(self.replica)+' '+str(self.restart_counter)+' started_relaxing:    ' +str(datetime.datetime.now()))
 
-		struct = self.relaxation_module.main(new_struct, self.working_dir, control_check_SPE_string, control_relax_full_string, self.replica)
+		struct = self.relaxation_module.main(struct, self.working_dir, control_check_SPE_string, control_relax_full_string, self.replica)
 		if struct is False: 
 			self.output('SPE check not passed or full relaxation failure for '+ str(self.replica))
 			return False
@@ -454,9 +464,9 @@ class RunGA():
 
 	def set_parents(self, structures_to_cross, struct):
 		for i in range(len(structures_to_cross)): 
-		par_st = structures_to_cross[i]
-		struct.set_property('parent_' + str(i), par_st.get_stoic_str() + '/' \
-		+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
+			par_st = structures_to_cross[i]
+			struct.set_property('parent_' + str(i), par_st.get_stoic_str() + '/' \
+			+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
 
 	def output(self, message): output.local_message(message, self.replica)
 
