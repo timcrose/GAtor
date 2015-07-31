@@ -79,6 +79,7 @@ def request_folder_to_check():
 		for info in folder_list:
 			f.write(info+"\n")
 		f.close()
+		os.system("chmod g=u "+os.path.join(tmp_dir,"folder.info"))
 	return result
 
 def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_index()):
@@ -94,13 +95,14 @@ def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_inde
         else:
                 raise ValueError("Unknown naming_scheme in bk_folder")
 
-#        try:
-        copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
-	output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility")
-	return True
-#        except:
-#		output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility!!!")
-#		return False
+        try:
+	        copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
+		os.system("chmod -R g=u "+os.path.join(bk_path,nname))
+		output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility")
+		return True
+        except:
+		output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility!!!")
+		return False
 
 def write_active(fdir):
 	'''
@@ -123,16 +125,5 @@ def read_active(folder):
         except:
                 return False
 					
-		
-
-def update_non_active_folder(fdir=tmp_dir):
-	'''
-	Updates the folders that are located in fdir
-	And prints out the folders to folder.info under fdir
-	'''
-	ui = user_input.get_config()
-	time_wait = ui.get_eval("parallel_settings","restart_interval")
-
-
 if __name__ == '__main__':
     print cwd
