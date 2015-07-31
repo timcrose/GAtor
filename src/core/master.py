@@ -89,52 +89,9 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 		pool.map(run_GA_master,replica_name_list)
 	elif environment=='Cypress_login' or environment=='cypress_login' or environment=='CYpress-login' or environment=='cypress-login':
 
-	        if restart_true == True:
-        	        restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
-                	number_of_restarts = len(restart_files)
-                	print "Number of restarts: "+str(number_of_restarts)
-	        else:
-        	        print "No restarts"
-                	restart_data_file = open(restart_replica_file, 'a')
-                	number_of_restarts = 0
-
-		if number_of_restarts >0:
-			for d in os.listdir(tmp_dir):
-				if os.path.isdir(os.path.join(tmp_dir, d)):
-		                       	replica_name=get_random_index()
-					shutil.move(os.path.join(tmp_dir,d), os.path.join(tmp_dir, replica_name))
-			restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
-			restart_data_file = open(restart_replica_file, 'a')
-                	for item in restart_files:
-                        	restart_data_file.write("%s\n" % item)
-
-			for i in range(number_of_restarts):
-				replica_name= restart_files[i]
-        	               	print "In master.py, this is (restarted) replica_name", replica_name
-                	        exe_string='''#!/bin/bash
-#SBATCH --qos=normal
-#SBATCH --job-name=fhi_aims
-
-#SBATCH --time=%s
-#SBATCH -e %s.err
-#SBATCH --nodes=%i
-#SBATCH --ntasks-per-node=20
-#SBATCH --workdir=%s
-
-export OMP_NUM_THREADS=1
-export MKL_NUM_THREADS=1
-export MKL_DYNAMIC=FALSE
-
-python %s -f %s --rn %s
-''' % (ui.get('parallel_settings','replica_walltime'),replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)
-                        	ss=open('submit.ss','w')
-                        	ss.write(exe_string)
-                        	ss.close()
-                        	os.system("sbatch submit.ss")
-
-		for i in range(number_of_multi-number_of_restarts):
+		for i in range(number_of_multi):
 			replica_name=get_random_index()
-			print "In master.py, this is (no restart) replica_name", replica_name
+			print "In master.py, this is replica_name", replica_name
 			exe_string='''#!/bin/bash
 #SBATCH --qos=normal
 #SBATCH --job-name=fhi_aims
