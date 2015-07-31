@@ -49,6 +49,12 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 					return fullrelax.extract()
 		       		output.local_message("Relaxation failed!",replica)
 				output.time_log("aims relaxation determined as failed",replica)
+				fdir = os.path.abspath(os.path.join(working_dir,os.pardir))
+		                if bk_folder(fdir,working_dir[len(fdir)+1:],fail_dir,"random"):
+		                        output.local_message("Successfully backed up failed folder",replica)
+		                else:
+                		        output.local_message("Failed to back up failed folder",replica)
+
                 		if i==attempts-1:
 					output.time_log("aims job maxed out on attempts",replica)
 					return False
@@ -116,12 +122,13 @@ class FHIAimsRelaxation():
 	out_location = str(self.working_dir)
         ui=user_input.get_config()
         bin=ui.get('FHI-aims','path_to_aims_executable')
+	self.bin=bin
 	environment=ui.get('parallel_settings','system')
 	output.time_log("Beginning aims execution",self.replica)
 	output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
 	output.local_message("Binary location is"+bin,self.replica)
 
-	if environment=='Cypress_login' or environment=="cypress_login" or environment=="Cypress-login" or environment=="cypress-login":
+	if environment=='Cypress_login' or environment=="cypress_login" or environment=="Cypress-login" or environment=="cypress-login" or environment=="Cypress" or environment=="cypress":
 		arglist=["mpirun","-wdir",self.working_dir,self.bin]
 
 	elif environment=='Edison_login':
@@ -160,7 +167,7 @@ class FHIAimsRelaxation():
 			write_active(self.working_dir)
 			time.sleep(1)
 		if (os.stat(aimsout).st_size>512):
-			output.time_log("aims.out begins output" % self.replica)
+			output.time_log("aims.out begins output", self.replica)
 			break
 		outfile.close()
 
@@ -215,10 +222,6 @@ class FHIAimsRelaxation():
                         counter += 1
                 if counter > 8:
                         break
-	try:
-		shutil.copy(aims_path, os.path.join(fail_dir, str(datetime.datetime.now())+'_'+str(self.replica)+".aims.out"))
-        except: 
-		pass
 	return False
 
 
