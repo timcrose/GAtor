@@ -111,7 +111,8 @@ python %s -f %s --rn %s
 			ss=open('submit.ss','w')
 			ss.write(exe_string)
 			ss.close()
-			os.system("sbatch submit.ss")    
+			os.system("sbatch submit.ss")
+			os.remove('submit.ss')    
         #####CYPRESS SBATCH SUBMISSION SCRIPT#############
         elif environment=='Edison_login':
                 for i in range (number_of_multi):

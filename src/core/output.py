@@ -29,6 +29,7 @@ def time_log(message,replica,file="time_log"):
 		message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+" : "+message+"\n"
 		f.write(message)
 		f.close()
+		os.system("chmod 771 "+os.path.join(cwd, file))
 
 def error(message, replica=None):
     if replica == None: r = ''
