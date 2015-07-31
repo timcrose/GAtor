@@ -98,10 +98,10 @@ def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_inde
         try:
 	        copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
 		os.system("chmod -R g=u "+os.path.join(bk_path,nname))
-		output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility")
+		output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility")
 		return True
         except:
-		output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility!!!")
+		output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility!!!")
 		return False
 
 def write_active(fdir):
