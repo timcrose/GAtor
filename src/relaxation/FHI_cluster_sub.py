@@ -179,8 +179,8 @@ class FHIAimsRelaxation():
 
 		output.time_log("aims job launch failure",self.replica)
 		if i==9:
-			output.time_log("Repeated launch failure ; exiting",self.replica)
-			raise RuntimeError("Repeated failure to launch aims job in execute()")
+			output.time_log("WARNING: Repeated launch failure ; exiting",self.replica)
+			return False
 	counter=0; last=os.stat(aimsout).st_size
 	while counter<60 and p.poll()==None: #The output file needs to update at least once in every 5 minutes
 		write_active(self.working_dir)
