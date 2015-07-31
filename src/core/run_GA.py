@@ -314,6 +314,7 @@ class RunGA():
 		struct.set_property('lattice_vector_c',list(c))
 		self.output("post second check geo: ")
 		self.output(str(struct.get_geometry_atom_format()))
+		return struct
 
 	def structure_comparison(self,struct):
 		'''
