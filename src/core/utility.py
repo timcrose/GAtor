@@ -110,6 +110,7 @@ def write_active(fdir):
 	f=open(os.path.join(fdir,"active.info"),"w")
 	f.write(str(time.time()))
 	f.close()
+	os.system("chmod g=u "+os.path.join(fdir,"active.info"))
 
 def read_active(folder):
         '''
