@@ -321,7 +321,7 @@ class RunGA():
 		'''
 		self.output("--Comparison--")
 		structure_collection.update_supercollection(self.structure_supercoll)
-		is_acceptable = comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica)
+		is_acceptable = self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica)
 		if is_acceptable is False:
 			self.output('Newly relaxed structure is not acceptable') 
 			return False  # structure not acceptable start with new selection
