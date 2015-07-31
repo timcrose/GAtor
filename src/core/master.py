@@ -67,7 +67,7 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 			for atom in atom_list:
 				for j in range (3):
 					atom[j]-=cm[j]
-			print "this is atom_list",atom_list
+#			print "this is atom_list",atom_list
 			f=open(os.path.join(molecules_dir,molename+'_com_adjusted'),"w")
 			for i in range (len(atom_list)):
 				f.write('%f %f %f %s\n' % (atom_list[i][0],atom_list[i][1],atom_list[i][2],atom_list[i][3])) 
