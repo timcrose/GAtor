@@ -545,7 +545,7 @@ def cell_check(struct,replica):
                                         diff=[struct.geometry[a1][j]-new_apos[j] for j in range (3)]
                                         if numpy.linalg.norm(diff)<atom_distance:
                                                 if verbose:
-                                                        output.local_message("The new structure has stoms from different molecules sitting too close to each other.\nRestarting iteration.\n", replica)
+                                                        output.local_message("The new structure has atoms from different molecules sitting too close to each other.\nRestarting iteration.\n", replica)
                                                 return False
 		if verbose: output.local_message("The new structure has passed the interatomic distance check.",replica)
 	elif verbose:
