@@ -89,11 +89,13 @@ def write_energy_hierarchy(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
  #   biggest_dists = get_biggest_dist(structure_coll)
     to_write = ''
+    count = 1	
     energy_tuples.sort(key=lambda x: x[3])
     for  Id, rep, index, energy, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
-        to_write +=str(Id) + '  '
-        to_write +=str(rep) + ' '
+	to_write +=str(count) + '    '
+        to_write +=str(Id) + '    '
+        to_write +=str(rep) + '    '
         to_write += str(structure_coll.get_input_ref()) + '/'
         to_write += str(index) + '/'
         to_write +='    ' + str(energy)
@@ -109,6 +111,7 @@ def write_energy_hierarchy(structure_coll):
         to_write +='    ' + str(par0)
         to_write +='    ' + str(par1)
         to_write += '\n'
+	count +=1
     with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
     os.system("chmod 771 "+os.path.join(tmp_dir,'energy_hierarchy.'+str(structure_coll.get_input_ref())+'.dat'))
 
