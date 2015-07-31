@@ -5,7 +5,7 @@ Created on Aug 5, 2013
 '''
 import errno
 import os
-from shutil import rmtree
+from shutil import rmtree,copytree
 import time
 from hashlib import sha1
 
@@ -66,14 +66,16 @@ def request_folder_to_check():
 			folder_list=[str(time.time())] #Time stamp comes first
 			restart_wait=ui.get_eval("parallel_settings","restart_interval")
 			list_of_folders = [name for name in os.listdir(tmp_dir)\
-			if os.path.isdir(os.path.join(tmp_dir,name)) and os.path.exist(os.path.join(tmp_dir,name,"active.info"))]
+			if os.path.isdir(os.path.join(tmp_dir,name)) and os.path.exists(os.path.join(tmp_dir,name,"active.info"))]
 			for folder in list_of_folders:
 				time_stamp=read_active(os.path.join(tmp_dir,folder))
 				if time_stamp!=False and time.time()-time_stamp>restart_wait:
 					folder_list.append(folder)
 		f=open(os.path.join(tmp_dir,"folder.info"),"w")
-		if len(folder_list)>1:
+		while len(folder_list)>1 and result==False: #Take the last on the list
 			result=folder_list.pop()
+			if result=="":
+				result=False
 		for info in folder_list:
 			f.write(info+"\n")
 		f.close()
@@ -92,13 +94,13 @@ def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_inde
         else:
                 raise ValueError("Unknown naming_scheme in bk_folder")
 
-        try:
-                shutil.copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
-		output.timelog("bk_folder success: from %s to %S" % (os.path.join(fdir,folder),bk_path),"utility")
-		return True
-        except:
-		output.timelog("bk_folder failure: from %s to %S" % (os.path.join(fdir,folder),bk_path),"utility!!!")
-		return False
+#        try:
+        copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
+	output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility")
+	return True
+#        except:
+#		output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),bk_path),"utility!!!")
+#		return False
 
 def write_active(fdir):
 	'''

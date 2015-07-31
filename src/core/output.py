@@ -24,9 +24,9 @@ def local_message(message, replica):
     data_file.close()
 
 def time_log(message,replica,file="time_log"):
-	with Filelock(file,15):
+	with FileLock(file,cwd,15):
 		f=open(os.path.join(cwd,file),"a")
-		message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+":"+message+"\n"
+		message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+" : "+message+"\n"
 		f.write(message)
 		f.close()
 

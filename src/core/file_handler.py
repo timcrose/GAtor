@@ -33,8 +33,9 @@ res_dir = os.path.join(GA_dir, 'res')
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
 
-#failure directory
-fail_dir = os.path.join(cwd, 'failed_relaxations')
+#back-up directory
+fail_dir = os.path.join(cwd, 'failed_relaxations')  
+scavenge_dir = os.path.join(cwd,"scavenged_folders")
 
 # filesystem storage
 structure_dir = os.path.join(cwd, 'structures')
@@ -79,6 +80,15 @@ def mkdir_p_clean(path):
     '''
     if os.path.exists(path): rmtree(path)
     mkdir_p(path)
+
+def rmdir_silence(path):
+	'''
+	Removes directory silently
+	'''
+	try:
+		rmtree(path)
+	except:
+		pass
     
 def my_import(name, package=''):
     '''
@@ -193,32 +203,6 @@ def print_to_file(message):
     except:
 	pass
 
-def get_execute_clearance(buffer=3,max_wait=1000):
-        '''
-        Reads the execute.info in the working directory and gets clearance for executing commands such as runjob and mpirun
-        '''
-        for i in range (max_wait):
-                with FileLock("execute.info",15):
-                        if not os.path.exists(os.path.join(cwd,"execute.info")):
-                                data_file=open(os.path.join(cwd,"execute.info"),"w")
-                                data_file.write(str(time.time()))
-                                data_file.close()
-                                return True
-
-                        data_file=open(os.path.join(cwd,"execute.info"))
-                        last_time=float(data_file.read())
-                        data_file.close()
-                        current_time=time.time()
-                        if (current_time-last_time>buffer) or (i==max_wait):
-                                data_file=open(os.path.join(cwd,"execute.info"),"w")
-                                data_file.write(str(time.time()))
-                                data_file.close()
-                                if i==1000 and current_time-last_time<=buffer:
-                                        return False
-                                return True
-#                if request_folder!="":
-#                        write_active(request_folder)
-                time.sleep(buffer)
 
 if __name__ == '__main__':
     print cwd
