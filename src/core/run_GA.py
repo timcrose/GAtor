@@ -16,7 +16,7 @@ from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
 from selection import structure_selection
-import copy
+import copy, shutil
 # from external_libs import asizeof
 # from profilestats import profile  # for time profiling
 
@@ -150,7 +150,7 @@ class RunGA():
 			end_time = datetime.datetime.now()
 			self.output("GA Iteration time: -- " + str(end_time - begin_time))
 			self.output("Current Wallclock: -- " + str(end_time))
-			mkdir_p_clean(self.working_dir)
+			rmdir_silence(self.working_dir)
 					
 	def module_init(self):
 		'''
@@ -267,8 +267,20 @@ class RunGA():
 			self.output("Failed to back up scavenged folder")
 		
 		if cleanup:
-			self.output("Folder %s removed" % folder)
-			rmdir_silence(folder)
+			try:
+				shutil.rmtree(folder)
+				self.output("Folder %s removed" % folder)
+			except:
+				self.output("Scavenged folder %s clean-up failure" % folder) #Probably due to file permission issue
+				if os.path.exists(os.path.join(folder,"active.info")):
+					try:
+						os.remove(os.path.join(folder,"active.info"))
+						self.output("Removing active.info instead")
+					except:
+						self.output("active.info remains there!")
+						output.time_log("WARNING! Folder %s unable to clean-up" % folder,self.replica)
+				else:
+					self.output("active.info already gone")		
 		
 		return struct	
 			
