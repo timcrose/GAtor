@@ -93,6 +93,7 @@ class FHIAimsRelaxation():
 	mkdir_p_clean(self.working_dir)
 	self.create_geometry_in()
 	self.create_control_in()
+	self.set_permission()
     
     def output(self, message): output.local_message(message, self.replica)   
         
@@ -165,6 +166,7 @@ class FHIAimsRelaxation():
 			if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
 				break
 			write_active(self.working_dir)
+			self.set_permission()
 			time.sleep(1)
 		if (os.stat(aimsout).st_size>512):
 			output.time_log("aims.out begins output", self.replica)
@@ -173,6 +175,7 @@ class FHIAimsRelaxation():
 
 		try:
 			p.send_signal(2)
+			self.set_permission()
 			time.sleep(60)
 		except:
 			pass
@@ -184,6 +187,7 @@ class FHIAimsRelaxation():
 	counter=0; last=os.stat(aimsout).st_size
 	while counter<60 and p.poll()==None: #The output file needs to update at least once in every 5 minutes
 		write_active(self.working_dir)
+		self.set_permission()
 		time.sleep(10)
 		if os.stat(aimsout).st_size>last:
 			last=os.stat(aimsout).st_size
@@ -194,6 +198,7 @@ class FHIAimsRelaxation():
 		output.time_log("aims job hung",self.replica)
 		try:
 			p.send_signal(2)
+			self.set_permission()
 			time.sleep(60)
 		except:
 			pass
@@ -427,6 +432,12 @@ class FHIAimsRelaxation():
         for i in range(len(reduced_charge_list)):
             self.result_struct.geometry[i]['charge'] = float(reduced_charge_list[i].split()[-1])
         return True
+
+    def set_permission(self):
+	'''
+	Allow other group user to access this folder
+	'''
+	os.system("chmod -R g=u "+self.working_dir)
     
     def wait_on_file(self,wait_file,sleeptime=1):
 	"""
