@@ -174,10 +174,10 @@ python %s -f %s --rn %s
 			pool=multiprocessing.Pool(processes=number_of_multi)
 			pool.map(run_GA_master,replica_name)
 
-	#mkdir_p(tmp_dir)
-        #mkdir_p(structure_dir)
-        #mkdir_p(fail_dir)
-        #set_unkill()
+	mkdir_p(tmp_dir)
+        mkdir_p(structure_dir)
+        mkdir_p(fail_dir)
+        set_unkill()
 	else:
 		raise RuntimeError("parallel_settings.system not recognized!")
         
