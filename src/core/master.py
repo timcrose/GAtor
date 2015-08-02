@@ -165,7 +165,7 @@ python %s -f %s --rn %s
 			while True: #converts the iterable into a list of replica names
 				try:
 					corner=next(corners)
-					replica_name.append(corner[0]+'%'+corner[1]+'%'+corner[2])
+					replica_name.append(corner[0]+'%'+corner[1]+'%'+corner[2]+"%"+get_random_index())
 				except:
 					break
 
