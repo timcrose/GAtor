@@ -144,15 +144,19 @@ class FHIAimsRelaxation():
 		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
 		#Will run it with modes=4 and thre=4
 		modes=4; thres=4
-		try:
+		try: #Replica name is defined as block%core%shape%random_index
 			l=self.replica.index("%")
 			block=self.replica[0:l]
 			rest=self.replica[l+1:]
 			l=rest.index("%")
 			corner=rest[:l]
-			shape=rest[l+1:]
+			rest=rest[l+1:]
+			l=rest.index("%")
+			shape=rest[:l]
 			arglist=["runjob","--np",str(modes*block_size),"-p",str(modes),"--envs","OMP_NUM_THREADS="+str(thres),"--verbose","INFO","--block",block,"--corner",corner,"--shape",shape,"--cwd",self.working_dir,"--exe",self.bin]
 		except: #Only has a block name
+			l=self.replica.index("%")
+			block=self.replica[0:l]
 			arglist=["runjob","--np",str(modes*block_size),"-p",str(modes),"--envs","OMP_NUM_THREADS="+str(thres),"--verbose","INFO","--block",block,"--cwd",self.working_dir,"--exe",self.bin]
 
 	aimsout=os.path.join(self.working_dir,"aims.out")
