@@ -75,7 +75,7 @@ class RunGA():
 		self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 		self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
 		self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
-		self.number_of_replicas =int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
+		self.number_of_replicas = int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
 		self.mod_iteration_counter = 0
 		self.module_init()
 
@@ -123,21 +123,21 @@ class RunGA():
 				self.output('replica ' + str(self.replica) + ' killed')
 				return
 			structures_to_add = {}	
-			struct=False
+			struct = False
 			if os.path.isdir(self.working_dir): 
 				#First check if there is a risk of overwriting a name_sake replica's leftover folder
-				struct=self.structure_scavenge_old(self.working_dir)
+				struct = self.structure_scavenge_old(self.working_dir)
 			folder_to_scavenge = utility.request_folder_to_check()
-			while struct==False and folder_to_scavenge!=False:
-				struct=self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
-				folder_to_scavenge=utility.request_folder_to_check()
+			while struct == False and folder_to_scavenge!= False:
+				struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+				folder_to_scavenge = utility.request_folder_to_check()
 			
 			failed_counter = 0
-			while struct==False:
-				failed_counter+=1
-				if failed_counter==101:
+			while struct == False:
+				failed_counter +=1
+				if failed_counter == 101:
 					raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
-				struct=self.structure_create_new()
+				struct = self.structure_create_new()
 			
 			mkdir_p(self.working_dir)
 			struct = self.structure_relax(struct)
