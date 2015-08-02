@@ -218,9 +218,10 @@ class FHIAimsRelaxation():
                 if "Have a nice day" in line:
 			return True
                 elif line == '':
-                        time.sleep(60)
                         counter += 1
-                if counter > 8:
+		else:
+			counter = 0
+                if counter > 10: #Allowing 10 empty lines in a row before determining eof
                         break
 	return False
 
