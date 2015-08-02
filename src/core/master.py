@@ -82,6 +82,11 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
                 restart_data_file = open(restart_replica_file, 'a')
                 number_of_restarts = 0
 	print "Number of restarts: "+str(number_of_restarts)
+	mkdir_p(tmp_dir)
+        mkdir_p(structure_dir)
+        mkdir_p(fail_dir)
+        set_unkill()
+
 	if environment=='Cypress' or environment=='cypress' or environment=='1':
 		#Replica name will be a random string
 		pool=multiprocessing.Pool(processes=number_of_multi)
@@ -176,11 +181,7 @@ python %s -f %s --rn %s
 
 	else:
 		raise RuntimeError("parallel_settings.system not recognized!")
-	mkdir_p(tmp_dir)
-        mkdir_p(structure_dir)
-        mkdir_p(fail_dir)
-        set_unkill()
-
+	
         
 def run_GA_master(replica):
 	from utilities.stoic_model import determine_stoic
