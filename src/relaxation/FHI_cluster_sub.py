@@ -106,6 +106,7 @@ class FHIAimsRelaxation():
         geometry_file = open(os.path.join(self.working_dir, 'geometry.in'), 'w')
         geometry_file.write(self.input_structure.get_geometry_atom_format())
         geometry_file.close()
+	output.write_data(self.working_dir,"struct.info",self.input_structure.dumps())
         
     def create_control_in(self):
         '''
