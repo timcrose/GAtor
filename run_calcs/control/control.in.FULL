@@ -20,7 +20,8 @@
   sc_accuracy_etot   1E-6
   sc_accuracy_forces 1E-4 #uncomment for relaxation
   sc_iter_limit      500
-  load_balancing .true. 	
+#  load_balancing .true. 	
+  check_cpu_consistency
 
 #  Eigenvalue solution
   KS_method	     scalapack_fast
