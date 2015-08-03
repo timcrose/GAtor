@@ -127,10 +127,12 @@ class RunGA():
 			if os.path.isdir(self.working_dir): 
 				#First check if there is a risk of overwriting a name_sake replica's leftover folder
 				struct = self.structure_scavenge_old(self.working_dir)
-			folder_to_scavenge = utility.request_folder_to_check()
-			while struct == False and folder_to_scavenge!= False:
-				struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+			if struct == False:
 				folder_to_scavenge = utility.request_folder_to_check()
+				while struct == False and folder_to_scavenge!= False:
+					struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+					if struct == False:
+						folder_to_scavenge = utility.request_folder_to_check()
 			
 			failed_counter = 0
 			while struct == False:
