@@ -299,7 +299,7 @@ class RunGA():
 		control_check_SPE_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),self.control_list[0])
 		control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),self.control_list[1])
 		
-		write_data(self.working_dir,"struct.json",struct.dumps())
+		#write_data(self.working_dir,"struct.json",struct.dumps()) #This line is removed because relaxation module cleans the directory
 		struct_info = copy.deepcopy(struct)
 
 		########## Check SPE and perform Full Relaxation ##########
