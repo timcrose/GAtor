@@ -106,7 +106,7 @@ class FHIAimsRelaxation():
         geometry_file = open(os.path.join(self.working_dir, 'geometry.in'), 'w')
         geometry_file.write(self.input_structure.get_geometry_atom_format())
         geometry_file.close()
-	more_file = open(os.path.join(self.working_dir, "struct.info"),"w")
+	more_file = open(os.path.join(self.working_dir, "struct.json"),"w")
 	more_file.write(self.input_structure.dumps())
 	more_file.close()
         
