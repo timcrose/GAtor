@@ -168,6 +168,14 @@ class FHIAimsRelaxation():
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
 		p=subprocess.Popen(arglist,stdout=outfile)
+		time.sleep(1)
+		try:
+			status=p.poll()
+		except: #OSError Errno 3 Process does not exist
+			output.time_log("Nodes failure ; replica will sleep for 5 hours now")
+			time.sleep(18000)
+			return False
+			
 		time_limit=60
 		for j in range (time_limit): #Allow 60 seconds for aims to start outputting
 			if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
