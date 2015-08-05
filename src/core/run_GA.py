@@ -215,7 +215,7 @@ class RunGA():
 			return False
 		return new_struct
 	
-	def structure_scavenge_old(self,folder,next_step=True,cleanup=True):
+	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
 		'''
 		This routine takes a folder (directory) that should be an fhi-aims job directory and salvages a structure from it
 		if next_step=True, geometry.in.next_step has to be present
