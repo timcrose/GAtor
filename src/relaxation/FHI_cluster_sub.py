@@ -173,8 +173,8 @@ class FHIAimsRelaxation():
 		try:
 			status=p.poll()
 		except: #OSError Errno 3 Process does not exist
-			output.time_log("Nodes failure ; replica will sleep for 5 hours now")
-			time.sleep(18000)
+			output.time_log("Nodes failure ; replica will pass out from now on")
+			time.sleep(86400)
 			return False
 			
 		time_limit=60
@@ -193,7 +193,8 @@ class FHIAimsRelaxation():
 			p.send_signal(2)
 		except:
 			output.time_log("Unable to kill process ; possible node failures", self.replica)
-		time.sleep(60)
+			time.sleep(86400)
+		active_sleep(60,self.working_dir)
 		try:
 			self.set_permission()
 		except:
@@ -219,7 +220,8 @@ class FHIAimsRelaxation():
 			p.send_signal(2)
 		except:
 			output.time_log("Unable to kill process ; possible node failures", self.replica)
-		time.sleep(60)
+			time.sleep(86400)
+		active_sleep(60,self.working_dir)
 		try:
 			self.set_permission()
 		except:
