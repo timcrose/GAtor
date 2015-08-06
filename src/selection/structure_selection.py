@@ -37,6 +37,7 @@ class StructureSelection():
 	self.control_list = self.ui.get_list('control', 'control_in_filelist')
         self.max_cascade = len(self.control_list) - 1
 	self.index = 0
+	self.percent = self.ui.get_eval('selection','percent_best_structs_to_select')
 
     def get_structures(self):
 	control_list = self.ui.get_list('control', 'control_in_filelist')
@@ -114,7 +115,11 @@ class StructureSelection():
     def select_best_from_fitness(self, fitness_dict):
         fitness = self.sorted_fitness(fitness_dict)
         fitness = self.normalized_fitness(fitness)
-        random_num = np.random.random()
+	dec = float(self.percent*0.01)
+	dec_comp = 1-dec
+        #random_num = np.random.random()
+	random_num = np.random.uniform(dec_comp,1.0)
+	output.local_message("selection random num: "+str(random_num),self.replica)
         # selects first element to be greater than random number
         return list(filter((lambda x : x[1] > random_num), fitness))[0]
     
