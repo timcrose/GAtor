@@ -24,12 +24,15 @@ def local_message(message, replica):
     data_file.close()
 
 def time_log(message,replica,file="time_log"):
+	message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+" : "+message+"\n"
 	with FileLock(file,cwd,86400):
+		if not os.path.exists(os.path.join(cwd,file)):
+			f=open(os.path.join(cwd,file),"w")
+			f.close()
+			os.system("chmod g=u "+os.path.join(cwd,file))
 		f=open(os.path.join(cwd,file),"a")
-		message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+" : "+message+"\n"
 		f.write(message)
 		f.close()
-		os.system("chmod 771 "+os.path.join(cwd, file))
 
 def error(message, replica=None):
     if replica == None: r = ''
