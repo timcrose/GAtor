@@ -189,7 +189,6 @@ class RunGA():
 		if new_struct is False: 
 			self.output("Crossover failure")
 			return False  
-		self.set_parents(structures_to_cross, new_struct)
 	
 		########## Mutation Execution ##########
 		# Expects: Structure, target_stoichiometry [decision] #Returns: Structure
@@ -214,6 +213,8 @@ class RunGA():
 		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
+
+		self.set_parents(structures_to_cross, new_struct)
 		return new_struct
 	
 	def structure_scavenge_old(self,folder,next_step=True,cleanup=True):
