@@ -21,7 +21,7 @@ def get_execute_clearance(request_folder="",buffer=3,max_wait=1000):
         Reads the execute.info in the working directory and gets clearance for executing commands such as runjob and mpirun
         '''
         for i in range (max_wait):
-                with FileLock("execute.info",tmp_dir,15):
+                with FileLock("execute.info",tmp_dir,86400):
                         if not os.path.exists(os.path.join(tmp_dir,"execute.info")):
                                 data_file=open(os.path.join(tmp_dir,"execute.info"),"w")
                                 data_file.write(str(time.time()))
