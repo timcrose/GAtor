@@ -148,6 +148,7 @@ class RunGA():
 	
 			if self.structure_comparison(struct)==False:
 				convergeTF = False
+				rmdir_silence(self.working_dir)
 				continue
 			structures_to_add[(self.replica_stoic, 0)] = struct
 			self.restart_counter += 1 
