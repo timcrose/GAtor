@@ -33,7 +33,7 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 	checkSPE = SPE.execute()
 	if SPE.is_successful_spe():
 		SP_energy = SPE.extract_energy()
-		self.input_structure.set_property('spe_energy',SP_energy)
+		input_structure.set_property('spe_energy',SP_energy)
 		output.local_message("SPE extracted", replica)
 		if SP_energy >= SPE_threshold:
 			return False
