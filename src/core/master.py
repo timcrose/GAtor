@@ -145,13 +145,15 @@ python %s -f %s --rn %s
 	elif environment=="Cetus" or environment=="cetus" or environment=="mira" or environment=="Mira":
 		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
 		from external_libs import bgqtools
-		if block_size>=128:
+		if (block_size>=128 and (environment=="Cetus" or environment=="cetus")) or (block_size>=512 and (environment=="mira" or environment=="Mira")):
 		#Will get individual blocks
 			
 			partsize, partition, job_id = bgqtools.get_cobalt_info()
 			blocks = bgqtools.get_bootable_blocks(partition,partsize,block_size)
 			bgqtools.boot_blocks(blocks)
 			number_of_multi=int(partsize/block_size)
+			for i in range (len(blocks)):
+				blocks[i] = blocks[i]+"%"+get_random_index()
 #			print "In master.py, this is number_of_multi", number_of_multi
 			pool=multiprocessing.Pool(processes=number_of_multi)
 			pool.map(run_GA_master,blocks)
