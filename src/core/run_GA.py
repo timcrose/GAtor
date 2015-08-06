@@ -144,6 +144,7 @@ class RunGA():
 			mkdir_p(self.working_dir)
 			struct = self.structure_relax(struct)
 			if struct == False: #Relaxation has failed ; start with new selection
+				rmdir_silence(self.working_dir)
 				continue
 	
 			if self.structure_comparison(struct)==False:
