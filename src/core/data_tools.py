@@ -67,7 +67,8 @@ def get_energy_tuples(structure_coll):
     for index, structure in structure_coll:
 	ID = structure.get_property('ID')
 	replica = structure.get_property('replica')
-        energy = structure.get_property('energy') 
+        energy = structure.get_property('energy')
+	spe = structure.get_property('spe_energy') 
 	vol = structure.get_property('cell_vol')
 	a = structure.get_property('a')
 	b = structure.get_property('b')
@@ -81,7 +82,7 @@ def get_energy_tuples(structure_coll):
 	parent1 = structure.get_property('parent_1')
 #	relaxtype = structure.get_property('Relax_type')
 #	childnum = structure.get_property('child_count')
-	if energy is not None: energy_tuples.append((ID, replica, index, energy, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
+	if energy is not None: energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
 #	print energy_tuples
     return energy_tuples
 
@@ -91,7 +92,7 @@ def write_energy_hierarchy(structure_coll):
     to_write = ''
     count = 1	
     energy_tuples.sort(key=lambda x: x[3])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
 	to_write +=str(count) + '    '
         to_write +=str(Id) + '    '
@@ -99,6 +100,7 @@ def write_energy_hierarchy(structure_coll):
         to_write += str(structure_coll.get_input_ref()) + '/'
         to_write += str(index) + '/'
         to_write +='    ' + str(energy)
+	to_write +='    ' + str(spe)
         to_write +='    ' + str(vol)
         to_write +='    ' + str(a)
         to_write +='    ' + str(b)

@@ -33,6 +33,7 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 	checkSPE = SPE.execute()
 	if SPE.is_successful_spe():
 		SP_energy = SPE.extract_energy()
+		input_structure.set_property('spe_energy',SP_energy)
 		output.local_message("SPE extracted", replica)
 		if SP_energy >= SPE_threshold:
 			return False
@@ -334,8 +335,10 @@ class FHIAimsRelaxation():
 
         ct = self.input_structure.get_property('crossover_type')
 	mt = self.input_structure.get_property('mutation_type')
+	spe = self.input_structure.get_property('spe_energy')
 	self.result_struct.set_property('mutation_type',mt)
         self.result_struct.set_property('crossover_type',ct)
+	self.result_struct.set_property('spe_energy',spe)
 	
         # sets the result structure's geometry based on output file
         extract_success = self.extract_geometry()
