@@ -124,6 +124,20 @@ def read_active(folder):
                 return last_time
         except:
                 return False
+def active_sleep(total_time,folder,write_active_interval=10):
+        '''
+        Sleep for the total time but continues to write_active in the folder
+        '''
+        times = int(total_time/write_active_interval)
+        for i in range (times):
+                write_active(folder)
+                time.sleep(write_active_interval)
+        write_active(folder)
+        try:
+                time.sleep(total_time-write_active_interval*times)
+                write_active(folder)
+        except:
+                pass
 					
 if __name__ == '__main__':
     print cwd
