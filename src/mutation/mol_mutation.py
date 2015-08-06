@@ -44,7 +44,7 @@ def select_mutator_2mol(input_structure, replica_stoic, replica):
     Returns: Class
     '''
     mutation_list = ["Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym","Comp_cell"]
-    mutation_list = ["Comp_cell"]
+#    mutation_list = ["Comp_cell"]
     try:
 	mut_choice = np.random.choice(mutation_list)
     except:
