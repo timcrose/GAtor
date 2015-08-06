@@ -188,15 +188,18 @@ class FHIAimsRelaxation():
 			output.time_log("aims.out begins output", self.replica)
 			break
 		outfile.close()
-
+		output.time_log("aims job launch failure",self.replica)
 		try:
 			p.send_signal(2)
+		except:
+			output.time_log("Unable to kill process ; possible node failures", self.replica)
+		time.sleep(60)
+		try:
 			self.set_permission()
-			time.sleep(60)
 		except:
 			pass
 
-		output.time_log("aims job launch failure",self.replica)
+
 		if i==9:
 			output.time_log("WARNING: Repeated launch failure ; exiting",self.replica)
 			return False
@@ -214,10 +217,15 @@ class FHIAimsRelaxation():
 		output.time_log("aims job hung",self.replica)
 		try:
 			p.send_signal(2)
+		except:
+			output.time_log("Unable to kill process ; possible node failures", self.replica)
+		time.sleep(60)
+		try:
 			self.set_permission()
-			time.sleep(60)
 		except:
 			pass
+
+			
 	outfile.close()
 	output.local_message("aims job exited with status "+str(p.poll()),self.replica)
 	output.time_log("aims job exited with status "+str(p.poll()),self.replica)
