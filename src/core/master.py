@@ -98,7 +98,7 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 			replica_name=get_random_index()
 			print "In master.py, this is replica_name", replica_name
 			exe_string='''#!/bin/bash
-#SBATCH --qos=normal
+#SBATCH --qos=project
 #SBATCH --job-name=fhi_aims
 
 #SBATCH --time=%s
