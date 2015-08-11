@@ -489,6 +489,23 @@ def cell_check(struct,replica):
 	Checks if a structure has reasonable cell volume, lattice vector lengths, and distance between molecules and atoms
 	Should only be performed after cell_modification is done
 	'''
+	#First checks close encounter between all atoms user Aim's default 0.4 bohr=0.211672 Angstrom
+	total_atoms=len(struct.geometry)
+	napm=total_atoms/nmpc
+	tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]]
+	default_closeness = 0.211672
+	for a1 in range (total_atoms-1):
+		for a2 in range (a1+1,total_atoms): #Atoms should not be compared to those from the same molecule
+			for tr_choice in range (27):
+				new_apos=[struct.geometry[a2][j]+struct.properties["lattice_vector_a"][j]*tr[tr_choice][0]+struct.properties["lattice_vector_b"][j]*tr[tr_choice][1]+struct.properties["lattice_vector_c"][j]*tr[tr_choice][2] for j in range (3)] #Move the molecule by the fractional vector specified by tr[tr_choice]
+				diff=[struct.geometry[a1][j]-new_apos[j] for j in range (3)]
+				if numpy.linalg.norm(diff)<default_closeness:
+					if verbose:
+						output.local_message("The new structure failed close encounter check. Default closeness criteria is "+str(default_closeness)+".\nRestarting iteration.\n", replica)
+						return False
+	if verbose: output.local_message("The new structure has passed the close encounter check. Default closeness criteria is "+str(default_closeness)+".",replica)
+
+
 	standard_volume=ui.get_eval("cell_check_settings","standard_volume")
 	if standard_volume!=None:
 		upper_volume=ui.get_eval("cell_check_settings","volume_upper_ratio")*standard_volume
