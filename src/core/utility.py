@@ -72,6 +72,7 @@ def request_folder_to_check():
 				if time_stamp!=False and time.time()-time_stamp>restart_wait:
 					folder_list.append(folder)
 		f=open(os.path.join(tmp_dir,"folder.info"),"w")
+		restart_wait=ui.get_eval("parallel_settings","restart_interval")
 		while len(folder_list)>1 and result==False: #Take the last on the list
 			result=folder_list.pop()
 			if (result=="") or not os.path.exists(os.path.join(tmp_dir,result,"active.info")): #Check the active info again in case the folder gets reactivated somehow
