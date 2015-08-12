@@ -1257,7 +1257,7 @@ class CompressCellMutationMoveMols_4mol(object):
     def mutate(self):
         return self.compress()
 
-    def rstrain(self):
+    def compress(self):
 	A = self.A
 	B = self.B
 	C = self.C 	
