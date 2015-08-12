@@ -74,7 +74,7 @@ def request_folder_to_check():
 		f=open(os.path.join(tmp_dir,"folder.info"),"w")
 		while len(folder_list)>1 and result==False: #Take the last on the list
 			result=folder_list.pop()
-			if (result=="") or not os.path.exists(tmp_dir,result,"active.info"): #Check the active info again in case the folder gets reactivated somehow
+			if (result=="") or not os.path.exists(os.path.join(tmp_dir,result,"active.info")): #Check the active info again in case the folder gets reactivated somehow
 				result = False
 			else:
 				time_stamp = read_active(os.path.join(tmp_dir,result))
