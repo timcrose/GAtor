@@ -59,7 +59,7 @@ def request_folder_to_check():
 		else:
 			f=open(os.path.join(tmp_dir,"folder.info"),"r")
 			folder_list=f.read().split("\n")
-			if time.time()-float(folder_list[0])>time_wait:
+			if folder_list[0]=="" or time.time()-float(folder_list[0])>time_wait:
 				need_update=True
 			f.close()
 		if need_update:
