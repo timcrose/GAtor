@@ -197,7 +197,7 @@ class RunGA():
 		randnum = np.random.random()	
 		randnum2 = np.random.random()
 		#Single Parents have to be mutated	
-		if new_struct.get_property('cross_type') == [1,1] or new_struct.get_property('cross_type') == [2,2] or randnum<self.singlemutate:
+		if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<self.singlemutate:
 			new_struct = self.mutation_module.main(new_struct, self.replica_stoic, self.replica)
 			if new_struct!=False and randnum2 < self.doublemutate:
 				self.output("--Second Mutation--")
