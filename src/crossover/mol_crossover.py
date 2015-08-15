@@ -489,7 +489,7 @@ class Crossover_4mol(object):
         '''
         the centers the origin in relation to the max and min of each axis
         '''
-        for i in range(2):  # x, y, and z
+        for i in range(3):  # x, y, and z
             coordinate_sum = 0
             counter = 0
             for atom in geometry:
@@ -758,7 +758,7 @@ class Crossover_8mol(object):
         '''
         the centers the origin in relation to the max and min of each axis
         '''
-        for i in range(2):  # x, y, and z
+        for i in range(3):  # x, y, and z
             coordinate_sum = 0
             counter = 0
             for atom in geometry:
