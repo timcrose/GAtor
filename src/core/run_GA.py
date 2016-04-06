@@ -21,24 +21,24 @@ import copy, shutil
 # from profilestats import profile  # for time profiling
 
 def main(replica,stoic):
-    # setup temporary and structures directory
-    mkdir_p(tmp_dir)	
-    mkdir_p(structure_dir)
+	# setup temporary and structures directory
+	mkdir_p(tmp_dir)	
+	mkdir_p(structure_dir)
 
-    # run genetic algorithm
-    ga = RunGA(replica, stoic)
-    # catch crashes
-    if ga.ui.get_eval('run_settings', 'recover_from_crashes') is not True: 
-        ga.start()  # no exception catching
-    else:
-        while True:
-            try:
-                ga.start() 
-                break
-            except Exception, e: 
-                output.error(e, replica)
-    output.move_to_shared_output(replica)
-    
+	# run genetic algorithm
+	ga = RunGA(replica, stoic)
+	# catch crashes
+	if ga.ui.get_eval('run_settings', 'recover_from_crashes') is not True: 
+		ga.start()  # no exception catching
+	else:
+		while True:
+			try:
+				ga.start() 
+				break
+			except Exception, e: 
+				output.error(e, replica)
+	output.move_to_shared_output(replica)
+	
 class RunGA():
 	'''
 	This is the core algorithm which runs the genetic algorithm tasks
@@ -75,19 +75,19 @@ class RunGA():
 
 	def start(self):
 		'''
-	    Performs main genetic algorithm operations
-        Loads necessary modules based on UI at runtime
-	    ''' 
+		Performs main genetic algorithm operations
+		Loads necessary modules based on UI at runtime
+		''' 
 
-	    # Report Replica to Common Output and Update Supercollection
+		# Report Replica to Common Output and Update Supercollection
 		self.output("--Replica %s updating local pool--" %(self.replica))
-	    structure_collection.update_supercollection(self.structure_supercoll)
+		structure_collection.update_supercollection(self.structure_supercoll)
 
-            # Intialiaze restarts
-        restart_replica = self.initialize_restart()
+			# Intialiaze restarts
+		restart_replica = self.initialize_restart()
 		restart_counter = 0
 		convergeTF = None
-	    while True:
+		while True:
 			########## Beginning of Iteration Tasks ##########
 			begin_time = self.beginning_tasks(restart_counter)
 
@@ -189,7 +189,7 @@ class RunGA():
 		This routine reads in the modules defined in ui.conf
 		'''
 		self.initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
-	 	self.selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
+		self.selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
 		self.crossover_module = my_import(self.ui.get('modules', 'crossover_module'), package='crossover')
 		self.mutation_module = my_import(self.ui.get('modules', 'mutation_module'), package='mutation')
 		self.relaxation_module = my_import(self.ui.get('modules', 'relaxation_module'), package='relaxation')
@@ -232,7 +232,7 @@ class RunGA():
 			new_struct.set_property('mutation_type', 'No_mutation')
 		if new_struct is False: 
 			self.output('Mutation failure')
-	            	return False
+					return False
 
 		####Structure modification of angles. Checks reasonable structure is created####
 		self.output("--Cell Checks--")	
@@ -442,15 +442,15 @@ class RunGA():
 			#Output success message to screen and write energy hierarchy        
 			prev_struct_index = str(key) + str(index)
 			message = 'Success!: \n  stoichiometry-- ' + key[0].get_string() + \
-	                      '\n  cascade-- ' + str(key[1]) + \
-        	              '\n  structure index-- ' + str(struct_index) + \
-                	      '\n  replica child count-- ' + str(self.child_counter) + \
-	                      '\n  collection count -- ' + str(ID) + \
-        	              '\n  replica-- ' + str(self.replica)
+						  '\n  cascade-- ' + str(key[1]) + \
+						  '\n  structure index-- ' + str(struct_index) + \
+						  '\n  replica child count-- ' + str(self.child_counter) + \
+						  '\n  collection count -- ' + str(ID) + \
+						  '\n  replica-- ' + str(self.replica)
 			self.output(message)
 			self.output("writing hierachy")
 			data_tools.write_energy_hierarchy(self.structure_coll)		   	
- 			
+			
 			#End of Iteration Outputs
 			additions = len(self.structure_coll.structures)-self.number_of_IP	
 			avg_add = float(additions)/self.number_of_replicas	
@@ -481,19 +481,19 @@ class RunGA():
 			if en_new in old_list_top_en:
 				continue
 			else:
-        	        	self.output("Top "+str(self.top_en_count)+" energies have changed.")
+						self.output("Top "+str(self.top_en_count)+" energies have changed.")
 				self.mod_iteration_counter = 0
 				self.output("Convergence counter reset.")
 				self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
-        	                return "not_converged"
+							return "not_converged"
 		self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
 		if self.mod_iteration_counter == self.max_en_it:
 			return "converged" 
 
 	def avg_fitness(self, min_e, max_e, structure_coll):
-	        fitness = {}
-	        for index, struct in structure_coll:
-        		try: energy = float(struct.get_property('energy'))
+			fitness = {}
+			for index, struct in structure_coll:
+				try: energy = float(struct.get_property('energy'))
 			except: pass
 			rho = (max_e - energy) / (max_e - min_e)
 			if self.ui.get('selection', 'fitness_function') == 'standard':
@@ -501,9 +501,9 @@ class RunGA():
 		sorted_fit = sorted(fitness.iteritems(), key=lambda x:x[1])
 
 		f_sum = 0
-	        tmp = []
-        	total = 0
-	        normalized_fit = []
+			tmp = []
+			total = 0
+			normalized_fit = []
 
 		# sum and reduce all fitnesses
 		for index, fitness in sorted_fit: f_sum += fitness
