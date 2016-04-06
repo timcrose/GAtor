@@ -22,7 +22,7 @@ import copy, shutil
 
 def main(replica,stoic):
     # setup temporary and structures directory
-    mkdir_p(itmp_dir)	
+    mkdir_p(tmp_dir)	
     mkdir_p(structure_dir)
 
     # run genetic algorithm
@@ -81,18 +81,19 @@ class RunGA():
 
 	    # Report Replica to Common Output and Update Supercollection
 		self.output("--Replica %s updating local pool--" %(self.replica))
-        structure_collection.update_supercollection(self.structure_supercoll)
+	        structure_collection.update_supercollection(self.structure_supercoll)
 
-        # Intialiaze restarts
-        self.intialize_restart()
+            # Intialiaze restarts
+        	restart_replica = self.initialize_restart()
 		restart_counter = 0
 		convergeTF = None
 	        while True:
 			########## Beginning of Iteration Tasks ##########
-			begin_time = self.beginning_tasks()
+			begin_time = self.beginning_tasks(restart_counter)
 
 			########## Check if GA finished/converged ########
-			self.check_convergence(convergeTF)
+			end = self.check_finished(convergeTF)
+			if end: return
 
 			########### Restart Scheme #######################
 			structures_to_add = {}	
@@ -137,20 +138,20 @@ class RunGA():
 			self.output("Current Wallclock: -- " + str(end_time))
 			rmdir_silence(self.working_dir)
 
-	def intialize_restart():
+	def initialize_restart(self):
 		restart_counter = 0
 		restart_replica = self.ui.get_eval("parallel_settings","restart_replicas")
-		return
+		return restart_replica
 
-	def beginning_tasks():
-		self.beginning_tasks()
+	def beginning_tasks(self, restart_counter):
 		output.move_to_shared_output(self.replica)
 		self.output('Beginning iteration')
 		self.restart(str(self.replica)+' '+str(restart_counter)+' beginning iteration:    ' +str(datetime.datetime.now()))
 		begin_time = datetime.datetime.now()
 		return begin_time
 
-	def check_convergence(convergeTF):
+	def check_finished(self,convergeTF):
+		end = False
 		try: 
 			added_structs = len(self.structure_coll.structures)-self.number_of_IP
 			total_structs = len(self.structure_coll.structures) 
@@ -161,9 +162,9 @@ class RunGA():
 				message += str(added_structs) +'\n'
 				message +='Total size of collection: '
 				message += str(total_structs) +'\n'
-				message += 'GA ended at: '+str(datetime.datetime.now()
+				message += 'GA ended at: '+str(datetime.datetime.now())
 				self.output(message)
-				return
+				end = True
 			if convergeTF == True:
 				message = ''
 				message +=' ~*~*~*~*~*~*~*~*~*~*~*~ GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n'
@@ -172,8 +173,10 @@ class RunGA():
 				message +='Total size of collection: '
 				message += str(total_structs) 
 				self.output(message)
-		        return
+				end = True
 		except: pass
+		return end
+
 
 
 
@@ -326,7 +329,7 @@ class RunGA():
 		########## Check SPE and perform Full Relaxation ##########
 		# Expects: Structure, working_dir, input_path #Returns: Structure
 		self.output("--SPE Check and Full Relaxation--")
-		self.restart(str(self.replica)+' '+str(restart_counter)+' started_relaxing:    ' +str(datetime.datetime.now()))
+		self.restart(str(self.replica)+' started_relaxing:    ' +str(datetime.datetime.now()))
 
 		struct = self.relaxation_module.main(struct, self.working_dir, control_check_SPE_string, control_relax_full_string, self.replica)
 		if struct is False: 
