@@ -162,7 +162,7 @@ class RunGA():
 		except: pass
 		return end
 
-	def restart_scheme(restart_replica):	
+	def restart_scheme(self, restart_replica):	
 			structures_to_add = {}	
 			struct = False
 			if os.path.isdir(self.working_dir): 
@@ -175,14 +175,15 @@ class RunGA():
 					if struct == False:
 						folder_to_scavenge = activity.request_folder_to_check()
 
-			return
-	def generate_trial_structure(): 
+			return 
+	def generate_trial_structure(self):
+		struct = False 
 		failed_counter = 0
 		while struct == False:
 			failed_counter +=1
 			if failed_counter == 101:
 				raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
-				struct = self.structure_create_new()
+			struct = self.structure_create_new()
 
 	def module_init(self):
 		'''
@@ -232,7 +233,7 @@ class RunGA():
 			new_struct.set_property('mutation_type', 'No_mutation')
 		if new_struct is False: 
 			self.output('Mutation failure')
-					return False
+			return False
 
 		####Structure modification of angles. Checks reasonable structure is created####
 		self.output("--Cell Checks--")	
@@ -292,8 +293,8 @@ class RunGA():
 							struct.properties[key]=struct_info.properties[key]
 					self.output("struct.json found and information extracted")
 		
-		self.output("Scavenge folder success!")
-		fdir = os.path.abspath(os.path.join(folder,os.pardir))
+				self.output("Scavenge folder success!")
+				fdir = os.path.abspath(os.path.join(folder,os.pardir))
 		if activity.bk_folder(fdir,folder[len(fdir)+1:],scavenge_dir,"random"):
 			self.output("Successfully backed up scavenged folder")
 		else:
@@ -481,29 +482,28 @@ class RunGA():
 			if en_new in old_list_top_en:
 				continue
 			else:
-						self.output("Top "+str(self.top_en_count)+" energies have changed.")
+				self.output("Top "+str(self.top_en_count)+" energies have changed.")
 				self.mod_iteration_counter = 0
 				self.output("Convergence counter reset.")
 				self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
-							return "not_converged"
+				return "not_converged"
 		self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
 		if self.mod_iteration_counter == self.max_en_it:
 			return "converged" 
 
 	def avg_fitness(self, min_e, max_e, structure_coll):
-			fitness = {}
-			for index, struct in structure_coll:
-				try: energy = float(struct.get_property('energy'))
+		fitness = {}
+		for index, struct in structure_coll:
+			try: energy = float(struct.get_property('energy'))
 			except: pass
 			rho = (max_e - energy) / (max_e - min_e)
 			if self.ui.get('selection', 'fitness_function') == 'standard':
 				fitness[struct] = rho
-		sorted_fit = sorted(fitness.iteritems(), key=lambda x:x[1])
-
-		f_sum = 0
-			tmp = []
-			total = 0
-			normalized_fit = []
+				sorted_fit = sorted(fitness.iteritems(), key=lambda x:x[1])
+				f_sum = 0
+				tmp = []
+				total = 0
+				normalized_fit = []
 
 		# sum and reduce all fitnesses
 		for index, fitness in sorted_fit: f_sum += fitness
@@ -539,4 +539,3 @@ if __name__ == '__main__':
 	stoic = determine_stoic()
 	if stoic == None: raise Exception
 	main(replica,stoic)
-
