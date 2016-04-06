@@ -8,7 +8,7 @@ import time
 import numpy as np
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) # add source directory to python path
 sys.path.append(src_dir)
-from core import user_input, data_tools, output, utility
+from core import user_input, data_tools, output, activity
 from file_handler import *
 from kill import *
 from structures import structure_collection, structure_handling
@@ -81,13 +81,13 @@ class RunGA():
 
 	    # Report Replica to Common Output and Update Supercollection
 		self.output("--Replica %s updating local pool--" %(self.replica))
-	        structure_collection.update_supercollection(self.structure_supercoll)
+	    structure_collection.update_supercollection(self.structure_supercoll)
 
             # Intialiaze restarts
-        	restart_replica = self.initialize_restart()
+        restart_replica = self.initialize_restart()
 		restart_counter = 0
 		convergeTF = None
-	        while True:
+	    while True:
 			########## Beginning of Iteration Tasks ##########
 			begin_time = self.beginning_tasks(restart_counter)
 
@@ -96,30 +96,15 @@ class RunGA():
 			if end: return
 
 			########### Restart Scheme #######################
-			structures_to_add = {}	
-			struct = False
-			if os.path.isdir(self.working_dir): 
-				#First check if there is a risk of overwriting a name_sake replica's leftover folder
-				struct = self.structure_scavenge_old(self.working_dir)
-			if (struct == False) and restart_replica:
-				folder_to_scavenge = utility.request_folder_to_check()
-				while struct == False and folder_to_scavenge!= False:
-					struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
-					if struct == False:
-						folder_to_scavenge = utility.request_folder_to_check()
-			
+			self.restart_scheme(restart_replica)
+
 			########### Generate Trial Structure ##############
-			failed_counter = 0
-			while struct == False:
-				failed_counter +=1
-				if failed_counter == 101:
-					raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
-				struct = self.structure_create_new()
+			struct = self.generate_trial_structure()
 
 			########### Relax Trial Structure #################
-			mkdir_p(self.working_dir)
+			mkdir_p(self.working_dir) # make relaxation directory in tmp
 			struct = self.structure_relax(struct)
-			if struct == False: #Relaxation has failed ; start with new selection
+			if struct == False: #relaxation failed, start with new selection
 				rmdir_silence(self.working_dir)
 				continue
 	
@@ -129,14 +114,14 @@ class RunGA():
 				rmdir_silence(self.working_dir)
 				continue
 
-				
-			structures_to_add[(self.replica_stoic, 0)] = struct
+			########## Add Structure to collection ############
+			
+
+			######### End of Iteration Data Tasks #############	
 			restart_counter += 1 
-			convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter, restart_counter)
-			end_time = datetime.datetime.now()
-			self.output("GA Iteration time: -- " + str(end_time - begin_time))
-			self.output("Current Wallclock: -- " + str(end_time))
-			rmdir_silence(self.working_dir)
+			structures_to_add[(self.replica_stoic, 0)] = struct
+			convergeTF = self.end_of_iteration_tasks(structures_to_add, self.success_counter, restart_counter,begin_time)
+
 
 	def initialize_restart(self):
 		restart_counter = 0
@@ -177,8 +162,27 @@ class RunGA():
 		except: pass
 		return end
 
+	def restart_scheme(restart_replica):	
+			structures_to_add = {}	
+			struct = False
+			if os.path.isdir(self.working_dir): 
+				#First check if there is a risk of overwriting a name_sake replica's leftover folder
+				struct = self.structure_scavenge_old(self.working_dir)
+			if (struct == False) and restart_replica:
+				folder_to_scavenge = activity.request_folder_to_check()
+				while struct == False and folder_to_scavenge!= False:
+					struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+					if struct == False:
+						folder_to_scavenge = activity.request_folder_to_check()
 
-
+			return
+	def generate_trial_structure(): 
+		failed_counter = 0
+		while struct == False:
+			failed_counter +=1
+			if failed_counter == 101:
+				raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
+				struct = self.structure_create_new()
 
 	def module_init(self):
 		'''
@@ -290,7 +294,7 @@ class RunGA():
 		
 		self.output("Scavenge folder success!")
 		fdir = os.path.abspath(os.path.join(folder,os.pardir))
-		if utility.bk_folder(fdir,folder[len(fdir)+1:],scavenge_dir,"random"):
+		if activity.bk_folder(fdir,folder[len(fdir)+1:],scavenge_dir,"random"):
 			self.output("Successfully backed up scavenged folder")
 		else:
 			self.output("Failed to back up scavenged folder")
@@ -318,6 +322,7 @@ class RunGA():
 		This routines takes a structure and relaxes it
 		Returns False if doesn't meet SPE criteria or relaxation fails
 		'''
+		mkdir_p(self.working_dir) # make relaxation directory in tmp
 		########### Begin 'Cascade' ##############################
 		cascade_counter = 0 
 		control_check_SPE_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),self.control_list[0])
@@ -371,7 +376,7 @@ class RunGA():
 		
 ############################# Helper Functions used in start function above #######################################################  
 
-	def end_of_iteration_tasks(self, structures_to_add, num_success_common, restart_counter):
+	def end_of_iteration_tasks(self, structures_to_add, num_success_common, restart_counter,begin_time):
 		prev_struct_index = None #none for now because only using GA for FF or aims not both
 		ID = len(self.structure_coll.structures) + 1
 		self.child_counter = self.child_counter + 1 
@@ -405,6 +410,11 @@ class RunGA():
 			self.output("Structure index: "+str(struct_index))
 			structure_collection.update_supercollection(self.structure_supercoll)
 			 #self.output("Added? :"+str(self.structure_supercoll.get((self.replica_stoic,0)).structures))	
+			end_time = datetime.datetime.now()
+			self.output("GA Iteration time: -- " + str(end_time - begin_time))
+			self.output("Current Wallclock: -- " + str(end_time))
+			rmdir_silence(self.working_dir)
+
 
 			#Check for Energy Convergence of GA
 			new_list_top_en = np.array([])
@@ -440,7 +450,7 @@ class RunGA():
 			self.output(message)
 			self.output("writing hierachy")
 			data_tools.write_energy_hierarchy(self.structure_coll)		   	
-
+ 			
 			#End of Iteration Outputs
 			additions = len(self.structure_coll.structures)-self.number_of_IP	
 			avg_add = float(additions)/self.number_of_replicas	
