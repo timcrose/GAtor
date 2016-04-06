@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 '''
-Created on Aug 5, 2013
-
-@author: newhouse
+core algorithm
 '''
 
 # adding src directory to path at runtime
@@ -46,35 +44,6 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 	environment=ui.get('parallel_settings','system')
 	print "Setting up multiprocessing for %i processes on the %s system" % (number_of_multi,environment)
 
-	# Currently Not Used #
-	#############################################################################
-	mole_list=ui.get_eval('unit_cell_settings','molecule_list')
-	for (molename,napm,occurance) in mole_list:
-		if os.path.isfile(os.path.join(molecules_dir,molename+"_com_adjusted")):
-			pass
-		else:
-			if not os.path.isfile(os.path.join(molecules_dir,molename)):
-				raise RuntimeError("molecule geometry not found!")
-				return
-			atom_list=get_molecule_geo(molename,False)
-			cm=[0,0,0]; tm=0
-			for i in range (len(atom_list)):
-				mass=ui.get_eval('molar_mass',atom_list[i][3])
-				tm+=mass
-				for j in range (3):
-					cm[j]+=atom_list[i][j]*mass
-			cm=[cm[j]/tm for j in range (3)]
-			for atom in atom_list:
-				for j in range (3):
-					atom[j]-=cm[j]
-#			print "this is atom_list",atom_list
-			f=open(os.path.join(molecules_dir,molename+'_com_adjusted'),"w")
-			for i in range (len(atom_list)):
-				f.write('%f %f %f %s\n' % (atom_list[i][0],atom_list[i][1],atom_list[i][2],atom_list[i][3])) 
-			#fix
-			f.close()
-	#######################################################################################
-
         if restart_true == True:
         	restart_files = [d for d in os.listdir(tmp_dir) if os.path.isdir(os.path.join(tmp_dir, d))]
                 number_of_restarts = len(restart_files)
@@ -98,7 +67,7 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 			replica_name=get_random_index()
 			print "In master.py, this is replica_name", replica_name
 			exe_string='''#!/bin/bash
-#SBATCH --qos=project
+#SBATCH --qos=normal
 #SBATCH --job-name=fhi_aims
 
 #SBATCH --time=%s
@@ -110,6 +79,11 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export MKL_DYNAMIC=FALSE
+echo "Starting at `date`"
+echo "Running on hosts: $SLURM_NODELIST"
+echo "Running on $SLURM_NNODES nodes."
+echo "Running on $SLURM_NPROCS processors."
+echo "Current working directory is `pwd`"
 
 python %s -f %s --rn %s
 ''' % (ui.get('parallel_settings','replica_walltime'),replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)

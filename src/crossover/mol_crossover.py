@@ -164,7 +164,7 @@ class Crossover_2mol(object):
     def choose_crossover_type(self):
 	geom_opts = [1, 2, 3, 4]
         lat_opts = [1, 2, 3]
-	cross_types = [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3],[4,1],[4,2],[4,3]]
+	cross_types = [[1,1],[1,1],[2,2],[2,2],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3],[4,1],[4,2],[4,3]]
 	method = random.choice(cross_types)
 	return method
 
