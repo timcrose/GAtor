@@ -90,7 +90,7 @@ def rmdir_silence(path):
 	except:
 		pass
     
-def my_import(name, package=''):
+def (name, package=''):
     '''
     dynamically (at runtime) imports modules portentially specified in the UI
     taken from http://function.name/in/Python/__import__ 
