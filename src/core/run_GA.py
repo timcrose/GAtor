@@ -76,7 +76,7 @@ class RunGA():
 		''' 
 
 		# Report Replica to Common Output and Update Supercollection
-		self.output("--Replica %s updating local pool--" %(self.replica))
+		self.output("\n--Replica %s updating local pool--" %(self.replica))
 		structure_collection.update_supercollection(self.structure_supercoll)
 
 		# Intialiaze restarts
@@ -113,7 +113,7 @@ class RunGA():
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
 			coll = self.structure_supercoll.get((self.replica_stoic,ref_label))
-			top_en_list = self.return_top_en(coll)
+			top_en_list = self.return_energy_array(coll)
 			self.check_energy_minimum(struct,top_en_list)
 			
 			#----- Add Structure to collection -----#
@@ -207,14 +207,14 @@ class RunGA():
 		for index, structure in coll:
 			energy = structure.get_property('energy')
 			e_list = np.append(energy,e_list)
-		e_list = np.sort(e_list.reshape(len(old_e_list),1),axis=0)
+		e_list = np.sort(e_list.reshape(len(e_list),1),axis=0)
 		return e_list
 
 
 	def check_energy_minimum(self, struct, e_list):
 		en = struct.get_property('energy')
 		global_en= e_list[0][0]		
-		self.output("E_stuct: "+str(en)+"  GM: "+str(global_en)
+		self.output("E_stuct: "+str(en)+"  GM: "+str(global_en))
 		self.check_if_global_minima(en, global_en)
 		return 
 
@@ -380,7 +380,7 @@ class RunGA():
 			return False
 
 		self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
-		self.restart(str(self.replica)+' '+str(restart_count)+' finished_relaxing:   ' +str(datetime.datetime.now()))
+		self.restart(str(self.replica)+' finished_relaxing:   ' +str(datetime.datetime.now()))
 
 		for key in struct_info.properties: #Update the information after relaxation
 			if (not key in struct.properties) or (struct.properties[key]==None):
@@ -416,9 +416,8 @@ class RunGA():
 			rmdir_silence(self.working_dir)
 
 			# Convergence of Energy of Nth Top Structures
-			new_list_top_en =self.return_energy_array(coll)
-			converged = self.check_convergence(old_list_top_en,new_list_top_en,len(self.structure_coll.structures)) 
-	
+			#new_list_top_en =self.return_energy_array(coll)
+			converged = self.check_convergence(old_list_top_en)	
 			#Print out avg fitness
 			#sum = 0
 			#fit_array = self.avg_fitness(min_e, max_e, coll_new)
@@ -476,7 +475,7 @@ class RunGA():
 		list_top_ens = new_e_list[:self.top_en_count]
 		return list_top_ens
 
-	def check_convergence(self, old_list_top_en, new_list_top_en, length_coll):
+	def check_convergence(self, old_list_top_en):
 		#Check if top N energies havent changed in X iterations
 		
 		new_e_list = np.array([])
