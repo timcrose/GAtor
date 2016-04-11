@@ -184,6 +184,7 @@ class RunGA():
 			if failed_counter == 101:
 				raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
 			struct = self.structure_create_new()
+		return struct
 
 	def module_init(self):
 		'''
