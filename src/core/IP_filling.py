@@ -9,9 +9,10 @@ import numpy
 from core import user_input, data_tools, output
 from core.file_handler import cwd, set_progress, my_import, tmp_dir, read_data
 from external_libs.filelock import FileLock
-from structures import structure_collection
+from structures import structure_collection,structure_handling
 from structures.structure import get_geo_from_file, Structure
 from structures.structure_collection import StructureCollection
+from utilities.duplicate_check import *
 
 
 def main():
@@ -55,7 +56,9 @@ def main():
 		struct.set_property('replica', 'init__pool')
 	        message= "Stoic of IP struct: "  +str(struct.get_stoic())
 		print message
-		structure_collection.add_structure(struct, struct.get_stoic(), 0) #add struct to common FF pool
+		new_struct = structure_handling.cell_modification(struct, "init_pool",create_duplicate=False)
+		new_structp = duplicate_check(new_struct)
+		structure_collection.add_structure(struct, new_struct.get_stoic(), 0) #add struct to common FF pool
 		print "IP structure added. ID: ", ip_count
         return	ip_count
 

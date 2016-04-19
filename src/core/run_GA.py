@@ -220,7 +220,7 @@ class RunGA():
 
 	def add_to_collection(self, struct, ref_label):	
 		prev_struct_index = None #none for now because only using GA for FF not both
-		ID = len(self.structure_coll.structures) + 1
+		ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
 		self.replica_child_count = self.replica_child_count + 1 
 		try:
 			struct.set_property('prev_struct_id', prev_struct_index)  # tracks cascade sequence
@@ -427,27 +427,27 @@ class RunGA():
 			#data_tools.write_avg_fitness(ID, fit_avg, coll_new)
 
 			#Output success message to screen        
-			prev_struct_index = str(key) + str(index)
+			#prev_struct_index = str(key) + str(index)
 			message = 'Success!: \n  stoichiometry-- ' + str(self.replica_stoic) + \
-						  '\n  cascade-- ' + str(key[1]) + \
-						  '\n  structure index-- ' + str(struct_index) + \
+						  '\n  cascade-- ' + str("key[1]") + \
+						  '\n  structure index-- ' + str("struct_index") + \
 						  '\n  replica child count-- ' + str(self.replica_child_count) + \
-						  '\n  collection count -- ' + str(ID) + \
+						  '\n  collection count -- ' + str("ID") + \
 						  '\n  replica-- ' + str(self.replica)
 			self.output(message)
 
 			#write energy hierarchy 
 			self.output("writing hierachy")
-			data_tools.write_energy_hierarchy(self.structure_coll)		   	
+			data_tools.write_energy_hierarchy( self.structure_supercoll.get((self.replica_stoic, 0)))		   	
 			
 			#End of Iteration Outputs
-			additions = len(self.structure_coll.structures)-self.number_of_IP	
-			avg_add = float(additions)/self.number_of_replicas	
-			self.restart(str(self.replica)+' '+str(restart_count-1)+' finished_iteration:  ' +str(datetime.datetime.now()))
-			self.output(str(self.replica)+' finished iteration')
-			self.output('Cumulative additions to common pool: '+str(additions))
-			self.output('Avg addition per replica:            '+str(avg_add))
-			self.output('Total size of common pool:           '+str(len(self.structure_coll.structures)))		 	
+	#		additions = len(self.structure_coll.structures)-self.number_of_IP	
+	#		avg_add = float(additions)/self.number_of_replicas	
+	#		self.restart(str(self.replica)+' '+str(restart_count-1)+' finished_iteration:  ' +str(datetime.datetime.now()))
+	#		self.output(str(self.replica)+' finished iteration')
+	#		self.output('Cumulative additions to common pool: '+str(additions))
+	#		self.output('Avg addition per replica:            '+str(avg_add))
+			self.output('Total size of common pool:           '+str(len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)))		 	
 			if converged is "not_converged":
 				self.output("GA not converged yet.")
 				pass	
@@ -499,9 +499,9 @@ class RunGA():
 				self.output("Top "+str(self.top_en_count)+" energies have changed.")
 				self.convergence_count= 0
 				self.output("Convergence counter reset.")
-				self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
+				self.output("Convergence iteration:  "+ str(self.convergence_count))
 				return "not_converged"
-		self.output("Convergence iteration:  "+ str(self.mod_iteration_counter))
+		self.output("Convergence iteration:  "+ str(self.convergence_count))
 		if self.convergence_count== self.max_en_it:
 			return "converged" 
 

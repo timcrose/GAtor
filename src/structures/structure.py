@@ -155,7 +155,59 @@ class Structure(object):
             if not math.isnan(item['charge']): atom_string += 'initial_charge ' + "%.5f" % item['charge'] + '\n'
             if item['fixed'] == True: atom_string += 'constrain_relaxation    .true.\n'
         return atom_string
-    
+  
+    def get_pymatgen_structure(self):
+        '''
+        Inputs: A numpy.ndarry structure with standard "geometry" format
+        Outputs: A pymatgen core structure object with basic geometric properties
+        '''
+	frac_data = self.get_frac_data()
+	coords = frac_data[0] # frac coordinates
+        atoms = frac_data[1] # site labels
+        lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=data[6], gamma=data[7])
+        structp = StructureP(lattice, atoms, coords)
+        return structp	
+
+    def get_frac_data(self):
+        '''
+	Inputs: A numpy.ndarry structure with standard "geometry" format
+	Outputs:  Fractional coordinate data in the form of positions (list), atom_types (list), lattice vector a magnitude, lattice vector b magnitude, lattice vector c magnitude, alpha beta, gamma.
+        '''
+        geo = self.geometry
+	A = self.get_property('lattice_vector_a')
+        B = self.get_property('lattice_vector_b')
+        C = self.get_property('lattice_vector_c')
+	alpha, beta, gamma = self.get_lattice_angles()
+        lat_mat = np.zeros((3,3))
+        for i in range(3):
+                lat_mat[i][0] = A[i]
+                lat_mat[i][1] = B[i]
+                lat_mat[i][2] = C[i]
+        lat_mat_f = np.linalg.inv(lat_mat)
+        xyz = [i for i in range(len(geo))]
+        fxyz = [i for i in range(len(geo))]
+        atoms = [i for i in range(len(geo))]
+        for i in range(len(geo)):
+                xyz[i]= [geo[i][0], geo[i][1], geo[i][2]]
+                atoms[i] = geo[i][3]
+                fxyz[i]= xyz[i][0]*lat_mat_f[0]+xyz[i][1]*lat_mat_f[1]+xyz[i][2]*lat_mat_f[2]
+        coords = []
+        for i in range(len(fxyz)):
+                coords.append([fxyz[i][0],fxyz[i][1],fxyz[i][2]])
+        return coords, atoms, a, b, c, alpha, beta, gamma
+
+    def get_lattice_angles(self):
+	A = self.get_property('lattice_vector_a')
+        B = self.get_property('lattice_vector_b')
+        C = self.get_property('lattice_vector_c')
+        a = np.linalg.norm(A)
+        b = np.linalg.norm(B)
+        c = np.linalg.norm(C)
+        alpha = angle(B,C)
+        beta = angle(A,C)
+        gamma = angle(A,B)
+	return alpha, beta, gamma
+
     # json data handling packing
     def dumps(self):
 	self.properties["lattice_vector_a"]=list(self.properties["lattice_vector_a"])
