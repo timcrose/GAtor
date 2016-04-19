@@ -9,7 +9,7 @@ import ast
 from collections import defaultdict
 import json
 import math
-import numpy
+import numpy as np
 import os
 
 from core.file_handler import read_data, structure_dir, write_data
@@ -30,7 +30,7 @@ class Structure(object):
         self.struct_id = None
         self.input_ref = None        
         self.properties = {}
-        self.geometry = numpy.zeros(0, dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), \
+        self.geometry = np.zeros(0, dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), \
                                       ('element', 'a10'), ('spin', 'float32'), ('charge', 'float32'), ('fixed', 'bool')])
             
     # setters
@@ -139,7 +139,7 @@ class Structure(object):
     
     def get_geometry_atom_format(self): 
         '''
-        Takes a numpy.ndarry with standard "geometry" format.
+        Takes a np.ndarry with standard "geometry" format.
         Returns a string with structure in standard aims format.
         If atom's spin is spedcified, it's value is located on the line below the atom's coordinates.
         similarly with charge and relaxation constraint.
@@ -158,7 +158,7 @@ class Structure(object):
   
     def get_pymatgen_structure(self):
         '''
-        Inputs: A numpy.ndarry structure with standard "geometry" format
+        Inputs: A np.ndarry structure with standard "geometry" format
         Outputs: A pymatgen core structure object with basic geometric properties
         '''
 	frac_data = self.get_frac_data()
@@ -170,7 +170,7 @@ class Structure(object):
 
     def get_frac_data(self):
         '''
-	Inputs: A numpy.ndarry structure with standard "geometry" format
+	Inputs: A np.ndarry structure with standard "geometry" format
 	Outputs:  Fractional coordinate data in the form of positions (list), atom_types (list), lattice vector a magnitude, lattice vector b magnitude, lattice vector c magnitude, alpha beta, gamma.
         '''
         geo = self.geometry
@@ -283,9 +283,9 @@ def adapt_array(arr):
 
 def convert_array(list_of_list):
     """
-    takes the array stored in json format and return it to a numpy array with proper dtype
+    takes the array stored in json format and return it to a np array with proper dtype
     """
-    geometry = numpy.zeros(len(list_of_list), dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), \
+    geometry = np.zeros(len(list_of_list), dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), \
                                    ('element', 'a10'), ('spin', 'float32'), ('charge', 'float32'), ('fixed', 'bool')])
     for i in range(len(list_of_list)): 
         geometry[i]['x'] = list_of_list[i][0]
