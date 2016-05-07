@@ -455,7 +455,7 @@ class RunGA():
 				return True	
 
 
-	def check_if_global_minima(self, min_e, e_new):	
+	def check_if_global_minima(self, e_new, min_e):	
 		if e_new < min_e:
 			diff = min_e - e_new
 			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \

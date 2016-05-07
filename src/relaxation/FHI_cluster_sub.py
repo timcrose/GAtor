@@ -302,7 +302,7 @@ class FHIAimsRelaxation():
 
 	# reads output file to extract energy
         energy = self.extract_energy()
-	#self.output("extracted energy" +str(energy))
+	self.output("extracted energy" +str(energy))
         if energy == False: return False  # did not converge
         self.result_struct.set_property('energy', energy)
        

@@ -14,6 +14,8 @@ import os
 
 from core.file_handler import read_data, structure_dir, write_data
 
+from pymatgen import Lattice as LatticeP
+from pymatgen import Structure as StructureP
 
 class Structure(object):
     '''
@@ -156,17 +158,17 @@ class Structure(object):
             if item['fixed'] == True: atom_string += 'constrain_relaxation    .true.\n'
         return atom_string
   
-    def get_pymatgen_structure(self):
-        '''
-        Inputs: A np.ndarry structure with standard "geometry" format
-        Outputs: A pymatgen core structure object with basic geometric properties
-        '''
-	frac_data = self.get_frac_data()
-	coords = frac_data[0] # frac coordinates
-        atoms = frac_data[1] # site labels
-        lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=data[6], gamma=data[7])
-        structp = StructureP(lattice, atoms, coords)
-        return structp	
+ #   def get_pymatgen_structure(self):
+#        '''
+#        Inputs: A np.ndarry structure with standard "geometry" format
+#        Outputs: A pymatgen core structure object with basic geometric properties
+#        '''
+#	frac_data = self.get_frac_data()
+#	coords = frac_data[0] # frac coordinates
+ #       atoms = frac_data[1] # site labels
+#        lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
+#        structp = StructureP(lattice, atoms, coords)
+#        return structp	
 
     def get_frac_data(self):
         '''
@@ -178,6 +180,7 @@ class Structure(object):
         B = self.get_property('lattice_vector_b')
         C = self.get_property('lattice_vector_c')
 	alpha, beta, gamma = self.get_lattice_angles()
+	a, b, c = self. get_lattice_magnitudes()
         lat_mat = np.zeros((3,3))
         for i in range(3):
                 lat_mat[i][0] = A[i]
@@ -203,10 +206,25 @@ class Structure(object):
         a = np.linalg.norm(A)
         b = np.linalg.norm(B)
         c = np.linalg.norm(C)
-        alpha = angle(B,C)
-        beta = angle(A,C)
-        gamma = angle(A,B)
+        alpha = self.angle(B,C)
+        beta = self.angle(A,C)
+        gamma = self.angle(A,B)
 	return alpha, beta, gamma
+
+    def get_lattice_magnitudes(self):
+        A = self.get_property('lattice_vector_a')
+        B = self.get_property('lattice_vector_b')
+        C = self.get_property('lattice_vector_c')
+        a = np.linalg.norm(A)
+        b = np.linalg.norm(B)
+        c = np.linalg.norm(C)
+	return a, b, c
+
+    def angle(self, v1, v2):
+        numdot = np.dot(v1,v2)
+        anglerad = np.arccos(numdot/(np.linalg.norm(v1)*np.linalg.norm(v2)))
+        angledeg = anglerad*180/np.pi
+        return angledeg
 
     # json data handling packing
     def dumps(self):

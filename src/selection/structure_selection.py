@@ -1,6 +1,6 @@
 '''
 Created on Oct 16, 2013
-@author: newhouse and farren
+@authors newhouse, farren
 '''
 from __future__ import division
 from collections import defaultdict
@@ -67,10 +67,13 @@ class StructureSelection():
 	reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
 	e_list = np.array([])
         for index, structure in structure_coll:
-        	energy = structure.get_property('energy')
-                e_list = np.append(energy,e_list)
+		try:
+        		energy = structure.get_property('energy')
+                	e_list = np.append(energy,e_list)
+		except ValueError:
+			output.local_message("Structure has no 'energy' property",self.replica)
         e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
-#	output.local_message("e_list" +str(e_list), self.replica)
+	output.local_message("e_list" +str(e_list), self.replica)
         min_e = e_list[0][0]
   	max_e = e_list[-1][0] 
 #	output.local_message("min e" +str(min_e),self.replica)
