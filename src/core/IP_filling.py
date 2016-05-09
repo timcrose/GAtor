@@ -19,36 +19,38 @@ def main():
 	Called by core/master.py when -i option is present, requires the user-defined initial pool (or additional user structures)
 	to be added into the common 0 storage. An optional duplicate check is performed if requested in ui.conf
 	Returns: Total number of initial structures added to the collection.
-    '''
+    	'''
 	ui = user_input.get_config()
-    user_structures_dir = os.path.join(cwd, ui.get('initial_pool', 'user_structures_dir'))
-    added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
+    	user_structures_dir = os.path.join(cwd, ui.get('initial_pool', 'user_structures_dir'))
+    	added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
 	initial_list = convert_to_structures(files_to_add)
-    if ui.get_eval('initial_pool', duplicate_check):
-    	print "Checking Initial pool for duplicates"
-    	ip_count = return_non_duplicates(initial_list)
+    	if ui.get_eval('initial_pool', 'duplicate_check'):
+    		print "Checking Initial pool for duplicates"
+    		ip_count = return_non_duplicates(initial_list, ui)
+		print "Final Initial Pool Count: "+ str(ip_count)
 		return	ip_count
 	else:
-		ip_count = return_all_user_structures(intial_list)
+		ip_count = return_all_user_structures(initial_list)
+                print "Final Initial Pool Count: "+ str(ip_count)
 		return ip_count
 
 def file_lock_structures(user_structures_dir, added_user_structures):
 	'''
 	Args: Path to user defined structures directory, path name to save filepaths of user added structures 
 	Returns: List of files to add to collection
-    '''
+    	'''
 	open(added_user_structures, 'a').close()  
-    # read files in usre-defined structures directory
-    try:files = os.listdir(user_structures_dir)
-    except:
+    	# read files in user-defined structures directory
+	try:files = os.listdir(user_structures_dir)
+	except:
 		raise RuntimeError('IP directory defined but not found; omit -i in run script if IP filling unnecessary')
 	if len(files) == 0:
 		print "Empty initial pool directory; omit -i in run script if IP filling unnecessary"
 		return 0
-    # copy files and add name to list of copied files to avoid duplicates
-    files_to_add = []
-    with FileLock(added_user_structures):
+    	# copy files and add name to list of copied files to avoid duplicates
+    	files_to_add = []
+    	with FileLock(added_user_structures):
 		ffile = open(added_user_structures, 'r')
 		file_list = ffile.read()
 		ffile.close()
@@ -66,15 +68,14 @@ def convert_to_structures(files_to_add):
 	'''
 	Args: List of files to add to collection
 	Returns: List of Structures(), 
-    '''
+	'''
 	initial_list = []
 	for file in files_to_add:	
 		struct = Structure()
 		struct.build_geo_from_json_file(file)
 		struct.set_property('file_path', file)
-		struct.set_property('ID', ip_count)	
 		struct.set_property('replica', 'init_pool')
-	    message= "Stoic of IP struct: "  +str(struct.get_stoic())
+		message= "Stoic of IP struct: "  +str(struct.get_stoic())
 		mod_struct = structure_handling.cell_modification(struct, "init_pool",create_duplicate=False)
 		initial_list.append(mod_struct)
 		print "Done with converting user input geometries to Structure() instances"
@@ -84,11 +85,11 @@ def set_structure_matcher(ui):
 	'''
 	Args: The UI for setting tolerances for pymatgen's structure matcher
 	Returns: Pymatgen StructureMatcher object
-    '''
-	L_tol =ui.get_eval('initial_pool', ltol)
-	S_tol = ui.get_eval('initial_pool', stol)
-	Angle_tol = ui.get_eval('initial_pool', angle_tol)
-	Scale = ui.get_eval('initial_pool', scale_vol)
+	'''
+	L_tol =ui.get_eval('initial_pool', 'ltol')
+	S_tol = ui.get_eval('initial_pool', 'stol')
+	Angle_tol = ui.get_eval('initial_pool', 'angle_tol')
+	Scale = ui.get_eval('initial_pool', 'scale_vol')
 	sm = StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, scale=Scale, attempt_supercell=False, comparator=SpeciesComparator())
 	return sm
 
@@ -97,7 +98,7 @@ def return_all_user_structures(initial_list):
 	Called when no duplicate check is required. Adds all user-defined structures into common (0) storage
 	Args: The initial list of Structures() from the user-defined folder
 	Returns: The total number of structures added
-    '''
+	'''
 	ip_count = 0
 	for struct in initial_list:
 		structure_collection.add_structure(struct, struct.get_stoic(), 0)
@@ -105,7 +106,7 @@ def return_all_user_structures(initial_list):
 	return ip_count
 
     	
-def return_non_duplicates(initial_list):
+def return_non_duplicates(initial_list, ui):
 	'''
 	Called when duplicate check is required before adding user-defined structures into common (0) storage
 	Args: The initial list of Structures() from the user-defined folder
@@ -128,7 +129,7 @@ def return_non_duplicates(initial_list):
 			print "Checking Next Structure"
 			for comp_struct in struct_list:	
 				comp_frac_data = comp_struct.get_frac_data()
-               	comp_structp = get_pymatgen_structure(comp_frac_data)
+        		       	comp_structp = get_pymatgen_structure(comp_frac_data)
 				fitTF = sm.fit(structp,comp_structp)
 				TF_list.append(fitTF)
 				#print TF_list
