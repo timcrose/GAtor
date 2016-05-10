@@ -27,7 +27,7 @@ def main():
 	initial_list = convert_to_structures(files_to_add)
     	if ui.get_eval('initial_pool', 'duplicate_check'):
     		print "Checking Initial pool for duplicates"
-    		ip_count = return_non_duplicates(initial_list, ui)
+    		ip_count = return_IP_non_duplicates(initial_list, ui)
 		print "Final Initial Pool Count: "+ str(ip_count)
 		return	ip_count
 	else:
@@ -81,7 +81,7 @@ def convert_to_structures(files_to_add):
 		print "Done with converting user input geometries to Structure() instances"
 	return initial_list
 
-def set_structure_matcher(ui):
+def set_IP_structure_matcher(ui):
 	'''
 	Args: The UI for setting tolerances for pymatgen's structure matcher
 	Returns: Pymatgen StructureMatcher object
@@ -106,7 +106,7 @@ def return_all_user_structures(initial_list):
 	return ip_count
 
     	
-def return_non_duplicates(initial_list, ui):
+def return_IP_non_duplicates(initial_list, ui):
 	'''
 	Called when duplicate check is required before adding user-defined structures into common (0) storage
 	Args: The initial list of Structures() from the user-defined folder
@@ -115,11 +115,10 @@ def return_non_duplicates(initial_list, ui):
 	check_count = 0
 	ip_count = 0
 	struct_list = []
-	sm = set_structure_matcher(ui)
+	sm = set_IP_structure_matcher(ui)
 	for struct in initial_list:
 		check_count += 1
-		frac_data = struct.get_frac_data()
-		structp = get_pymatgen_structure(frac_data)
+		structp = get_pymatgen_structure(struct)
 		if len(struct_list) == 0:
 			struct_list.append(struct)	
 			print "Added First Structure"
@@ -144,11 +143,12 @@ def return_non_duplicates(initial_list, ui):
 	return ip_count
 
 
-def get_pymatgen_structure(frac_data):
+def get_pymatgen_structure(struct):
 	'''
 	Args: Geometric data from GAtor's Structure() object
 	Returns: A pymatgen StructureP() object with the same geometric properties
 	'''
+	frac_data = struct.get_frac_data()
 	coords = frac_data[0] # frac coordinates
 	atoms = frac_data[1] # site labels
 	lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
