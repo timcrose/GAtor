@@ -9,7 +9,12 @@ import math
 import numpy as np
 
 from core import user_input, output
+from core.IP_flling import return_non_duplicates, get_pymatgen_structure
 from datetime import datetime
+
+from pymatgen import Lattice as LatticeP
+from pymatgen import Structure as StructureP
+from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,SpeciesComparator,FrameworkComparator
 
 def main(struct, structure_coll, replica):
     '''
@@ -25,20 +30,14 @@ def main(struct, structure_coll, replica):
     if en_result is False:
         return False
 
-
     structs_to_compare = comp.get_similar_structures() # return list of structures within a difference tolerance of comparison (.5 eV)
-    output.local_message("Number of Structures w/in duplicate energy window: "+len(structs_to_compare),replica)
-    output.local_message("Structures w/in energy window: "+str(structs_to_compare),replica)
+    dup_result = comp.check_if_duplicate(structs_to_compare)
 
-    #is_duplicate = comp.check_if_duplicate(structs_to_compare) #Boolean
-   # if is_duplicate is False:
-    #    return False
-  
     t2 = datetime.now()
-   
     output.local_message("The structure compared is unique. ",replica)
     output.local_message("Time taken to compare structure to collection: " + str(struct.struct_id) + ' -- ' + str(t2 - t1),replica)
-    return True
+
+    return dup_result # Boolean
 
 
 class Comparison:
@@ -62,10 +61,10 @@ class Comparison:
         sorted_ens = np.sort(np.array(energies))
         worst_energy =sorted_ens[-1] 
 
-        self.output("worst energy: " +str(worst_energy))
+        self.output("Highest energy in collection: " +str(worst_energy))
 
         if energy < worst_energy:
-            self.output("Structure has unacceptable energy, higher than entire collection")
+            self.output("Structure has unacceptable energy that is higher than entire collection")
             return False
         elif energy >= worst_energy:
             return True
@@ -81,11 +80,63 @@ class Comparison:
 
         sim_list = []
         en = float(self.struct.get_property('energy'))
-        for comp_struct in list_to_compare:
+        for comp_struct in self.structure_coll.itervalues():
             comp_en = float(comp_struct.get_property('energy'))
             if comp_en <= en + e_tol and comp_en >= en + e_tol: 
                 sim_list.append(comp_struct) 
+        self.output.("Number of Structures w/in duplicate energy window: "+len(structs_to_compare))
+        self.output("Structures w/in energy window: "+str(structs_to_compare))
         return sim_list
+
+    def check_if_duplicate(self, comp_list):
+        '''
+        Args: list of Structures() to compare
+        Returns: T/F is structure is duplicate
+        '''
+        sm = self.set_comp_structure_matcher()
+ 
+        structp = self.get_pymatgen_structure(struct)
+        for comp_struct in comp_list: 
+            comp_frac_data = comp_struct.get_frac_data()
+            comp_structp = self.get_pymatgen_structure(comp_struct)
+            fitTF = sm.fit(structp,comp_structp)
+            TF_list.append(fitTF)
+                    #print TF_list
+        try:            
+            if True not in TF_list:
+                print "Structure is non-duplicate!"
+                print "Total Checked: "+str(len(comp_list) 
+                return True
+        except:
+            self.output("Structure compared found to be a duplicate")
+            self.output("Total Checked"+ str(len(comp_list))) 
+            return False
+
+
+    def set_comp_structure_matcher(self):
+        '''
+        Args: self
+        Returns: Pymatgen StructureMatcher object
+        '''
+        ui= self.ui
+        L_tol =ui.get_eval('comparison', 'ltol')
+        S_tol = ui.get_eval('comparison', 'stol')
+        Angle_tol = ui.get_eval('comparison', 'angle_tol')
+        Scale = ui.get_eval('comparison', 'scale_vol')
+        sm = StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, scale=Scale, attempt_supercell=False, comparator=SpeciesComparator())
+        return sm
+
+    def get_pymatgen_structure(self, struct):
+        '''
+        Args: self, Geometric data from GAtor's Structure() object
+        Returns: A pymatgen StructureP() object with the same geometric properties
+        '''
+        frac_data = struct.get_frac_data()
+        coords = frac_data[0] # frac coordinates
+        atoms = frac_data[1] # site labels
+        lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
+        structp = StructureP(lattice, atoms, coords)
+        return structp
     
 
         
