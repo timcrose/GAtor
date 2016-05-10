@@ -9,7 +9,6 @@ import math
 import numpy as np
 
 from core import user_input, output
-from core.IP_flling import return_non_duplicates, get_pymatgen_structure
 from datetime import datetime
 
 from pymatgen import Lattice as LatticeP
@@ -61,12 +60,14 @@ class Comparison:
         sorted_ens = np.sort(np.array(energies))
         worst_energy =sorted_ens[-1] 
 
-        self.output("Highest energy in collection: " +str(worst_energy))
+	self.output("Energy of current structure: " + str(energy))
+        self.output("Highest energy in collection: " + str(worst_energy))
 
-        if energy < worst_energy:
+        if energy > worst_energy:
             self.output("Structure has unacceptable energy that is higher than entire collection")
             return False
-        elif energy >= worst_energy:
+        elif energy <= worst_energy:
+	    self.output("Structure has acceptable energy.")
             return True
     
         
@@ -75,7 +76,7 @@ class Comparison:
         reduces the list of structures that are checked for duplicates within
         a certain window of energy defined by the user
         '''
-        e_tol = float(self.ui.get_eval('comparison', 'dup_energy_tol'))
+        e_tol = float(self.ui.get_eval('comparison_settings', 'dup_energy_tol'))
         if e_tol == None: raise Exception
 
         sim_list = []
@@ -84,8 +85,8 @@ class Comparison:
             comp_en = float(comp_struct.get_property('energy'))
             if comp_en <= en + e_tol and comp_en >= en + e_tol: 
                 sim_list.append(comp_struct) 
-        self.output.("Number of Structures w/in duplicate energy window: "+len(structs_to_compare))
-        self.output("Structures w/in energy window: "+str(structs_to_compare))
+        self.output("Number of Structures w/in duplicate energy window: "+str(len(sim_list)))
+        self.output("Structures w/in energy window: "+str(sim_list))
         return sim_list
 
     def check_if_duplicate(self, comp_list):
@@ -105,7 +106,7 @@ class Comparison:
         try:            
             if True not in TF_list:
                 print "Structure is non-duplicate!"
-                print "Total Checked: "+str(len(comp_list) 
+                print "Total Checked: "+str(len(comp_list)) 
                 return True
         except:
             self.output("Structure compared found to be a duplicate")
@@ -119,10 +120,10 @@ class Comparison:
         Returns: Pymatgen StructureMatcher object
         '''
         ui= self.ui
-        L_tol =ui.get_eval('comparison', 'ltol')
-        S_tol = ui.get_eval('comparison', 'stol')
-        Angle_tol = ui.get_eval('comparison', 'angle_tol')
-        Scale = ui.get_eval('comparison', 'scale_vol')
+        L_tol =ui.get_eval('comparison_settings', 'ltol')
+        S_tol = ui.get_eval('comparison_settings', 'stol')
+        Angle_tol = ui.get_eval('comparison_settings', 'angle_tol')
+        Scale = ui.get_eval('comparison_settings', 'scale_vol')
         sm = StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, scale=Scale, attempt_supercell=False, comparator=SpeciesComparator())
         return sm
 

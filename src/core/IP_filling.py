@@ -70,6 +70,7 @@ def convert_to_structures(files_to_add):
 	Returns: List of Structures(), 
 	'''
 	initial_list = []
+	print "Converting all user-input geometries to Structure() instances"
 	for file in files_to_add:	
 		struct = Structure()
 		struct.build_geo_from_json_file(file)
@@ -78,7 +79,6 @@ def convert_to_structures(files_to_add):
 		message= "Stoic of IP struct: "  +str(struct.get_stoic())
 		mod_struct = structure_handling.cell_modification(struct, "init_pool",create_duplicate=False)
 		initial_list.append(mod_struct)
-		print "Done with converting user input geometries to Structure() instances"
 	return initial_list
 
 def set_IP_structure_matcher(ui):
