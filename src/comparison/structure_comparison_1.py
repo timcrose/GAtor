@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 from core import user_input, output
-
+from datetime import datetime
 
 def main(struct, structure_coll, replica):
     '''
@@ -19,7 +19,7 @@ def main(struct, structure_coll, replica):
 
     comp = Comparison(struct, structure_coll, replica)
 
-    t1 = datetime.datetime.now()
+    t1 = datetime.now()
   
     en_result = comp.acceptable_energy() # make sure energy is higher than the worst in the collection
     if en_result is False:
@@ -27,17 +27,17 @@ def main(struct, structure_coll, replica):
 
 
     structs_to_compare = comp.get_similar_structures() # return list of structures within a difference tolerance of comparison (.5 eV)
-    output.local_message(("Number of Structures w/in duplicate energy window: "+len(structs_to_compare),replica)
-    output.local_message(("Structures w/in energy window: "+str(structs_to_compare),replica)
+    output.local_message("Number of Structures w/in duplicate energy window: "+len(structs_to_compare),replica)
+    output.local_message("Structures w/in energy window: "+str(structs_to_compare),replica)
 
     #is_duplicate = comp.check_if_duplicate(structs_to_compare) #Boolean
    # if is_duplicate is False:
     #    return False
   
-    t2 = datetime.datetime.now()
+    t2 = datetime.now()
    
-    output.local_message(("The structure compared is unique. ",replica)
-    output.local_message(("Time taken to compare structure to collection: " + str(struct.struct_id) + ' -- ' + str(t2 - t1),replica)
+    output.local_message("The structure compared is unique. ",replica)
+    output.local_message("Time taken to compare structure to collection: " + str(struct.struct_id) + ' -- ' + str(t2 - t1),replica)
     return True
 
 
@@ -59,7 +59,7 @@ class Comparison:
         energies = []
         for index, comp_struct in self.structure_coll:
             energies.append(comp_struct.get_property('energy'))
-        sorted_ens = np.sort(np.array(worst_energy))
+        sorted_ens = np.sort(np.array(energies))
         worst_energy =sorted_ens[-1] 
 
         self.output("worst energy: " +str(worst_energy))
@@ -71,7 +71,7 @@ class Comparison:
             return True
     
         
-    def get_similar_structures(self,list_to_compare):
+    def get_similar_structures(self):
         '''
         reduces the list of structures that are checked for duplicates within
         a certain window of energy defined by the user
