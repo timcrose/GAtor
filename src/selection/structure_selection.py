@@ -73,7 +73,7 @@ class StructureSelection():
 		except ValueError:
 			output.local_message("Structure has no 'energy' property",self.replica)
         e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
-	output.local_message("e_list" +str(e_list), self.replica)
+	#output.local_message("e_list" +str(e_list), self.replica)
         min_e = e_list[0][0]
   	max_e = e_list[-1][0] 
 #	output.local_message("min e" +str(min_e),self.replica)

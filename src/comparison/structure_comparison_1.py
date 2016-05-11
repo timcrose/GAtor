@@ -81,12 +81,12 @@ class Comparison:
 
         sim_list = []
         en = float(self.struct.get_property('energy'))
-        for comp_struct in self.structure_coll.itervalues():
-            comp_en = float(comp_struct.get_property('energy'))
-            if comp_en <= en + e_tol and comp_en >= en + e_tol: 
+	for index, comp_struct in self.structure_coll:
+            comp_en = float(comp_struct.get_property('energy'))	
+            if en - e_tol <= comp_en <= en + e_tol:
+		self.output("comp en: " +str(comp_en)) 
                 sim_list.append(comp_struct) 
         self.output("Number of Structures w/in duplicate energy window: "+str(len(sim_list)))
-        self.output("Structures w/in energy window: "+str(sim_list))
         return sim_list
 
     def check_if_duplicate(self, comp_list):
@@ -96,7 +96,8 @@ class Comparison:
         '''
         sm = self.set_comp_structure_matcher()
  
-        structp = self.get_pymatgen_structure(struct)
+	TF_list = []
+        structp = self.get_pymatgen_structure(self.struct)
         for comp_struct in comp_list: 
             comp_frac_data = comp_struct.get_frac_data()
             comp_structp = self.get_pymatgen_structure(comp_struct)

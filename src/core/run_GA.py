@@ -488,8 +488,8 @@ class RunGA():
 		min_e = new_e_list[0][0]
 		max_e = new_e_list[-1][0]
 		
-		self.output("old top energies:    "+ str(old_list_top_en))
-		self.output("new top energies:    "+ str(new_list_top_en))
+		#self.output("old top energies:    "+ str(old_list_top_en))
+		#self.output("new top energies:    "+ str(new_list_top_en))
 
 		self.convergence_count= self.convergence_count+ 1
 		for en_new in new_list_top_en:
