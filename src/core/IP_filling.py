@@ -23,21 +23,29 @@ def main():
 	ui = user_input.get_config()
     	user_structures_dir = os.path.join(cwd, ui.get('initial_pool', 'user_structures_dir'))
     	added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
+	num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
 	initial_list = convert_to_structures(files_to_add)
     	if ui.get_eval('initial_pool', 'duplicate_check'):
     		print "Checking Initial pool for duplicates"
     		ip_count = return_IP_non_duplicates(initial_list, ui)
 		print "Final Initial Pool Count: "+ str(ip_count)
+                with open(num_IP_structures,'a') as f:
+                        f.write(str(ip_count))
+                        f.close()
 		return	ip_count
 	else:
 		ip_count = return_all_user_structures(initial_list)
                 print "Final Initial Pool Count: "+ str(ip_count)
+                with open(num_IP_structures,'a') as f:
+                        f.write(str(ip_count))
+                        f.close()
 		return ip_count
 
 def file_lock_structures(user_structures_dir, added_user_structures):
 	'''
-	Args: Path to user defined structures directory, path name to save filepaths of user added structures 
+	Args: Path to user defined structures directory, 
+        path name to save filepaths of user added structures 
 	Returns: List of files to add to collection
     	'''
 	open(added_user_structures, 'a').close()  
