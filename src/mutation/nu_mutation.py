@@ -18,9 +18,10 @@ def main(struct, replica):
     '''
     input_struct = deepcopy(struct)
     num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
-
+    output.local_message(input_struct.get_geometry_atom_format(), replica)
     mutate_obj = select_mutator(input_struct, num_mols, replica)
     mutated_struct = mutate_obj.mutate()
+    output.local_message(mutated_struct.get_geometry_atom_format(), replica)
     return mutated_struct
    
 def select_mutator(input_struct, num_mols, replica):
@@ -63,9 +64,9 @@ class RandomTranslationMutation(object):
     in the unit cell.
     '''
     def __init__(self, input_struct, num_mols, replica):
+        self.ui = user_input.get_config()
         self.st_dev = self.ui.get_eval('mutation', 'stand_dev_trans')
         self.geometry = deepcopy(input_struct.get_geometry())
-        self.ui = user_input.get_config()
         self.input_struct = input_struct
         self.num_mols = num_mols
         self.replica = replica
@@ -78,11 +79,12 @@ class RandomTranslationMutation(object):
     def random_translation(self):
         '''Performs random translation to each molecule's COM and returns a Structure'''
 
-        temp_geo = center_geometry(self.geometry) 
+        #temp_geo = center_geometry(self.geometry)
+	temp_geo = self.geometry 
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
 
-        translated_geometry = self.translate_molecules(self, mol_list, st_dev)
+        translated_geometry = self.translate_molecules(mol_list, self.st_dev)
         mutated_struct = self.create_mutated_struct(translated_geometry)
         return mutated_struct
 
@@ -97,7 +99,7 @@ class RandomTranslationMutation(object):
         translated_geometry = np.concatenate(np.array(mol_list))
         return translated_geometry
 
-    def create_mutated_struct(translated_geometry):
+    def create_mutated_struct(self, translated_geometry):
         ''' Creates Structure from mutated geometry'''
         struct = Structure()
         struct.build_geo_whole(translated_geometry)
@@ -116,7 +118,7 @@ class RandomTranslationMutation(object):
         return struct
 
 #---- Functions Common to All Classes ----#
-def center_geometry(self, geometry):
+def center_geometry(geometry):
     ''' Centers the origin in relation to the max and min of each axis '''
 
     for i in range(2):  # x, y, and z
