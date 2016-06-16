@@ -54,8 +54,6 @@ def select_mutator(input_struct, num_mols, replica):
         mutator = RandomSymmetryStrainMutationMoveMols(input_struct, num_mols, replica)
     elif mut_choice == "Strain_sym":
         mutator = RandomSymmetryStrainMutation(input_struct, num_mols, replica)
-    elif mut_choice == "Comp_cell":
-        mutator = CompressCellMutationMoveMols(input_struct, num_mols, replica)
     return mutator
 
 class RandomTranslationMutation(object):
@@ -77,10 +75,9 @@ class RandomTranslationMutation(object):
         return self.random_translation()
 
     def random_translation(self):
-        '''Performs random translation to each molecule's COM and returns a Structure'''
+        '''Calls for a random translation to each molecule's COM and returns a Structure'''
 
-        #temp_geo = center_geometry(self.geometry)
-	temp_geo = self.geometry 
+	    temp_geo = self.geometry 
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
 
@@ -116,6 +113,58 @@ class RandomTranslationMutation(object):
         struct.set_property('gamma', self.input_struct.get_property('gamma'))
         struct.set_property('mutation_type', 'Trans_mol')
         return struct
+
+class RandomRotationMolMutation(object):
+    ''' Gives a random rotation to the COM of the molecules in the unit cell.'''
+
+    def __init__(self, input_struct, num_mols, replica):
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+        self.input_struct = input_struct
+        self.num_mols = num_mols
+        self.replica = replica
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.random_rotation()
+
+    def random_rotation(self):
+        '''Calls for a random rotation to each molecule's COM and returns a Structure'''
+        temp_geo = self.geometry 
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        rotated_geometry = self.rotate_molecules
+
+    def rotate_molecules(self, mol_list, st_dev):
+        ''' Randomly rotates each molecule within gaussian dist'''
+        for mol in mol_list:
+            rand_vec = np.random.standard_normal(3) * st_dev
+            for atom in mol:
+                atom = np.dot(self.rotation_matrix(rand_vec),np.array(atom))
+        rotated_geometry = np.concatenate(np.array(mol_list))
+        return rotated_geometry
+
+    def rotation_matrix(self, rand_vec):
+        theta= (np.pi/180)*rand_vec[0]
+        psi = (np.pi/180)*rand_vec[1]
+        phi= (np.pi/180)*rand_vec[2]
+        self.output("Random Rotation Angles:  "+str(theta)+str(psi)+str(phi))
+        Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
+                        (-np.cos(phi) * np.sin(psi)) + (np.sin(phi) * np.sin(theta) * np.cos(psi)),
+                        (np.sin(phi) * np.sin(psi)) + (np.cos(phi) * np.sin(theta) * np.cos(psi))),
+
+                        ((np.cos(theta) * np.sin(psi)),
+                        (np.cos(phi) * np.cos(psi)) + (np.sin(phi) * np.sin(theta) * np.sin(psi)),
+                        (-np.sin(phi) * np.cos(psi)) + (np.cos(phi) * np.sin(theta) * np.sin(psi))),
+
+                        ((-np.sin(theta)),
+                        (np.sin(phi) * np.cos(theta)),
+                        (np.cos(phi) * np.cos(theta)))])
+        return Rxyz
+
+
 
 #---- Functions Common to All Classes ----#
 def center_geometry(geometry):
