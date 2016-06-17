@@ -151,14 +151,14 @@ class RandomRotationMolMutation(object):
         temp_geo = self.geometry 
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
-	    atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
+        atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
         rotated_geometry = self.rotate_molecules(mol_list, self.st_dev)
         rotated_struct = self.create_rotated_struct(rotated_geometry, atom_type_list)
         return rotated_struct
 	
     def rotate_molecules(self, mol_list, st_dev):
         ''' Randomly rotates each molecule within gaussian dist'''
-	    rot_geometry = []
+        rot_geometry = []
         for mol in mol_list:
             rand_vec = np.random.normal(scale=st_dev,size=3)
             for atom in mol:
@@ -241,7 +241,7 @@ class RandomStrainMutation(object):
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
         return strain_A, strain_B, strain_C
 
-    def create_strained_struct(lat_A, lat_B, lat_C):
+    def create_strained_struct(self, lat_A, lat_B, lat_C):
         struct = Structure()
         struct.build_geo_whole(self.geometry)
         struct.set_property('lattice_vector_a', lat_A)
@@ -276,7 +276,7 @@ def get_strain_mat(strain_list):
 
 def angle(v1,v2):
     numdot = np.dot(v1,v2)
-    anglerad = np.arccos(numdot/(self.leng(v1)*self.leng(v2)))
+    anglerad = np.arccos(numdot/(leng(v1)*leng(v2)))
     angledeg = anglerad*180/np.pi
     return (angledeg)
 
