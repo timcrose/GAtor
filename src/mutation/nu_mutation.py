@@ -32,8 +32,8 @@ def select_mutator(input_struct, num_mols, replica):
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    mutation_list = ["Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
-    mutation_list = ["Rot_mol"]
+    mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_rand_mols","Strain_sym_mols","Strain_sym"]
+    mutation_list = ["Strain_rand"]
 
     try:
         mut_choice = np.random.choice(mutation_list)
@@ -62,12 +62,20 @@ class RandomTranslationMutation(object):
     in the unit cell.
     '''
     def __init__(self, input_struct, num_mols, replica):
-        self.ui = user_input.get_config()
-        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_trans')
-        self.geometry = deepcopy(input_struct.get_geometry())
         self.input_struct = input_struct
         self.num_mols = num_mols
         self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_trans')
+        self.A = self.input_struct.get_property('lattice_vector_a')
+        self.B = self.input_struct.get_property('lattice_vector_b')      
+        self.C = self.input_struct.get_property('lattice_vector_c')
+        self.alpha = self.input_struct.get_property('alpha')
+        self.beta = self.input_struct.get_property('beta')
+        self.gamma = self.input_struct.get_property('gamma')
+        self.cell_vol = self.input_struct.get_property('cell_vol')
+        self.cross_type = self.input_struct.get_property('crossover_type')
 
     def output(self, message): output.local_message(message, self.replica)
 
@@ -100,18 +108,18 @@ class RandomTranslationMutation(object):
         ''' Creates Structure from mutated geometry'''
         struct = Structure()
         struct.build_geo_whole(translated_geometry)
-        struct.set_property('lattice_vector_a', self.input_struct.get_property('lattice_vector_a'))
-        struct.set_property('lattice_vector_b', self.input_struct.get_property('lattice_vector_b'))
-        struct.set_property('lattice_vector_c', self.input_struct.get_property('lattice_vector_c'))
-        struct.set_property('a', np.linalg.norm(self.input_struct.get_property('lattice_vector_a')))
-        struct.set_property('b', np.linalg.norm(self.input_struct.get_property('lattice_vector_b')))
-        struct.set_property('c', np.linalg.norm(self.input_struct.get_property('lattice_vector_c')))
-        struct.set_property('cell_vol', self.input_struct.get_property('cell_vol'))
-        struct.set_property('crossover_type', self.input_struct.get_property('crossover_type'))
-        struct.set_property('alpha',self.input_struct.get_property('alpha'))
-        struct.set_property('beta', self.input_struct.get_property('beta'))
-        struct.set_property('gamma', self.input_struct.get_property('gamma'))
-        struct.set_property('mutation_type', 'Trans_mol')
+        struct.set_property('lattice_vector_a', self.A)
+        struct.set_property('lattice_vector_b', self.B)
+        struct.set_property('lattice_vector_c', self.C)
+        struct.set_property('a', leng(self.A))
+        struct.set_property('b', leng(self.B))
+        struct.set_property('c', leng(self.C))
+        struct.set_property('cell_vol', self.cell_vol)
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha',self.alpha)
+        struct.set_property('beta', self.beta)
+        struct.set_property('gamma', self.gamma)
+        struct.set_property('mutation_type', 'trans_mol')
         return struct
 
 class RandomRotationMolMutation(object):
@@ -124,6 +132,14 @@ class RandomRotationMolMutation(object):
         self.input_struct = input_struct
         self.num_mols = num_mols
         self.replica = replica
+        self.A = self.input_struct.get_property('lattice_vector_a')
+        self.B = self.input_struct.get_property('lattice_vector_b')      
+        self.C = self.input_struct.get_property('lattice_vector_c')
+        self.alpha = self.input_struct.get_property('alpha')
+        self.beta = self.input_struct.get_property('beta')
+        self.gamma = self.input_struct.get_property('gamma')
+        self.cell_vol = self.input_struct.get_property('cell_vol')
+        self.cross_type = self.input_struct.get_property('crossover_type')
 
     def output(self, message): output.local_message(message, self.replica)
 
@@ -135,18 +151,18 @@ class RandomRotationMolMutation(object):
         temp_geo = self.geometry 
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
-	atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
+	    atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
         rotated_geometry = self.rotate_molecules(mol_list, self.st_dev)
         rotated_struct = self.create_rotated_struct(rotated_geometry, atom_type_list)
         return rotated_struct
 	
     def rotate_molecules(self, mol_list, st_dev):
         ''' Randomly rotates each molecule within gaussian dist'''
-	rot_geometry = []
+	    rot_geometry = []
         for mol in mol_list:
             rand_vec = np.random.normal(scale=st_dev,size=3)
             for atom in mol:
-		atom_vec = np.array([atom[0], atom[1], atom[2]])
+                atom_vec = np.array([atom[0], atom[1], atom[2]])
                 rot_geometry.append(np.dot(np.asarray(self.rotation_matrix(rand_vec)),atom_vec))
         return rot_geometry
 
@@ -155,7 +171,7 @@ class RandomRotationMolMutation(object):
         psi = (np.pi/180)*rand_vec[1]
         phi= (np.pi/180)*rand_vec[2]
         self.output("Random Rotation Angles:  ")
-	self.output(str(theta*180/np.pi)+' '+str(psi*180/np.pi)+' '+str(phi*180/np.pi))
+        self.output(str(theta*180/np.pi)+' '+str(psi*180/np.pi)+' '+str(phi*180/np.pi))
         Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
                         (-np.cos(phi) * np.sin(psi)) + (np.sin(phi) * np.sin(theta) * np.cos(psi)),
                         (np.sin(phi) * np.sin(psi)) + (np.cos(phi) * np.sin(theta) * np.cos(psi))),
@@ -175,22 +191,99 @@ class RandomRotationMolMutation(object):
         for i in range(len(rotated_geo)):
                  struct.build_geo_by_atom(float(rotated_geo[i][0]), float(rotated_geo[i][1]),
                                           float(rotated_geo[i][2]), atom_types[i])
-        struct.set_property('lattice_vector_a', self.input_struct.get_property('lattice_vector_a'))
-        struct.set_property('lattice_vector_b', self.input_struct.get_property('lattice_vector_b'))
-        struct.set_property('lattice_vector_c', self.input_struct.get_property('lattice_vector_c'))
-        struct.set_property('a', np.linalg.norm(self.input_struct.get_property('lattice_vector_a')))
-        struct.set_property('b', np.linalg.norm(self.input_struct.get_property('lattice_vector_b')))
-        struct.set_property('c', np.linalg.norm(self.input_struct.get_property('lattice_vector_c')))
-        struct.set_property('cell_vol', self.input_struct.get_property('cell_vol'))
-        struct.set_property('crossover_type', self.input_struct.get_property('crossover_type'))
-        struct.set_property('alpha',self.input_struct.get_property('alpha'))
-        struct.set_property('beta', self.input_struct.get_property('beta'))
-        struct.set_property('gamma', self.input_struct.get_property('gamma'))
-        struct.set_property('mutation_type', 'Rot_mol')
+        struct.set_property('lattice_vector_a', self.A)
+        struct.set_property('lattice_vector_b', self.B)
+        struct.set_property('lattice_vector_c', self.C)
+        struct.set_property('a', leng(self.A))
+        struct.set_property('b', leng(self.B))
+        struct.set_property('c', leng(self.C))
+        struct.set_property('cell_vol', self.cell_vol)
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha',self.alpha)
+        struct.set_property('beta', self.beta)
+        struct.set_property('gamma', self.gamma)
+        struct.set_property('mutation_type', 'rot_mol')
+        return struct
+
+class RandomStrainMutation(object):
+    '''Gives a random strain to the lattice and DOESNT move the COM of the molecules'''
+    def __init__(self, input_struct, target_stoic, replica):
+        self.ui = user_input.get_config()
+        self.input_struct = input_struct
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.A = np.asarray(deepcopy(input_struct.get_property('lattice_vector_a')))
+        self.B = np.asarray(deepcopy(input_struct.get_property('lattice_vector_b')))
+        self.C = np.asarray(deepcopy(input_struct.get_property('lattice_vector_c')))
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
+        self.cross_type = self.input_struct.get_property('crossover_type')
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.rstrain()
+
+    def rstrain(self):
+        lat_mat = np.zeros((3,3))
+        lat_mat[0] = self.A
+        lat_mat[1] = self.B
+        lat_mat[2] = self.C
+        strain_A, strain_B, strain_C = self.rand_strain(lat_mat)
+        strained_struct = self.create_strained_struct(strain_A, strain_B, strain_C)
+        return strained_struct
+
+    def rand_strain(self, lat_mat):
+        strain_list = np.random.normal(scale=self.st_dev, size=6)
+        strain_mat = get_strain_mat(strain_list)
+        self.output("strain_mat" + str(strain_mat))
+        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
+        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
+        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
+        return strain_A, strain_B, strain_C
+
+    def create_strained_struct(lat_A, lat_B, lat_C):
+        struct = Structure()
+        struct.build_geo_whole(self.geometry)
+        struct.set_property('lattice_vector_a', lat_A)
+        struct.set_property('lattice_vector_b', lat_B)
+        struct.set_property('lattice_vector_c', lat_C)
+        struct.set_property('a', leng(lat_A))
+        struct.set_property('b', leng(lat_B))
+        struct.set_property('c', leng(lat_C))
+        struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_A, lat_C))
+        struct.set_property('gamma', angle(lat_A, lat_B))
+        struct.set_property('mutation_type', 'Strain_rand')
         return struct
 
 
 #---- Functions Common to All Classes ----#
+def get_strain_mat(strain_list):
+    sl = strain_list
+    s_mat = np.zeros((3,3))
+    s_mat[0][0] = 1.0 + sl[0]
+    s_mat[0][1] = sl[5]/2.
+    s_mat[0][2] = sl[4]/2.
+    s_mat[1][0] = sl[5]/2.
+    s_mat[1][1] = 1.0 + sl[1]
+    s_mat[1][2] = sl[3]/2.
+    s_mat[2][0] = sl[4]/2.
+    s_mat[2][1] = sl[3]/2.
+    s_mat[2][2] = 1.0 + sl[2]
+    return s_mat
+
+def angle(v1,v2):
+    numdot = np.dot(v1,v2)
+    anglerad = np.arccos(numdot/(self.leng(v1)*self.leng(v2)))
+    angledeg = anglerad*180/np.pi
+    return (angledeg)
+
+def leng(v):
+        length = np.linalg.norm(v)
+        return length
+
 def center_geometry(geometry):
     ''' Centers the origin in relation to the max and min of each axis '''
 
@@ -204,30 +297,4 @@ def center_geometry(geometry):
         for atom in geometry:
             atom[i] = atom[i] - average
     return geometry
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
