@@ -33,7 +33,7 @@ def select_mutator(input_struct, num_mols, replica):
     Returns: Mutation Class
     '''
     mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_rand_mols","Strain_sym_mols","Strain_sym"]
-    mutation_list = ["Strain_rand"]
+    mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_sym"]
 
     try:
         mut_choice = np.random.choice(mutation_list)
@@ -292,7 +292,7 @@ class RandomSymmetryStrainMutation(object):
         strain_param = np.random.normal(scale=self.st_dev, size=1)
         strain_list = strain_param*get_rand_sym_strain(lat_mat)
         strain_mat = get_strain_mat(strain_list)
-        seld.output("Strain parameter: " + str(strain_param))
+        self.output("Strain parameter: " + str(strain_param))
         self.output("Strain_matrix: " + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
