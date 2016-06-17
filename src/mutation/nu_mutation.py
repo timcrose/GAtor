@@ -34,6 +34,7 @@ def select_mutator(input_struct, num_mols, replica):
     '''
     mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_rand_mols","Strain_sym_mols","Strain_sym"]
     mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_sym"]
+    mutation_list = ["Strain_rand_mols"]
 
     try:
         mut_choice = np.random.choice(mutation_list)
@@ -207,7 +208,7 @@ class RandomRotationMolMutation(object):
 
 class RandomStrainMutation(object):
     '''Gives a random strain to the lattice and doesn't move the COM of the molecules'''
-    def __init__(self, input_struct, target_stoic, replica):
+    def __init__(self, input_struct, num_mols, replica):
         self.ui = user_input.get_config()
         self.input_struct = input_struct
         self.replica = replica
@@ -255,7 +256,7 @@ class RandomStrainMutation(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'Strain_rand')
+        struct.set_property('mutation_type', 'strain_rand')
         return struct
 
 class RandomSymmetryStrainMutation(object):
@@ -263,7 +264,7 @@ class RandomSymmetryStrainMutation(object):
     Gives a random symmetric strain to the lattice and doesn't move the COM 
     of the molecules
     '''
-    def __init__(self, input_struct, target_stoic, replica):
+    def __init__(self, input_struct, num_mols, replica):
         self.ui = user_input.get_config()
         self.input_struct = input_struct
         self.replica = replica
@@ -313,7 +314,69 @@ class RandomSymmetryStrainMutation(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'Strain_sym')
+        struct.set_property('mutation_type', 'strain_sym')
+        return struct
+
+class RandomStrainMutationMoveMols(object):
+    '''Gives a random strain to the lattice and moves the COM of the molecules'''
+    def __init__(self, input_struct, num_mols, replica):
+        self.ui = user_input.get_config()
+        self.input_struct = input_struct
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.num_mols = num_mols
+        self.A = np.asarray(deepcopy(input_struct.get_property('lattice_vector_a')))
+        self.B = np.asarray(deepcopy(input_struct.get_property('lattice_vector_b')))
+        self.C = np.asarray(deepcopy(input_struct.get_property('lattice_vector_c')))
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
+        self.cross_type = self.input_struct.get_property('crossover_type')
+
+    def strain_lat(self):
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
+
+        lat_mat = set_lat_mat[self.A, self.B, self.C]
+        lat_mat_f = np.linalg.inv(lat_mat)
+        strain_A, strain_B, strain_C = self.rand_strain(lat_mat)
+
+        temp_geo = self.geometry
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        mol_list_COM = get_COM_mol_list(mol_list)
+        mol_list_COM_f = get_COM_mol_list_f(mol_list_COM)
+
+        strain_lat_mat = set_lat_mat[strain_A, strain_B, strain_C]
+        strained_geometry = strain_geometry(lat_mat, mol_list, mol_list_COM, mol_list_COM_f)
+        strained_struct = (self.create_strained_struct(strain_A, strain_B, strain_C, 
+                                                          strained_geometry, atom_type_list)
+        return strained_struct
+
+    def rand_strain(self, lat_mat):
+        strain_list = np.random.normal(scale=self.st_dev, size=6)
+        strain_mat = get_strain_mat(strain_list)
+        self.output("strain_mat" + str(strain_mat))
+        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
+        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
+        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
+        return strain_A, strain_B, strain_C
+
+    def create_strained_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):
+        ''' Creates Structure from mutated geometry'''
+        struct = Structure()
+        for i in range(len(strained_geo)):
+            struct.build_geo_by_atom(float(strained_geo[i][0]), float(strained_geo[i][1]),
+                                     float(strained_geo[i][2]), atom_types[i])
+        struct.set_property('lattice_vector_a', lat_A)
+        struct.set_property('lattice_vector_b', lat_B)
+        struct.set_property('lattice_vector_c', lat_C)
+        struct.set_property('a', leng(lat_A))
+        struct.set_property('b', leng(lat_B))
+        struct.set_property('c', leng(lat_C))
+        struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_A, lat_C))
+        struct.set_property('gamma', angle(lat_A, lat_B))
+        struct.set_property('mutation_type', 'strain_rand')
         return struct
 
 
@@ -371,6 +434,54 @@ def get_rand_sym_strain(lat_mat):
     '35':[-6., 3.,-2., 5.,-4., 1.]}
     rand_choice = str(np.random.randint(1,35))
     return np.array(strain_dict[rand_choice])
+
+def get_COM_mol_list(mol_list):
+    ''' Returns COM as np array '''
+    COM_mol_list = []
+    for mol in mol_list:
+        N = len(mol)
+        rsum = [0, 0, 0]
+        for atom in mol:
+            rsum[0] +=atom[0]
+            rsum[1] +=atom[1]
+            zsum[2] +=atom[2]
+        COM = rsum/N
+        COM_mol_list.append(COM)
+    return np.asarray(COM_mol_list)
+
+def get_COM_mol_list_f(lat_mat_f, COM_mol_list):
+    ''' Returns COM as np array '''
+    COM_mol_list_f = []
+    for COM in COM_mol_list:
+        COM_f = np.dot(lat_mat_f, COM)
+        COM_f.append(COM_f)
+    return COM_f
+
+def strain_geometry(lat_mat, mol_list, mol_list_COM, mol_list_COM_f):
+    A = lat_mat[0]
+    B = lat_mat[1]
+    C = lat_mat[2]
+    strain_list_COM = []
+    strained_geometry = []
+    for mol_f in mol_list_COM_f:
+        strain_COM = mol_f[0]* A + mol_f[1] * B + mol_f[2] * C
+        strain_list_COM.append(strain_COM)
+    COM_diff = mol_list_COM - strain_list_COM
+    i = 0
+    for mol in mol_list:
+        for atom in mol_list
+            strained_geometry.append(mol - COM_diff[i]) 
+        i += 1
+    return np.asarray(strained_geometry)
+
+def set_lat_mat(lat_A, lat_B, lat_C):
+    lat_mat = np.zeros((3,3))
+    lat_mat[0] = lat_A
+    lat_mat[1] = lat_B
+    lat_mat[2] = lat_C
+    return lat_mat
+    
+
 
 def angle(v1,v2):
     numdot = np.dot(v1,v2)
