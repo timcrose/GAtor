@@ -126,12 +126,12 @@ class RandomRotationMolMutation(object):
     ''' Gives a random rotation to the COM of the molecules in the unit cell.'''
 
     def __init__(self, input_struct, num_mols, replica):
-        self.geometry = deepcopy(input_struct.get_geometry())
-        self.ui = user_input.get_config()
-        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
         self.input_struct = input_struct
         self.num_mols = num_mols
         self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
         self.A = self.input_struct.get_property('lattice_vector_a')
         self.B = self.input_struct.get_property('lattice_vector_b')      
         self.C = self.input_struct.get_property('lattice_vector_c')
@@ -189,8 +189,8 @@ class RandomRotationMolMutation(object):
         ''' Creates Structure from mutated geometry'''
         struct = Structure()
         for i in range(len(rotated_geo)):
-                 struct.build_geo_by_atom(float(rotated_geo[i][0]), float(rotated_geo[i][1]),
-                                          float(rotated_geo[i][2]), atom_types[i])
+            struct.build_geo_by_atom(float(rotated_geo[i][0]), float(rotated_geo[i][1]),
+                                     float(rotated_geo[i][2]), atom_types[i])
         struct.set_property('lattice_vector_a', self.A)
         struct.set_property('lattice_vector_b', self.B)
         struct.set_property('lattice_vector_c', self.C)
@@ -206,7 +206,7 @@ class RandomRotationMolMutation(object):
         return struct
 
 class RandomStrainMutation(object):
-    '''Gives a random strain to the lattice and DOESNT move the COM of the molecules'''
+    '''Gives a random strain to the lattice and doesn't move the COM of the molecules'''
     def __init__(self, input_struct, target_stoic, replica):
         self.ui = user_input.get_config()
         self.input_struct = input_struct
@@ -221,9 +221,9 @@ class RandomStrainMutation(object):
     def output(self, message): output.local_message(message, self.replica)
 
     def mutate(self):
-        return self.rstrain()
+        return self.strain_lat()
 
-    def rstrain(self):
+    def strain_lat(self):
         lat_mat = np.zeros((3,3))
         lat_mat[0] = self.A
         lat_mat[1] = self.B
@@ -258,8 +258,66 @@ class RandomStrainMutation(object):
         struct.set_property('mutation_type', 'Strain_rand')
         return struct
 
+class RandomSymmetryStrainMutation(object):
+    '''
+    Gives a random symmetric strain to the lattice and doesn't move the COM 
+    of the molecules
+    '''
+    def __init__(self, input_struct, target_stoic, replica):
+        self.ui = user_input.get_config()
+        self.input_struct = input_struct
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.A = np.asarray(deepcopy(input_struct.get_property('lattice_vector_a')))
+        self.B = np.asarray(deepcopy(input_struct.get_property('lattice_vector_b')))
+        self.C = np.asarray(deepcopy(input_struct.get_property('lattice_vector_c')))
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
+        self.cross_type = self.input_struct.get_property('crossover_type')
 
-#---- Functions Common to All Classes ----#
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.strain_lat()
+
+    def strain_lat(self):
+        lat_mat = np.zeros((3,3))
+        lat_mat[0] = self.A
+        lat_mat[1] = self.B
+        lat_mat[2] = self.C
+        strain_A, strain_B, strain_C = self.rand_sym_strain(lat_mat)
+        strained_struct = self.create_strained_struct(strain_A, strain_B, strain_C)
+        return strained_struct
+
+    def rand_sym_strain(self, lat_mat):
+        strain_param = np.random.normal(scale=self.st_dev, size=1)
+        strain_list = strain_param*get_rand_sym_strain(lat_mat)
+        strain_mat = get_strain_mat(strain_list)
+        seld.output("Strain parameter: " + str(strain_param))
+        self.output("Strain_matrix: " + str(strain_mat))
+        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
+        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
+        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
+        return strain_A, strain_B, strain_C
+
+    def create_strained_struct(self, lat_A, lat_B, lat_C):
+        struct = Structure()
+        struct.build_geo_whole(self.geometry)
+        struct.set_property('lattice_vector_a', lat_A)
+        struct.set_property('lattice_vector_b', lat_B)
+        struct.set_property('lattice_vector_c', lat_C)
+        struct.set_property('a', leng(lat_A))
+        struct.set_property('b', leng(lat_B))
+        struct.set_property('c', leng(lat_C))
+        struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_A, lat_C))
+        struct.set_property('gamma', angle(lat_A, lat_B))
+        struct.set_property('mutation_type', 'Strain_sym')
+        return struct
+
+
+#---- Functions Shared Between Several Mutation Classes ----#
 def get_strain_mat(strain_list):
     sl = strain_list
     s_mat = np.zeros((3,3))
@@ -273,6 +331,46 @@ def get_strain_mat(strain_list):
     s_mat[2][1] = sl[3]/2.
     s_mat[2][2] = 1.0 + sl[2]
     return s_mat
+
+def get_rand_sym_strain(lat_mat):
+    strain_dict={                       \
+    '1':[ 1., 1., 1., 0., 0., 0.],\
+    '2':[ 1., 0., 0., 0., 0., 0.],\
+    '3':[ 0., 1., 0., 0., 0., 0.],\
+    '4':[ 0., 0., 1., 0., 0., 0.],\
+    '5':[ 0., 0., 0., 2., 0., 0.],\
+    '6':[ 0., 0., 0., 0., 2., 0.],\
+    '7':[ 0., 0., 0., 0., 0., 2.],\
+    '8':[ 1., 1., 0., 0., 0., 0.],\
+    '9':[ 1., 0., 1., 0., 0., 0.],\
+    '10':[ 1., 0., 0., 2., 0., 0.],\
+    '11':[ 1., 0., 0., 0., 2., 0.],\
+    '12':[ 1., 0., 0., 0., 0., 2.],\
+    '13':[ 0., 1., 1., 0., 0., 0.],\
+    '14':[ 0., 1., 0., 2., 0., 0.],\
+    '15':[ 0., 1., 0., 0., 2., 0.],\
+    '16':[ 0., 1., 0., 0., 0., 2.],\
+    '17':[ 0., 0., 1., 2., 0., 0.],\
+    '18':[ 0., 0., 1., 0., 2., 0.],\
+    '19':[ 0., 0., 1., 0., 0., 2.],\
+    '20':[ 0., 0., 0., 2., 2., 0.],\
+    '21':[ 0., 0., 0., 2., 0., 2.],\
+    '22':[ 0., 0., 0., 0., 2., 2.],\
+    '23':[ 0., 0., 0., 2., 2., 2.],\
+    '24':[-1., .5, .5, 0., 0., 0.],\
+    '25':[ .5,-1., .5, 0., 0., 0.],\
+    '26':[ .5, .5,-1., 0., 0., 0.],\
+    '27':[ 1.,-1., 0., 0., 0., 0.],\
+    '28':[ 1.,-1., 0., 0., 0., 2.],\
+    '29':[ 0., 1.,-1., 0., 0., 2.],\
+    '30':[ 1., 2., 3., 4., 5., 6.],\
+    '31':[-2., 1., 4.,-3., 6.,-5.],\
+    '32':[ 3.,-5.,-1., 6., 2.,-4.],\
+    '33':[-4.,-6., 5., 1.,-3., 2.],\
+    '34':[ 5., 4., 6.,-2.,-1.,-3.],\
+    '35':[-6., 3.,-2., 5.,-4., 1.]}
+    rand_choice = str(np.random.randint(1,35))
+    return np.array(strain_dict[rand_choice])
 
 def angle(v1,v2):
     numdot = np.dot(v1,v2)
