@@ -33,7 +33,7 @@ def select_mutator(input_struct, num_mols, replica):
     Returns: Mutation Class
     '''
     mutation_list = ["Trans_mol","Rot_mol","Strain_rand_mols","Strain_rand","Strain_sym_mols","Strain_sym"]
-    mutation_list = ["Trans_mol"]
+    mutation_list = ["Rot_mol"]
 
     try:
         mut_choice = np.random.choice(mutation_list)
@@ -77,7 +77,7 @@ class RandomTranslationMutation(object):
     def random_translation(self):
         '''Calls for a random translation to each molecule's COM and returns a Structure'''
 
-	    temp_geo = self.geometry 
+        temp_geo = self.geometry 
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
 
@@ -135,22 +135,27 @@ class RandomRotationMolMutation(object):
         temp_geo = self.geometry 
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
-        rotated_geometry = self.rotate_molecules
-
+	atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
+        rotated_geometry = self.rotate_molecules(mol_list, self.st_dev)
+        rotated_struct = self.create_rotated_struct(rotated_geometry, atom_type_list)
+        return rotated_struct
+	
     def rotate_molecules(self, mol_list, st_dev):
         ''' Randomly rotates each molecule within gaussian dist'''
+	rot_geometry = []
         for mol in mol_list:
-            rand_vec = np.random.standard_normal(3) * st_dev
+            rand_vec = np.random.normal(scale=st_dev,size=3)
             for atom in mol:
-                atom = np.dot(self.rotation_matrix(rand_vec),np.array(atom))
-        rotated_geometry = np.concatenate(np.array(mol_list))
-        return rotated_geometry
+		atom_vec = np.array([atom[0], atom[1], atom[2]])
+                rot_geometry.append(np.dot(np.asarray(self.rotation_matrix(rand_vec)),atom_vec))
+        return rot_geometry
 
     def rotation_matrix(self, rand_vec):
         theta= (np.pi/180)*rand_vec[0]
         psi = (np.pi/180)*rand_vec[1]
         phi= (np.pi/180)*rand_vec[2]
-        self.output("Random Rotation Angles:  "+str(theta)+str(psi)+str(phi))
+        self.output("Random Rotation Angles:  ")
+	self.output(str(theta*180/np.pi)+' '+str(psi*180/np.pi)+' '+str(phi*180/np.pi))
         Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
                         (-np.cos(phi) * np.sin(psi)) + (np.sin(phi) * np.sin(theta) * np.cos(psi)),
                         (np.sin(phi) * np.sin(psi)) + (np.cos(phi) * np.sin(theta) * np.cos(psi))),
@@ -164,6 +169,25 @@ class RandomRotationMolMutation(object):
                         (np.cos(phi) * np.cos(theta)))])
         return Rxyz
 
+    def create_rotated_struct(self, rotated_geo, atom_types):
+        ''' Creates Structure from mutated geometry'''
+        struct = Structure()
+        for i in range(len(rotated_geo)):
+                 struct.build_geo_by_atom(float(rotated_geo[i][0]), float(rotated_geo[i][1]),
+                                          float(rotated_geo[i][2]), atom_types[i])
+        struct.set_property('lattice_vector_a', self.input_struct.get_property('lattice_vector_a'))
+        struct.set_property('lattice_vector_b', self.input_struct.get_property('lattice_vector_b'))
+        struct.set_property('lattice_vector_c', self.input_struct.get_property('lattice_vector_c'))
+        struct.set_property('a', np.linalg.norm(self.input_struct.get_property('lattice_vector_a')))
+        struct.set_property('b', np.linalg.norm(self.input_struct.get_property('lattice_vector_b')))
+        struct.set_property('c', np.linalg.norm(self.input_struct.get_property('lattice_vector_c')))
+        struct.set_property('cell_vol', self.input_struct.get_property('cell_vol'))
+        struct.set_property('crossover_type', self.input_struct.get_property('crossover_type'))
+        struct.set_property('alpha',self.input_struct.get_property('alpha'))
+        struct.set_property('beta', self.input_struct.get_property('beta'))
+        struct.set_property('gamma', self.input_struct.get_property('gamma'))
+        struct.set_property('mutation_type', 'Rot_mol')
+        return struct
 
 
 #---- Functions Common to All Classes ----#
