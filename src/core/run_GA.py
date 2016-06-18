@@ -36,13 +36,9 @@ def main(replica,stoic):
 	output.move_to_shared_output(replica)
 	
 class RunGA():
-	'''
-	This class controls the main the genetic algorithm tasks
-	'''
+	'''This class controls the main the genetic algorithm tasks each replica runs'''
 	def __init__(self, replica, stoic):
-		'''
-		Initialization of replica class fields
-		'''
+		'''Initialization of replica class fields'''
 		self.replica = replica
 		self.ui = user_input.get_config()
 		self.replica_stoic = stoic
@@ -247,9 +243,9 @@ class RunGA():
 			self.output('Selection failure')
 			return False
 		#----- Crossover -----#
-		# Expects: list_of_2_or_more<Structure>, target stochiometry #Returns Structure or False
+		# Expects: list_of_2_or_more<Structure>, #Returns Structure or False
 		self.output("--Crossover--")
-		new_struct = self.crossover_module.main(structures_to_cross, self.replica_stoic, self.replica)
+		new_struct = self.crossover_module.main(structures_to_cross, self.replica)
 		if new_struct is False: 
 			self.output("Crossover failure")
 			return False  
@@ -261,10 +257,10 @@ class RunGA():
 		randnum2 = np.random.random()
 		#Single Parents have to be mutated	
 		if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<self.singlemutate:
-			new_struct = self.mutation_module.main(new_struct, self.replica_stoic, self.replica)
+			new_struct = self.mutation_module.main(new_struct, self.replica)
 			if new_struct!=False and randnum2 < self.doublemutate:
 				self.output("--Second Mutation--")
-				new_struct = self.mutation_module.main(new_struct, self.replica_stoic, self.replica) 
+				new_struct = self.mutation_module.main(new_struct, self.replica) 
 		else:
 			self.output('No mutation applied.')
 			new_struct.set_property('mutation_type', 'No_mutation')
