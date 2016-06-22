@@ -1,8 +1,5 @@
 '''
-Created on Nov 4, 2013
-
 @author: newhouse
-
 This module contains the default user input values.
 Values are overridden by textual user input
 '''

@@ -1,4 +1,0 @@
-4/20: Collection 3 crosses only initial pool structures (but doesn't internally cross level 0 structures within this same pool).  Essentially this doesn't allow children to mate with parents which is going to be changed in collection 4.
-
-
-4
