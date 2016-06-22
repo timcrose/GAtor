@@ -13,28 +13,30 @@ from datetime import datetime
 
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
-from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,SpeciesComparator,FrameworkComparator
+from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator
+from pymatgen.analysis.structure_matcher import SpeciesComparator,FrameworkComparator
 
 def main(struct, structure_coll, replica):
     '''
     The module takes a structure and compare it to the given structure collection.
-    Returns: True if the structure passes a test for uniqueness and for energy
+    Returns: True/False if the structure passes/fails test for uniqueness and for energy
     '''
-
     comp = Comparison(struct, structure_coll, replica)
-
     t1 = datetime.now()
   
-    en_result = comp.acceptable_energy() # make sure energy is higher than the worst in the collection
+    # make sure energy is higher than the worst in the collection
+    en_result = comp.acceptable_energy()
     if en_result is False:
         return False
 
-    structs_to_compare = comp.get_similar_structures() # return list of structures within a difference tolerance of comparison (.5 eV)
+    # return list of structures within a difference tolerance of comparison (.5 eV)
+    structs_to_compare = comp.get_similar_structures()
     dup_result = comp.check_if_duplicate(structs_to_compare)
 
     t2 = datetime.now()
     output.local_message("The structure compared is unique. ",replica)
-    output.local_message("Time taken to compare structure to collection: " + str(struct.struct_id) + ' -- ' + str(t2 - t1),replica)
+    output.local_message(("Time taken to compare structure to collection: " + str(struct.struct_id) + 
+                                                                      ' -- ' + str(t2 - t1),replica))
 
     return dup_result # Boolean
 
@@ -125,7 +127,8 @@ class Comparison:
         S_tol = ui.get_eval('comparison_settings', 'stol')
         Angle_tol = ui.get_eval('comparison_settings', 'angle_tol')
         Scale = ui.get_eval('comparison_settings', 'scale_vol')
-        sm = StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, scale=Scale, attempt_supercell=False, comparator=SpeciesComparator())
+        sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, 
+                          scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
         return sm
 
     def get_pymatgen_structure(self, struct):
@@ -136,7 +139,8 @@ class Comparison:
         frac_data = struct.get_frac_data()
         coords = frac_data[0] # frac coordinates
         atoms = frac_data[1] # site labels
-        lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
+        lattice = (LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], 
+                                  alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7]))
         structp = StructureP(lattice, atoms, coords)
         return structp
     
