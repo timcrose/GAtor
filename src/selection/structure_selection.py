@@ -1,5 +1,4 @@
 '''
-Created on Oct 16, 2013
 @authors newhouse, farren
 '''
 from __future__ import division
@@ -70,8 +69,12 @@ class StructureSelection():
 		try:
         		energy = structure.get_property('energy')
                 	e_list = np.append(energy,e_list)
-		except ValueError:
-			output.local_message("Structure has no 'energy' property",self.replica)
+		except:
+
+                        energy = structure.get_property('energy_tier_1')
+                        e_list = np.append(energy,e_list)
+#		except ValueError:
+#			output.local_message("Structure has no 'energy' property",self.replica)
         e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
 	#output.local_message("e_list" +str(e_list), self.replica)
         min_e = e_list[0][0]

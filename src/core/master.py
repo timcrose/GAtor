@@ -24,10 +24,15 @@ def main(ui_name,reset_e,kill_e,data_e,run_e,fip_e):
     if reset_e: #User requires reseting environment
         clean()
     if fip_e:
-	from core import IP_filling
+	#from core import IP_filling
+	from core import user_input
+	from core.file_handler import my_import
+        ui = user_input.get_config()
+	IP_module = my_import(ui.get('modules', 'initial_pool_module'), package='initial_pool')
 	mkdir_p(tmp_dir) #tmp stores the added_user_structures.dat
 	mkdir_p(structure_dir) #structure_dir stores the common storage
-	IP_filling.main()
+	IP_module.main()
+#	IP_filling.main()
     if data_e: #Unknown feature
 	from core import data_tools
 	data_tools.main(sys.argv)
@@ -191,13 +196,13 @@ def clean():
 
 if __name__ == '__main__':
 	try:#PYthon 2.6 still uses optparse
-		(options,args)=argument_opt()
-		ui_name=options.user_input
-		reset_e=options.reset
-		kill_e=options.kill		
-		data_e=options.data
-		run_e=options.run_e
-		fip_e=options.fip_e
+		(options,args) = argument_opt()
+		ui_name = options.user_input
+		reset_e = options.reset
+		kill_e = options.kill		
+		data_e = options.data
+		run_e = options.run_e
+		fip_e = options.fip_e
 	except:
 		pass
 	main(ui_name,reset_e,kill_e,data_e,run_e,fip_e)

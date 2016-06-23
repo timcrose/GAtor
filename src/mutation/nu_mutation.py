@@ -27,14 +27,14 @@ def main(struct, replica):
 def select_mutator(input_struct, num_mols, replica):
     '''
     In this mutation implementation, there are several classes, each performing a 
-    different mutation. This method is responsible for reading the preferences set
-    by the user and selecting which mutation to empoly, or no mutation at all.
+    different mutation. This method selecting which mutation to empoly
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_rand_mols","Strain_sym_mols","Strain_sym"]
-    mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_sym"]
-    mutation_list = ["Strain_rand_mols"]
+    mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
+                                  "Strain_rand_mols","Strain_sym_mols"])
+ #   mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_sym"]
+#    mutation_list = ["Strain_rand_mols","Strain_sym_mols"]
 
     try:
         mut_choice = np.random.choice(mutation_list)
@@ -337,7 +337,7 @@ class RandomStrainMutationMoveMols(object):
         return self.strain_lat_and_mols()
 
     def strain_lat_and_mols(self):
-	    temp_geo = self.geometry
+        temp_geo = self.geometry
         num_atom_per_mol = int(len(temp_geo)/self.num_mols)
         atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))] 
         lat_mat = set_lat_mat(self.A, self.B, self.C)
@@ -348,17 +348,15 @@ class RandomStrainMutationMoveMols(object):
         mol_list_COM = get_COM_mol_list(mol_list)
         mol_list_COM_f = get_COM_mol_list_f(lat_mat_f, np.array(mol_list_COM))
         strain_lat_mat = set_lat_mat(strain_A, strain_B, strain_C)
-        strained_geometry = strain_geometry(lat_mat, mol_list, mol_list_COM, mol_list_COM_f)
+        strained_geometry = strain_geometry(strain_lat_mat, mol_list, mol_list_COM, mol_list_COM_f)
         strained_struct = (self.create_strained_struct(strain_A, strain_B, strain_C, 
                                                           strained_geometry, atom_type_list))
         return strained_struct
 
-    def rand_sym_strain(self, lat_mat):
-        strain_param = np.random.normal(scale=self.st_dev, size=1)
-        strain_list = strain_param*get_rand_sym_strain(lat_mat)
+    def rand_strain(self, lat_mat):
+        strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
-        self.output("Strain parameter: " + str(strain_param))
-        self.output("Strain_matrix: \n" + str(strain_mat))
+        self.output("strain_mat" + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
@@ -381,7 +379,7 @@ class RandomStrainMutationMoveMols(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'strain_rand')
+        struct.set_property('mutation_type', 'strain_rand_mol')
         return struct
 
 class RandomSymmetryStrainMutationMoveMols(object):
@@ -415,14 +413,16 @@ class RandomSymmetryStrainMutationMoveMols(object):
         mol_list_COM = get_COM_mol_list(mol_list)
         mol_list_COM_f = get_COM_mol_list_f(lat_mat_f, np.array(mol_list_COM))
         strain_lat_mat = set_lat_mat(strain_A, strain_B, strain_C)
-        strained_geometry = strain_geometry(lat_mat, mol_list, mol_list_COM, mol_list_COM_f)
+        strained_geometry = strain_geometry(strain_lat_mat, mol_list, mol_list_COM, mol_list_COM_f)
         strained_struct = (self.create_strained_struct(strain_A, strain_B, strain_C, 
                                                           strained_geometry, atom_type_list))
         return strained_struct
 
-    def rand_strain(self, lat_mat):
-        strain_list = np.random.normal(scale=self.st_dev, size=6)
+    def rand_sym_strain(self, lat_mat):
+        strain_param = np.random.normal(scale=self.st_dev, size=1)
+        strain_list = strain_param*get_rand_sym_strain(lat_mat)
         strain_mat = get_strain_mat(strain_list)
+        self.output("Strain parameter: " + str(strain_param))
         self.output("Strain_matrix: \n" + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
@@ -446,9 +446,8 @@ class RandomSymmetryStrainMutationMoveMols(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'strain_rand')
+        struct.set_property('mutation_type', 'sym_strain_mol')
         return struct
-
 
 #---- Functions Shared Between Several Mutation Classes ----#
 def get_strain_mat(strain_list):
@@ -527,10 +526,10 @@ def get_COM_mol_list_f(lat_mat_f, COM_mol_list):
         COM_mol_list_f.append(COM_f)
     return COM_mol_list_f
 
-def strain_geometry(lat_mat, mol_list, mol_list_COM, mol_list_COM_f):
-    A = lat_mat[0]
-    B = lat_mat[1]
-    C = lat_mat[2]
+def strain_geometry(strain_lat_mat, mol_list, mol_list_COM, mol_list_COM_f):
+    A = strain_lat_mat[0]
+    B = strain_lat_mat[1]
+    C = strain_lat_mat[2]
     strain_list_COM = []
     strained_geometry = []
     for mol_f in mol_list_COM_f:
@@ -543,7 +542,7 @@ def strain_geometry(lat_mat, mol_list, mol_list_COM, mol_list_COM_f):
 	for j in range(len(mol)):
             xyz.append((mol[j][0], mol[j][1], mol[j][2]))
         for atom in xyz:
-            strained_geometry.append((atom + COM_diff[i])) 
+            strained_geometry.append((atom - COM_diff[i])) 
         i += 1
     return np.asarray(strained_geometry)
 
