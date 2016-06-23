@@ -38,8 +38,6 @@ def main(list_of_structures, replica):
         output.local_message(parent_a.get_geometry_atom_format(), replica)
         output.local_message("parent b", replica)
         output.local_message(parent_b.get_geometry_atom_format(),replica)
-        output.local_message("child", replica)
-        output.local_message(child_struct.get_geometry_atom_format(), replica)
 	cross_obj = Crossover(cross_method, parent_a, parent_b, num_mols, replica)
 	child_struct = cross_obj.cross()
         output.local_message("child", replica)
