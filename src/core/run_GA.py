@@ -62,7 +62,7 @@ class RunGA():
 			#self.structure_supercoll[(self.replica_stoic, i)] = StructureCollection(self.replica_stoic, i)
 		self.structure_supercoll[(self.replica_stoic, 0)] = StructureCollection(self.replica_stoic, 0)
 		structure_collection.update_supercollection(self.structure_supercoll)
-
+		self.structure_coll = StructureCollection(self.replica_stoic, 0)
 		
 #------------------------- MAIN TASKS PERFORMED BY EVERY REPLICA -------------------------#
 	def start(self):
@@ -150,29 +150,34 @@ class RunGA():
 		end = False
 		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
 		number_of_IP = open(IP_dat).read()
- 		try: 
-			added_structs = len(self.structure_coll.structures)-int(number_of_IP)
-			total_structs = len(self.structure_coll.structures) 
-			if added_structs >= self.number_of_structures:
-				message = ''
-				message +=' ~*~*~*~*~*~*~*~*~*~*~*~ GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n'
-				message +='Number of additions to pool has reached user-specified number: '
-				message += str(added_structs) +'\n'
-				message +='Total size of collection: '
-				message += str(total_structs) +'\n'
-				message += 'GA ended at: '+str(datetime.datetime.now())
-				self.output(message)
-				end = True
-			if convergeTF == True:
-				message = ''
-				message +=' ~*~*~*~*~*~*~*~*~*~*~*~ GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n'
-				message +='Top energies havent changed in user-specfied number of energy convergence iterations: '
-				message += str(self.max_en_it) +'\n'
-				message +='Total size of collection: '
-				message += str(total_structs) 
-				self.output(message)
-				end = True
-		except: pass
+ 		#try:
+		struct_coll0 = self.structure_supercoll.get((self.replica_stoic, 0)) 
+		total_structs = len(struct_coll0.structures)
+		added_structs = total_structs-int(number_of_IP)
+		self.output("added structures"+ str(added_structs))
+		data_tools.write_energy_hierarchy(struct_coll0)
+                data_tools.write_energy_vs_iteration(struct_coll0)
+		data_tools.write_spe_vs_iteration(struct_coll0) 
+		if added_structs >= self.number_of_structures:
+			message = ''
+			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
+			message +='Number of additions to pool has reached user-specified number: '
+			message += str(added_structs) +'\n'
+			message +='Total size of collection: '
+			message += str(total_structs) +'\n'
+			message += 'GA ended at: '+str(datetime.datetime.now())
+			self.output(message)
+			end = True
+		if convergeTF == True:
+			message = ''
+			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
+			message +='Top energies havent changed in user-specfied number of iterations: '
+			message += str(self.max_en_it) +'\n'
+			message +='Total size of collection: '
+			message += str(total_structs) 
+			self.output(message)
+			end = True
+		#except: pass
 		return end
 
 	def restart_scheme(self, restart_replica):	
@@ -219,7 +224,8 @@ class RunGA():
 	def add_to_collection(self, struct, ref_label):	
 		prev_struct_index = None #none for now because only using GA for FF not both
 		ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
-		self.replica_child_count = self.replica_child_count + 1 
+		self.replica_child_count = self.replica_child_count + 1
+		struct.set_property('ID', ID) 
 		try:
 			struct.set_property('prev_struct_id', prev_struct_index)  # tracks cascade sequence
 			struct.set_property('ID', ID)	
@@ -227,6 +233,7 @@ class RunGA():
 			struct.set_property('child_counter', self.replica_child_count)		
 		except: pass
 		struct_index = structure_collection.add_structure(struct, self.replica_stoic, ref_label)
+		data_tools.write_energy_vs_iteration(self.structure_supercoll.get((self.replica_stoic,0)))
 		structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database		
 		self.output("Structure index: "+str(struct_index))
 		#self.output("Added? :"+str(self.structure_supercoll.get((self.replica_stoic,0)).structures))	
@@ -271,9 +278,8 @@ class RunGA():
 			return False
 
 		#-----Structure modification of angles. Checks reasonable structure is created -----#
-		self.output("--------Cell Checks--------")	
-		structure_handling.cell_lower_triangular(new_struct,False)
-#		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
+		self.output("--Cell Checks--")	
+		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
 
@@ -426,8 +432,8 @@ class RunGA():
 
 			#write energy hierarchy 
 			self.output("Writing hierachy and data files")
-			data_tools.write_energy_hierarchy( self.structure_supercoll.get((self.replica_stoic, 0)))		   	
-			
+			#data_tools.write_energy_hierarchy(self.structure_coll)		   	
+		        #data_tools.write_energy_vs_iteration(self.structure_coll)
 			#End of Iteration Outputs
                         IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
                         number_of_IP = open(IP_dat).read()
