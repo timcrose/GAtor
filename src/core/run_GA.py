@@ -271,8 +271,9 @@ class RunGA():
 			return False
 
 		#-----Structure modification of angles. Checks reasonable structure is created -----#
-		self.output("--Cell Checks--")	
-		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
+		self.output("--------Cell Checks--------")	
+		structure_handling.cell_lower_triangular(new_struct,False)
+#		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
 
