@@ -33,6 +33,19 @@ class ListSafeConfigParser(SafeConfigParser):
 			return True
 		return False
 
+	def get_section_as_dict(self,section,eval=False):
+		'''
+		Return all the option under a section as a dictionary
+		'''
+		dicti = {}
+		for key in self.options:
+			if eval:
+				dicti[key] = inst.get_eval(section,key)
+			else:
+				dicti[key] = inst.get(section,key)
+		return dicti
+			
+
 	def __deepcopy__(self,memo):
 		'''
 		Due to the inability to deepcopy a configuration file
