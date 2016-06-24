@@ -232,6 +232,9 @@ class Structure(object):
         return self.properties["unit_cell_volume"]
         
 
+    def get_atom_distance(self,a1,a2):
+        return np.linalg.norm([self.geometry[a1][k]-self.geometry[a2][k] for k in range(3)])
+
     def angle(self, v1, v2):
         numdot = np.dot(v1,v2)
         anglerad = np.arccos(numdot/(np.linalg.norm(v1)*np.linalg.norm(v2)))
