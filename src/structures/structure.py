@@ -220,6 +220,18 @@ class Structure(object):
         c = np.linalg.norm(C)
 	return a, b, c
 
+    def get_unit_cell_volume(self):
+        if "cell_vol" in self.properties:
+            return self.properties["cell_vol"]
+        if "unit_cell_volume" in self.properties:
+            return self.properties["unit_cell_volume"]
+        A = self.get_property('lattice_vector_a')
+        B = self.get_property('lattice_vector_b')
+        C = self.get_property('lattice_vector_c')
+        self.properties["unit_cell_volume"] = np.linalg.det([A,B,C])
+        return self.properties["unit_cell_volume"]
+        
+
     def angle(self, v1, v2):
         numdot = np.dot(v1,v2)
         anglerad = np.arccos(numdot/(np.linalg.norm(v1)*np.linalg.norm(v2)))
