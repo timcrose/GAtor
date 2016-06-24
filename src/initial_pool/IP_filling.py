@@ -126,6 +126,7 @@ def return_IP_non_duplicates(initial_list, ui):
 	ip_count = 0
 	struct_list = []
 	sm = set_IP_structure_matcher(ui)
+        structure_supercoll = {}
 	for struct in initial_list:
 		stoic = struct.get_stoic()
 		structure_supercoll[(stoic, 0)] = StructureCollection(stoic, 0)
@@ -157,8 +158,7 @@ def return_IP_non_duplicates(initial_list, ui):
 				print "Total Duplicates Found: " + str(check_count - len(struct_list))
                 #check_count +=1
 	ip_count = str(len(struct_list))
-        structure_supercoll[(stoic, 0)] = StructureCollection(stoic, 0)
-        structure_collection.update_supercollection(self.structure_supercoll)
+        structure_collection.update_supercollection(structure_supercoll)
 	data_tools.write_energy_hierarchy(StructureCollection(stoic, 0))
 	return ip_count
 
