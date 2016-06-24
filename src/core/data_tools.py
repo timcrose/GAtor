@@ -5,12 +5,6 @@ Created on Oct 30, 2013
 
 This module's purpose is to provide tools to the user wishing to access the data stored in the database
 
-Implemented:
-
-To Implement:
-Print data to filesystem
-Get lowest energy structure
-
 '''
 import os
 import subprocess
@@ -34,7 +28,6 @@ def main(argv):
     ui = user_input.get_config()
     supercoll = {} 
     structure_collection.update_supercollection(supercoll)
-#     write_to_filesystem()
     stoic = determine_stoic(os.path.join(cwd, argv[1]))
     if stoic == False: stoic = determine_stoic()
     if stoic == False: raise Exception
@@ -44,7 +37,6 @@ def main(argv):
     energy_tuples.sort(key=lambda x: x[1])
     loe = [item[1] for item in energy_tuples]
     index = energy_tuples[0][0]
-#     index, ignore, energy = structure_index(STOIC, 633)
     best_structure = structure_coll.get_struct(index)
     try:
         jmol(best_structure, str(index))
@@ -55,7 +47,7 @@ def main(argv):
     print structure_coll.get_struct(energy_tuples[0][0]).get_geometry_atom_format()
     write_energy_hierarchy(structure_coll)
 
-def write_avg_fitness(ID, fit_avg, structure_coll):
+def write_avg_fitness(Ig, fit_avg, structure_coll):
     to_write = ''
     to_write += str(ID)+ ' '+ str(fit_avg)
     to_write += '\n'	
@@ -82,13 +74,37 @@ def get_energy_tuples(structure_coll):
 	parent1 = structure.get_property('parent_1')
 #	relaxtype = structure.get_property('Relax_type')
 #	childnum = structure.get_property('child_count')
-	if energy is not None: energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
+	if energy is not None: 
+            energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
 #	print energy_tuples
     return energy_tuples
 
+def write_energy_vs_iteration(structure_coll):
+    energy_tuples = get_energy_tuples(structure_coll)
+    to_write = ''
+    energy_tuples.sort(key=lambda x: x[0])
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+	if rep == 'init_pool':
+            pass
+	else:
+	    to_write += str(Id)+'    '+str(energy)+'\n' 
+	with open(os.path.join(tmp_dir, 'iteration_vs_energy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: 
+            f.write(to_write)
+
+def write_spe_vs_iteration(structure_coll):
+    energy_tuples = get_energy_tuples(structure_coll)
+    to_write = ''
+    energy_tuples.sort(key=lambda x: x[0])
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+        if rep == 'init_pool':
+            pass
+        else:
+            to_write += str(Id)+'    '+str(spe)+'\n'
+        with open(os.path.join(tmp_dir, 'iteration_vs_sp_energy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f:
+            f.write(to_write)
+
 def write_energy_hierarchy(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
- #   biggest_dists = get_biggest_dist(structure_coll)
     to_write = ''
     count = 1	
     energy_tuples.sort(key=lambda x: x[3])
