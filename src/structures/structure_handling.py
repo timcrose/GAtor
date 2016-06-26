@@ -523,9 +523,9 @@ def cell_check(struct,replica):
 		lower_bound = ui.get_eval(sname,"lattice_vector_lower_ratio")*ucv**(1/3.0)
 		upper_bound = ui.get_eval(sname,"lattice_vector_upper_ratio")*ucv**(1/3.0)
 		if ui.has_option(sname,"lattice_vector_lower_bound"):
-			lower_bound = max(lower_bound,ui.get_eval(sname,"lattice_vector_lower_bound")
+			lower_bound = max(lower_bound,ui.get_eval(sname,"lattice_vector_lower_bound"))
 		if ui.has_option(sname,"lattice_vector_upper_bound"):
-			upper_bound = min(upper_bound,ui.get_eval(sname,"lattice_vector_upper_bound")
+			upper_bound = min(upper_bound,ui.get_eval(sname,"lattice_vector_upper_bound"))
 		cell_lower_triangular(struct,False)
 
 		if verbose:
