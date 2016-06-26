@@ -5,7 +5,7 @@ Created on Dec 19, 2013
 '''
 import os
 
-from core.file_handler import cwd, output_file
+from core.file_handler import cwd, output_file, log_file
 import time
 from external_libs.filelock import FileLock
 
@@ -23,7 +23,7 @@ def local_message(message, replica):
     data_file.write(str(message) + '\n')
     data_file.close()
 
-def time_log(message,replica,file="time_log"):
+def time_log(message,replica,file=log_file):
 	message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+" : "+message+"\n"
 	with FileLock(file,cwd,3600):
 		if not os.path.exists(os.path.join(cwd,file)):
