@@ -52,7 +52,7 @@ def write_avg_fitness(Ig, fit_avg, structure_coll):
     to_write += str(ID)+ ' '+ str(fit_avg)
     to_write += '\n'	
     with open(os.path.join(tmp_dir, 'fitness.' + str(structure_coll.get_input_ref()) + '.dat'), 'a+') as f: f.write(to_write)
-    os.system("chmod 771 "+os.path.join(tmp_dir,'fitness.'+str(structure_coll.get_input_ref())+'.dat'))
+    os.system("chmod g=u "+os.path.join(tmp_dir,'fitness.'+str(structure_coll.get_input_ref())+'.dat'))
  
 def get_energy_tuples(structure_coll):
     energy_tuples = []

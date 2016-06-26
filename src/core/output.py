@@ -14,7 +14,7 @@ def restart_message(message):
     data_file = open(out_file, 'a')
     data_file.write(str(message) + '\n')
     data_file.close()
-    os.system("chmod 771 "+out_file)
+    os.system("chmod g=u "+out_file)
 
 
 def local_message(message, replica):
@@ -59,5 +59,5 @@ def move_to_shared_output(replica):
         data_file = open(output_file, 'a')
         data_file.write('Replica: ' + str(replica) + str(contents_string) + '\n')
         data_file.close()
-	os.system("chmod 771 "+output_file)
+	os.system("chmod g=u "+output_file)
     reset_local(replica)
