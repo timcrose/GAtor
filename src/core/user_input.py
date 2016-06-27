@@ -7,6 +7,8 @@ from ConfigParser import SafeConfigParser
 import ast
 
 from core.file_handler import default_config, ui_conf
+import sys
+from select import select
 
 
 DEFAULT_CONFIG_REPLICA = -1
@@ -60,6 +62,8 @@ class ListSafeConfigParser(SafeConfigParser):
 
 
 
+
+
 	
 def get_config():
 	'''
@@ -75,3 +79,21 @@ def get_config():
 	config.readfp(local_config_file)
 	local_config_file.close()
 	return config
+
+def keyboard_input(prompt,allowed_answers=None,time_out=86400, attempts=10):
+	'''
+	Allows interactive user input
+	'''
+	user_answer = None
+	while attempts>0:
+		sys.stdout.write(prompt," ")
+		sys.stdout.flush()
+		rlist, _, _ = select([sys.stdin], [], [], timeout)
+		if rlist:
+			user_answer = sys.stdin.readline()
+		else:
+			return None
+		if allowed_answers==None or user_answer in list(allowed_answers):
+			return user_answer
+		attempts -= 1
+		
