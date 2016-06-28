@@ -33,6 +33,7 @@ res_dir = os.path.join(GA_dir, 'res')
 
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
+conf_tmp_dir = os.path.join(cwd,'conf_tmp/')
 
 #back-up directory
 fail_dir = os.path.join(cwd, 'failed_relaxations')  
@@ -55,7 +56,7 @@ default_config = os.path.join(GA_dir, 'res', 'default.conf')
 ui_conf = os.path.abspath(sys.argv[-1])
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
-log_file = os.path.join(cwd,"time_log.out")
+log_file = os.path.join(cwd,"run_GAtor.log")
 restart_relaxation_file = os.path.join(cwd, 'restart_relaxations.dat')
 restart_replica_file = os.path.join(cwd, 'restart_replicas.dat')
 # constants
