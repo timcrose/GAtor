@@ -42,9 +42,9 @@ class ListSafeConfigParser(SafeConfigParser):
 		dicti = {}
 		for key in self.options(section):
 			if eval:
-				dicti[key] = inst.get_eval(section,key)
+				dicti[key] = self.get_eval(section,key)
 			else:
-				dicti[key] = inst.get(section,key)
+				dicti[key] = self.get(section,key)
 		return dicti
 
 	def get_replica_name(self):
