@@ -52,7 +52,10 @@ class RunGA():
 		self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 		self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
 		self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
-		self.number_of_replicas = int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
+		if self.ui.has_option("parallel_settings","number_of_multiprocesses"):
+			self.number_of_replicas = int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
+		elif self.ui.has_option("parallel_settings","number_of_replicas"):
+			self.number_of_replicas = int(self.ui.get("parallel_settings","number_of_replicas"))
 
 		# Initialize Supercollection
 		self.replica_child_count = 0
@@ -127,6 +130,7 @@ class RunGA():
 		'''
 		This routine reads in the modules defined in ui.conf
 		'''
+		print(self.ui.get('modules','initial_pool_module'))
 		self.initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
 		self.selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
 		self.crossover_module = my_import(self.ui.get('modules', 'crossover_module'), package='crossover')

@@ -90,13 +90,15 @@ echo "Running on $SLURM_NNODES nodes."
 echo "Running on $SLURM_NPROCS processors."
 echo "Current working directory is `pwd`"
 
-python %s -f %s --rn %s
-''' % (ui.get('parallel_settings','replica_walltime'),replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),ui_name,replica_name)
+module load anaconda
+
+python %s --rn %s -f %s 
+''' % (ui.get('parallel_settings','replica_walltime'),replica_name,ui.get_eval('parallel_settings','nodes_per_replica'),os.getcwd(),os.path.join(src_dir,'core','run_GA.py'),replica_name,ui_name)
 			ss=open('submit.ss','w')
 			ss.write(exe_string)
 			ss.close()
 			os.system("sbatch submit.ss")
-			os.remove('submit.ss')    
+#			os.remove('submit.ss')    
         #####CYPRESS SBATCH SUBMISSION SCRIPT#############
         elif environment=='Edison_login':
                 for i in range (number_of_multi):

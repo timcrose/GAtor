@@ -6,8 +6,11 @@ Created on Dec 19, 2013
 import os
 
 from core.file_handler import cwd, output_file, log_file
+from core import user_input
 import time
 from external_libs.filelock import FileLock
+
+ui = user_input.get_config()
 
 def restart_message(message):
     out_file = os.path.join(cwd, 'restart_relaxations.dat')
@@ -17,24 +20,24 @@ def restart_message(message):
     os.system("chmod g=u "+out_file)
 
 
-def local_message(message, replica):
+def local_message(message, replica=ui.get_replica_name()):
     out_file = os.path.join(cwd, str(replica) + '.out')
     data_file = open(out_file, 'a')
     data_file.write(str(message) + '\n')
     data_file.close()
 
-def time_log(message,replica,file=log_file):
+def time_log(message,replica=ui.get_replica_name(),logfile=log_file):
 	message=time.strftime("%Y-%m-%d %H:%M:%S")+' '+replica+" : "+message+"\n"
-	with FileLock(file,cwd,3600):
-		if not os.path.exists(os.path.join(cwd,file)):
-			f=open(os.path.join(cwd,file),"w")
+	with FileLock(logfile,cwd,3600):
+		if not os.path.exists(os.path.join(cwd,logfile)):
+			f=open(os.path.join(cwd,logfile),"w")
 			f.close()
-			os.system("chmod g=u "+os.path.join(cwd,file))
-		f=open(os.path.join(cwd,file),"a")
+			os.system("chmod g=u "+os.path.join(cwd,logfile))
+		f=open(os.path.join(cwd,logfile),"a")
 		f.write(message)
 		f.close()
 
-def error(message, replica=None):
+def error(message, replica=ui.get_replica_name()):
     if replica == None: r = ''
     else: r = str(replica) + ' '
     out_file = os.path.join(cwd, 'error.out')
@@ -42,13 +45,13 @@ def error(message, replica=None):
     data_file.write(r + str(message) + '\n')
     data_file.close()
 
-def reset_local(replica):
+def reset_local(replica=ui.get_replica_name()):
     out_file = os.path.join(cwd, str(replica) + '.out')
     data_file = open(out_file, 'w')
     data_file.write(str('') + '\n')
     data_file.close()
     
-def move_to_shared_output(replica):
+def move_to_shared_output(replica=ui.get_replica_name()):
     local_out_file = os.path.join(cwd, str(replica) + '.out')
     if not os.path.exists(local_out_file): pass
     else: 
