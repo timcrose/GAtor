@@ -96,12 +96,24 @@ class RunGA():
 			#-----Generate Trial Structure -----#
 			struct = self.generate_trial_structure()
 
+                        #----- Compare Pre-relaxed Structure to Collection -----#
+                        if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
+                                convergeTF = False
+                                rmdir_silence(self.working_dir)
+                                continue
+
 			#----- Relax Trial Structure -----#
 			mkdir_p(self.working_dir) # make relaxation directory in tmp
 			struct = self.structure_relax(struct)
 			if struct == False: #relaxation failed, start with new selection
 				rmdir_silence(self.working_dir)
 				continue
+
+                        #----- Compare Post-relaxed Structure to Collection -----#
+                        if self.structure_comparison(struct, "post_relaxation_comparison") == False:
+                                convergeTF = False
+                                rmdir_silence(self.working_dir)
+                                continue
 	
 			#----- Compare Structure to Collection -----#
 			if self.structure_comparison(struct)==False:
@@ -257,7 +269,7 @@ class RunGA():
 			return False
 		#----- Crossover -----#
 		# Expects: list_of_2_or_more<Structure>, #Returns Structure or False
-		self.output("--Crossover--")
+		self.output("\n--Crossover--")
 		new_struct = self.crossover_module.main(structures_to_cross, self.replica)
 		if new_struct is False: 
 			self.output("Crossover failure")
@@ -265,7 +277,7 @@ class RunGA():
 	
 		#----- Mutation Execution -----#
 		# Expects: Structure, target_stoichiometry [decision] #Returns: Structure
-		self.output("--Mutation--")  
+		self.output("\n--Mutation--")  
 		randnum = np.random.random()	
 		randnum2 = np.random.random()
 		#Single Parents have to be mutated	
@@ -282,7 +294,7 @@ class RunGA():
 			return False
 
 		#-----Structure modification of angles. Checks reasonable structure is created -----#
-		self.output("--Cell Checks--")	
+		self.output("\n--Cell Checks--")	
 		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
@@ -409,16 +421,23 @@ class RunGA():
 		self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
-	def structure_comparison(self,struct):
-		'''
-		This routine takes a structure, updates self.structure_supercoll, and does comparison on the structure
-		'''
-		self.output("--Comparison--")
-		structure_collection.update_supercollection(self.structure_supercoll)
-		is_acceptable = self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica)
-		if is_acceptable is False:
-			self.output('Newly relaxed structure is not acceptable') 
-			return False  # structure not acceptable start with new selection
+        def structure_comparison(self,struct, comparison_type):
+                '''
+                This routine takes a structure, updates self.structure_supercoll, and does comparison on the structure
+                '''
+                t1 = time.time()
+                if comparison_type == "pre_relaxation_comparison":
+                    self.output("\n--Pre-relaxation Comparison--")
+                elif comparison_type == "post_relaxation_comparison":
+                    self.output("\n--Post-relaxation Comparison")
+                structure_collection.update_supercollection(self.structure_supercoll)
+                is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)),
+                                                                                            self.replica, comparison_type))
+                t2 = time.time()
+                self.output("Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
+                if is_acceptable is False:
+                        self.output('Newly relaxed structure is not acceptable')
+                        return False  # structure not acceptable start with new selection
 
 	def end_of_iteration_tasks(self, begin_time, old_list_top_en, restart_count, coll):
 			# Remove working directory in /tmp
