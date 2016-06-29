@@ -157,10 +157,13 @@ def return_IP_non_duplicates(initial_list, ui):
 				print "Total Checked: "+str(check_count) 
 				print "Total Duplicates Found: " + str(check_count - len(struct_list))
                 #check_count +=1
-	ip_count = str(len(struct_list))
-        structure_collection.update_supercollection(structure_supercoll)
-	data_tools.write_energy_hierarchy(StructureCollection(stoic, 0))
-	return ip_count
+	if len(initial_list)>0:
+		ip_count = str(len(struct_list))
+	        structure_collection.update_supercollection(structure_supercoll)
+		data_tools.write_energy_hierarchy(StructureCollection(stoic, 0))
+		return ip_count
+	else:
+		return 0
 
 
 def get_pymatgen_structure(frac_data):
