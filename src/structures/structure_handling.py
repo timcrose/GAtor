@@ -350,7 +350,7 @@ def cm_calculation (struct,atom_list):
 #    print 'this is cm', cm
 	return cm
 	
-def move_molecule_in (struct,create_duplicate=True):
+def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 	'''
 	Translate the molecules by the cell vector such that their center of mass lies within the cell
 	'''
@@ -381,7 +381,7 @@ def move_molecule_in (struct,create_duplicate=True):
 def angle(l1,l2):
 	return (numpy.rad2deg(numpy.arccos(numpy.dot(l1,l2)/(numpy.linalg.norm(l1)*numpy.linalg.norm(l2)))))
 
-def cell_modification (struct,replica,create_duplicate=True):#Replica name is passed in for verbose output
+def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=True):#Replica name is passed in for verbose output
 	'''
 	Method found in the 2011 Lonie paper
 	Make the skewed angle correct
@@ -469,7 +469,7 @@ def cell_modification (struct,replica,create_duplicate=True):#Replica name is pa
 			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
 			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
 
-	struct=move_molecule_in(struct,False)
+	struct=move_molecule_in(struct,create_duplicate=False)
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
@@ -491,6 +491,7 @@ def cell_check(struct,replica):
 	sname = "cell_check_settings"
 	output.local_message("--------Begin cell check--------")
 	struct = copy.deepcopy(struct)
+	struct = cell_modification(struct,create_duplicate=False)
 
 	#Volume check
 	standard_volume=ui.get_eval(sname,"standard_volume")
@@ -737,7 +738,7 @@ def combined_distance_check(struct,replica):
 
 	#Then compare each atom pair from different molecules
 	tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]]
-	struct = move_molecule_in(struct,total_atoms,1) #Move in to prevent too far away from cell
+	struct = move_molecule_in(struct,nmpc=total_atoms) #Move in to prevent too far away from cell
 	for a1 in range (total_atoms-napm):
 		for tr_choice in tr:
 			new_apos = [struct.geometry[a1][j]+struct.properties["lattice_vector_a"][j]*tr_choice[0]+struct.properties["lattice_vector_b"][j]*tr_choice[1]+struct.properties["lattice_vector_c"][j]*tr_choice[2] for j in range (3)]
