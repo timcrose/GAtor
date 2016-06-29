@@ -46,6 +46,12 @@ class ListSafeConfigParser(SafeConfigParser):
 			else:
 				dicti[key] = inst.get(section,key)
 		return dicti
+
+	def get_replica_name(self):
+		return self.get("parallel_settings","replica_name")
+
+	def is_master_process(self):
+		return not self.get_boolean("parallel_settings","im_not_master_process")
 			
 
 	def __deepcopy__(self,memo):
