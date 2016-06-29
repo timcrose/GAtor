@@ -34,14 +34,8 @@ def main(list_of_structures, replica):
         cross_method = [random.choice(geo_opts), random.choice(lat_opts)]
         output.local_message("Crossover type:  " + str(cross_method), replica)
         output_parent_properties(parent_a, parent_b, replica)
-        output.local_message("parent a", replica)
-        output.local_message(parent_a.get_geometry_atom_format(), replica)
-        output.local_message("parent b", replica)
-        output.local_message(parent_b.get_geometry_atom_format(),replica)
 	cross_obj = Crossover(cross_method, parent_a, parent_b, num_mols, replica)
 	child_struct = cross_obj.cross()
-        output.local_message("child", replica)
-        output.local_message(child_struct.get_geometry_atom_format(), replica)
 	cell_check = structure_handling.cell_check(child_struct, replica)
         if cell_check == False:
                 cross_attempts = cross_attempts + 1

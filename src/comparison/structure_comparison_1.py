@@ -9,46 +9,43 @@ import math
 import numpy as np
 
 from core import user_input, output
-from datetime import datetime
+from time import time
 
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
 from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator
 from pymatgen.analysis.structure_matcher import SpeciesComparator,FrameworkComparator
 
-def main(struct, structure_coll, replica):
+def main(struct, structure_coll, replica, comparison_type):
     '''
     The module takes a structure and compare it to the given structure collection.
     Returns: True/False if the structure passes/fails test for uniqueness and for energy
     '''
-    comp = Comparison(struct, structure_coll, replica)
-    t1 = datetime.now()
-  
-    # make sure energy is higher than the worst in the collection
-    en_result = comp.acceptable_energy()
-    if en_result is False:
-        return False
-
-    # return list of structures within a difference tolerance of comparison (.5 eV)
-    structs_to_compare = comp.get_similar_structures()
-    dup_result = comp.check_if_duplicate(structs_to_compare)
-
-    t2 = datetime.now()
-    output.local_message("The structure compared is unique. ",replica)
-    output.local_message(("Time taken to compare structure to collection: " + str(struct.struct_id) + 
-                                                                      ' -- ' + str(t2 - t1),replica))
-
+    if comparison_type == "pre_relaxation_comparison":
+	comp = Comparison(struct, structure_coll, replica, comparison_type)
+	structs_to_compare = comp.get_all_structures()
+        dup_result = comp.check_if_duplicate(structs_to_compare, comparison_type)
+    elif comparison_type == "post_relaxation_comparison":
+        comp = Comparison(struct, structure_coll, replica, comparison_type)
+        # make sure energy is higher than the worst in the collection
+        en_result = comp.acceptable_energy()
+        if en_result is False:
+            return False
+	structs_to_compare = comp.get_similar_energy_structures(comparison_type)
+	dup_result = comp.check_if_duplicate(structs_to_compare, comparison_type)
+    output.local_message("The structure compared is unique. ", replica)
     return dup_result # Boolean
 
 
 class Comparison:
 
-    def __init__(self, struct, structure_coll, replica):
+    def __init__(self, struct, structure_coll, replica, comparison_type):
         if struct is False or struct is None: raise Exception
         self.replica = replica
         self.struct = struct
         self.structure_coll = structure_coll
         self.ui = user_input.get_config()
+	self.comparison_type = comparison_type
 
     def output(self, message): output.local_message(message, self.replica)
 
@@ -71,14 +68,22 @@ class Comparison:
         elif energy <= worst_energy:
 	    self.output("Structure has acceptable energy.")
             return True
-    
+
+    def get_all_structures(self):
+        '''
+	returns full list of structures w/o index
+        '''
+        struct_list = []
+        for index, struct in self.structure_coll:
+                struct_list.append(struct)
+        return struct_list
         
-    def get_similar_structures(self):
+    def get_similar_energy_structures(self, comparison_type):
         '''
         reduces the list of structures that are checked for duplicates within
         a certain window of energy defined by the user
         '''
-        e_tol = float(self.ui.get_eval('comparison_settings', 'dup_energy_tol'))
+        e_tol = float(self.ui.get_eval(comparison_type, 'energy_comp_range'))
         if e_tol == None: raise Exception
 
         sim_list = []
@@ -91,12 +96,12 @@ class Comparison:
         self.output("Number of Structures w/in duplicate energy window: "+str(len(sim_list)))
         return sim_list
 
-    def check_if_duplicate(self, comp_list):
+    def check_if_duplicate(self, comp_list, comparison_type):
         '''
         Args: list of Structures() to compare
         Returns: T/F is structure is duplicate
         '''
-        sm = self.set_comp_structure_matcher()
+        sm = self.set_comp_structure_matcher(comparison_type)
  
 	TF_list = []
         structp = self.get_pymatgen_structure(self.struct)
@@ -117,16 +122,16 @@ class Comparison:
             return False
 
 
-    def set_comp_structure_matcher(self):
+    def set_comp_structure_matcher(self, comparison_type):
         '''
         Args: self
         Returns: Pymatgen StructureMatcher object
         '''
         ui= self.ui
-        L_tol =ui.get_eval('comparison_settings', 'ltol')
-        S_tol = ui.get_eval('comparison_settings', 'stol')
-        Angle_tol = ui.get_eval('comparison_settings', 'angle_tol')
-        Scale = ui.get_eval('comparison_settings', 'scale_vol')
+        L_tol =ui.get_eval(comparison_type, 'ltol')
+        S_tol = ui.get_eval(comparison_type, 'stol')
+        Angle_tol = ui.get_eval(comparison_type, 'angle_tol')
+        Scale = ui.get_eval(comparison_type, 'scale_vol')
         sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, 
                           scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
         return sm
