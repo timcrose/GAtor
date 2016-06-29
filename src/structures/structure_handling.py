@@ -725,14 +725,14 @@ def combined_distance_check(struct,replica):
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
 				dist = numpy.linalg.norm(diff)
 				if dist < min_dist:
-					olm("New structure failed atomic distance check",replica)
+					olm("New structure failed atomic distance check with distance of "+str(dist),replica)
 					return False
 
 				if (sr!=None and struct.geometry[a1][3] in radius
 				and struct.geometry[a2][3] in radius
 				and dist<(radius.radius[struct.geometry[a1][3]]
 				+radius.radius[struct.geometry[a2][3]])*sr):
-					olm("New structure failed specific radius check",replica)
+					olm("New structure failed specific radius check with distance of "+str(dist),replica)
 					return False
 	
 
@@ -758,6 +758,7 @@ def combined_distance_check(struct,replica):
 				+radius.radius[struct.geometry[a2][3]])*sr):
 					olm("New structure failed specific radius check",replica)
 					return False
+	return True
 			
 
 
