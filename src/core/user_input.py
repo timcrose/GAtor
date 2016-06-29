@@ -40,7 +40,7 @@ class ListSafeConfigParser(SafeConfigParser):
 		Return all the option under a section as a dictionary
 		'''
 		dicti = {}
-		for key in self.options:
+		for key in self.options(section)
 			if eval:
 				dicti[key] = inst.get_eval(section,key)
 			else:
