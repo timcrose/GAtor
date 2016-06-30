@@ -13,6 +13,7 @@ from core.file_handler import mkdir_p_clean, fail_dir
 from core.activity import *
 
 from structures.structure import Structure
+from structures.structure_collection import StructureCollection
 from copy import deepcopy
 
 
@@ -27,17 +28,24 @@ def main(input_structure, working_dir, control_check_SPE_string, control_relax_f
 	'''
 	ui = user_input.get_config()
 	SPE_threshold = ui.get_eval('run_settings','SPE_threshold')
+	stoic = input_structure.get_stoic()
+	energies = []
+	for key, struct in StructureCollection(stoic, 0):
+		energies.append(struct.get_property('energy'))
+	min_energy = sorted(energies)[0]
 
 	SPE = FHIAimsRelaxation(input_structure, working_dir, control_check_SPE_string, replica)
-	output.local_message("Replica " +str(replica)+" executing FHI-aims and checking the SPE.", replica)
+	output.local_message("Replica %s executing FHI-aims and checking the SPE." % (replica), replica)
+	output.local_message("Current minimum energy: %0.3f" % (min_energy), replica)
+
 	checkSPE = SPE.execute()
 	if SPE.is_successful_spe():
 		SP_energy = SPE.extract_energy()
 		input_structure.set_property('spe_energy',SP_energy)
 		output.local_message("SPE extracted: %0.3f eV" % (SP_energy), replica)
-		if SP_energy >= SPE_threshold:
+		if SP_energy >= min_energy + SPE_threshold:
 			return False
-		elif SP_energy <= SPE_threshold:
+		elif SP_energy <= min_energy + SPE_threshold:
 			message = "Structure passed SPE check"
 			output.local_message(message, replica)
 			fullrelax = FHIAimsRelaxation(input_structure, working_dir, control_relax_full_string, replica)

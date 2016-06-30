@@ -254,24 +254,22 @@ class RunGA():
 		This is the normal process to create a new structure through crossover and mutation
 		'''
 		#----- Structure Selection -----#
-		# Expects: dictionary_of_on_or_more<Stoic, StructureCollection> #Returns: list_of_2_or_more<Structure>
-		self.output("--Beginning normal structure creation process--")
+                self.output("--Beginning normal structure creation process--")
 		self.output("--Structure selection--")	
 		structures_to_cross = self.selection_module.main(self.structure_supercoll, self.replica_stoic, self.replica)
 		if structures_to_cross is False: 
 			self.output('Selection failure')
 			return False
+
 		#----- Crossover -----#
-		# Expects: list_of_2_or_more<Structure>, #Returns Structure or False
-		self.output("\n--Crossover--")
+                self.output("\n--Crossover--")
 		new_struct = self.crossover_module.main(structures_to_cross, self.replica)
 		if new_struct is False: 
 			self.output("Crossover failure")
 			return False  
 	
 		#----- Mutation Execution -----#
-		# Expects: Structure, target_stoichiometry [decision] #Returns: Structure
-		self.output("\n--Mutation--")  
+                self.output("\n--Mutation--")  
 		randnum = np.random.random()	
 		randnum2 = np.random.random()
 		#Single Parents have to be mutated	
@@ -292,7 +290,6 @@ class RunGA():
 		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
-
 		self.set_parents(structures_to_cross, new_struct)
 		return new_struct
 	
