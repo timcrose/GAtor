@@ -164,7 +164,7 @@ class RunGA():
 		struct_coll0 = self.structure_supercoll.get((self.replica_stoic, 0)) 
 		total_structs = len(struct_coll0.structures)
 		added_structs = total_structs-int(number_of_IP)
-		self.output("added structures"+ str(added_structs))
+		self.output("GA added structures: "+ str(added_structs))
 		data_tools.write_energy_hierarchy(struct_coll0)
                 data_tools.write_energy_vs_iteration(struct_coll0)
 		data_tools.write_spe_vs_iteration(struct_coll0) 
@@ -357,7 +357,8 @@ class RunGA():
 				shutil.rmtree(folder)
 				self.output("Folder %s removed" % folder)
 			except:
-				self.output("Scavenged folder %s clean-up failure" % folder) #Probably due to file permission issue
+				self.output("Scavenged folder %s clean-up failure" % folder) 
+                                #Probably due to file permission issue
 				if os.path.exists(os.path.join(folder,"active.info")):
 					try:
 						os.remove(os.path.join(folder,"active.info"))
@@ -378,18 +379,17 @@ class RunGA():
 		mkdir_p(self.working_dir) # make relaxation directory in tmp
 		#----- Begin 'Cascade' -----#
 		cascade_counter = 0 
-		control_check_SPE_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),self.control_list[0])
-		control_relax_full_string = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),self.control_list[1])
-		
-		#write_data(self.working_dir,"struct.json",struct.dumps()) #This line is removed because relaxation module cleans the directory
+		control_check_SPE = (read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
+                                                                                           self.control_list[0]))
+		control_relax_full = (read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
+                                                                                           self.control_list[1]))
 		struct_info = copy.deepcopy(struct)
 
 		#----- Check SPE and perform Full Relaxation -----#
-		# Expects: Structure, working_dir, input_path #Returns: Structure
-		self.output("--SPE Check and Full Relaxation--")
+		self.output("\n--SPE Check and Full Relaxation--")
 		self.restart(str(self.replica)+' started_relaxing:    ' +str(datetime.datetime.now()))
 
-		struct = self.relaxation_module.main(struct, self.working_dir, control_check_SPE_string, control_relax_full_string, self.replica)
+		struct = self.relaxation_module.main(struct, self.working_dir, control_check_SPE, control_relax_full, self.replica)
 		if struct is False: 
 			self.output('SPE check not passed or full relaxation failure for '+ str(self.replica))
 			return False
@@ -402,7 +402,7 @@ class RunGA():
 				struct.properties[key]=struct_info.properties[key]
 
 
-		#----- Make sure cell is lower triangular before -----#
+		#----- Make sure cell is lower triangular -----#
 		self.output("Ensuring cell is lower triangular...")
 		struct=structure_handling.cell_lower_triangular(struct,False)	
 		a=struct.get_property('lattice_vector_a')
@@ -415,7 +415,7 @@ class RunGA():
 		self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
-        def structure_comparison(self,struct, comparison_type):
+        def structure_comparison(self, struct, comparison_type):
                 '''
                 This routine takes a structure, updates self.structure_supercoll, and does comparison on the structure
                 '''
