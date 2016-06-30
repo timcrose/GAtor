@@ -3,6 +3,7 @@
 '''
 
 import os
+import itertools
 from core import user_input, data_tools, output
 from core.file_handler import cwd, tmp_dir
 from external_libs.filelock import FileLock
@@ -16,8 +17,10 @@ from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparat
 
 def main():
 	'''
-	Called by core/master.py when -i option is present, requires the user-defined initial pool (or additional user structures)
-	to be added into the common 0 storage. An optional duplicate check is performed if requested in ui.conf
+	Called by core/master.py when -i option is present, 
+        requires the user-defined initial pool (or additional user structures)
+	to be added into the common 0 storage. 
+        An optional duplicate check is performed if requested in ui.conf
 	Returns: Total number of initial structures added to the collection.
     	'''
 	ui = user_input.get_config()
@@ -27,7 +30,7 @@ def main():
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
 	initial_list = convert_to_structures(files_to_add)
     	if ui.get_eval('initial_pool', 'duplicate_check'):
-    		print "Checking Initial pool for duplicates"
+    		print "Checking initial pool for duplicates"
     		ip_count = return_IP_non_duplicates(initial_list, ui)
 		print "Final Initial Pool Count: "+ str(ip_count)
                 with open(num_IP_structures,'a') as f:
@@ -69,7 +72,7 @@ def file_lock_structures(user_structures_dir, added_user_structures):
 				ffile.write(filename + '\n')
 				files_to_add.append(filename)
 		ffile.close()	
-	os.system("chmod 775 "+added_user_structures)
+	os.system("chmod 771 "+added_user_structures)
 	return files_to_add
 
 def convert_to_structures(files_to_add):
@@ -87,7 +90,6 @@ def convert_to_structures(files_to_add):
 		message= "Stoic of IP struct: "  +str(struct.get_stoic())
 		mod_struct = structure_handling.cell_modification(struct, "init_pool",create_duplicate=False)
 		initial_list.append(mod_struct)
-	print initial_list
 	return initial_list
 
 def set_IP_structure_matcher(ui):
@@ -117,54 +119,51 @@ def return_all_user_structures(initial_list):
 
     	
 def return_IP_non_duplicates(initial_list, ui):
-	'''
-	Called when duplicate check is required before adding user-defined structures into common (0) storage
-	Args: The initial list of Structures() from the user-defined folder
-	Returns: The total number of non-duplicate structures added
-	'''
-	check_count = 0
-	ip_count = 0
-	struct_list = []
-	sm = set_IP_structure_matcher(ui)
+        '''
+        Called when duplicate check is required before adding user-defined structures into common (0) storage
+        Args: The initial list of Structures() from the user-defined folder
+        Returns: The total number of non-duplicate structures added
+        '''
+        remove_list = []
         structure_supercoll = {}
+        dup_pairs = return_duplicate_pairs(initial_list, ui)
+        for path, path_dup in dup_pairs:
+            remove_list.append(path_dup)
 	for struct in initial_list:
-		stoic = struct.get_stoic()
-		structure_supercoll[(stoic, 0)] = StructureCollection(stoic, 0)
-		frac_data = struct.get_frac_data()
-		check_count += 1
-		structp = get_pymatgen_structure(frac_data)
-		if len(struct_list) == 0:
-			struct_list.append(struct)
-                        struct.set_property('ID',0)	
-                        structure_collection.add_structure(struct, stoic, 0)
-			print "Added First Structure"
-		elif len(struct_list) > 0:
-			TF_list = []
-			fitTF= False		
-			print "Checking Next Structure"
-			for comp_struct in struct_list:	
-				comp_frac_data = comp_struct.get_frac_data()
-        		       	comp_structp = get_pymatgen_structure(comp_frac_data)
-				fitTF = sm.fit(structp,comp_structp)
-				TF_list.append(fitTF)
-				#print TF_list
-			if True not in TF_list:
-				struct_list.append(struct)
-				struct.set_property('ID',0)		
-				structure_collection.add_structure(struct, stoic, 0)	
-				#print "Found Non-Duplicate!"
-				print "Total Non-Duplicates: "+str(len(struct_list))
-				print "Total Checked: "+str(check_count) 
-				print "Total Duplicates Found: " + str(check_count - len(struct_list))
-                #check_count +=1
-	if len(initial_list)>0:
-		ip_count = str(len(struct_list))
-	        structure_collection.update_supercollection(structure_supercoll)
-		data_tools.write_energy_hierarchy(StructureCollection(stoic, 0))
-		return ip_count
-	else:
-		return 0
+            stoic = struct.get_stoic()
+            struct_fp = struct.get_property('file_path')
+            if struct_fp in remove_list:
+                continue
+            struct.set_property('ID',0)
+            structure_collection.add_structure(struct, stoic, 0)
+	struct_coll = StructureCollection(stoic, 0)
+        structure_collection.update_supercollection(structure_supercoll)
+        data_tools.write_energy_hierarchy(struct_coll)
 
+        print "Total Duplicate Pairs Found: %d" % (len(remove_list))
+	print "Total Checked: %d" % (len(initial_list))
+	print "Total Unique Structures Added: %d" % (len(struct_coll.structures))
+        return len(struct_coll.structures) 
+
+def return_duplicate_pairs(initial_list, ui):
+        dup_pairs = []
+        sm = set_IP_structure_matcher(ui)
+        ip_dup_output = open(os.path.join(tmp_dir, "IP_duplicates.dat"),'w')
+
+        for struct, structc in itertools.combinations(initial_list, 2):
+            structp = get_pymatgen_structure(struct.get_frac_data())
+            structpc = get_pymatgen_structure(structc.get_frac_data())
+            fit = sm.fit(structp, structpc)
+            if fit:
+                print "Found duplicate pair:"
+                struct_fp = struct.get_property('file_path')
+                structc_fp = structc.get_property('file_path')
+		print struct_fp
+		print structc_fp
+                dup_pairs.append((struct_fp, structc_fp))
+	for pair in dup_pairs:
+            ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')
+        return dup_pairs
 
 def get_pymatgen_structure(frac_data):
 	'''
@@ -173,7 +172,8 @@ def get_pymatgen_structure(frac_data):
 	'''
 	coords = frac_data[0] # frac coordinates
 	atoms = frac_data[1] # site labels
-	lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
+	lattice = (LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], 
+                                alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7]))
 	structp = StructureP(lattice, atoms, coords)
 	return structp
 
