@@ -111,11 +111,12 @@ def return_all_user_structures(initial_list):
 	Args: The initial list of Structures() from the user-defined folder
 	Returns: The total number of structures added
 	'''
-	ip_count = 0
-	for struct in initial_list:
-		structure_collection.add_structure(struct, struct.get_stoic(), 0)
-		ip_count += 1 
-	return ip_count
+        ip_count = 0
+        for struct in initial_list:
+            struct.set_property('ID',0)
+            structure_collection.add_structure(struct, struct.get_stoic(), 0)
+            ip_count += 1 
+        return ip_count
 
     	
 def return_IP_non_duplicates(initial_list, ui):

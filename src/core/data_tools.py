@@ -60,7 +60,7 @@ def get_energy_tuples(structure_coll):
 	ID = structure.get_property('ID')
 	replica = structure.get_property('replica')
         energy = structure.get_property('energy')
-	if ID == 0:
+	if replica == 'init__pool':
             spe = structure.get_property('energy_light_SPE')
 	else: spe = structure.get_property('spe_energy') 
 	vol = structure.get_property('cell_vol')
