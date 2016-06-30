@@ -60,7 +60,10 @@ def get_energy_tuples(structure_coll):
 	ID = structure.get_property('ID')
 	replica = structure.get_property('replica')
         energy = structure.get_property('energy')
-	spe = structure.get_property('spe_energy') 
+	try: spe = structure.get_property('spe_energy') 
+	except: pass
+	try: spe = structure.get_property('energy_light_SPE')
+	except: pass
 	vol = structure.get_property('cell_vol')
 	a = structure.get_property('a')
 	b = structure.get_property('b')
@@ -72,11 +75,8 @@ def get_energy_tuples(structure_coll):
         crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
-#	relaxtype = structure.get_property('Relax_type')
-#	childnum = structure.get_property('child_count')
 	if energy is not None: 
             energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
-#	print energy_tuples
     return energy_tuples
 
 def write_energy_vs_iteration(structure_coll):
@@ -85,9 +85,8 @@ def write_energy_vs_iteration(structure_coll):
     energy_tuples.sort(key=lambda x: x[0])
     for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
 	if rep == 'init_pool':
-            pass
-	else:
-	    to_write += str(Id)+'    '+str(energy)+'\n' 
+            continue
+	to_write += str(Id)+'    '+str(energy)+'\n' 
 	with open(os.path.join(tmp_dir, 'iteration_vs_energy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: 
             f.write(to_write)
 
@@ -97,9 +96,8 @@ def write_spe_vs_iteration(structure_coll):
     energy_tuples.sort(key=lambda x: x[0])
     for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
         if rep == 'init_pool':
-            pass
-        else:
-            to_write += str(Id)+'    '+str(spe)+'\n'
+            continue
+        to_write += str(Id)+'    '+str(spe)+'\n'
         with open(os.path.join(tmp_dir, 'iteration_vs_sp_energy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f:
             f.write(to_write)
 

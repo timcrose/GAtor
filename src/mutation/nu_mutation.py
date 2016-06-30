@@ -18,10 +18,10 @@ def main(struct, replica):
     '''
     input_struct = deepcopy(struct)
     num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
-    output.local_message(input_struct.get_geometry_atom_format(), replica)
+    #output.local_message(input_struct.get_geometry_atom_format(), replica)
     mutate_obj = select_mutator(input_struct, num_mols, replica)
     mutated_struct = mutate_obj.mutate()
-    output.local_message(mutated_struct.get_geometry_atom_format(), replica)
+    #output.local_message(mutated_struct.get_geometry_atom_format(), replica)
     return mutated_struct
    
 def select_mutator(input_struct, num_mols, replica):
@@ -33,9 +33,6 @@ def select_mutator(input_struct, num_mols, replica):
     '''
     mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
                                   "Strain_rand_mols","Strain_sym_mols"])
- #   mutation_list = ["Trans_mol","Rot_mol","Strain_rand","Strain_sym"]
-#    mutation_list = ["Strain_rand_mols","Strain_sym_mols"]
-
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -171,8 +168,6 @@ class RandomRotationMolMutation(object):
         theta= (np.pi/180)*rand_vec[0]
         psi = (np.pi/180)*rand_vec[1]
         phi= (np.pi/180)*rand_vec[2]
-        self.output("Random Rotation Angles:  ")
-        self.output(str(theta*180/np.pi)+' '+str(psi*180/np.pi)+' '+str(phi*180/np.pi))
         Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
                         (-np.cos(phi) * np.sin(psi)) + (np.sin(phi) * np.sin(theta) * np.cos(psi)),
                         (np.sin(phi) * np.sin(psi)) + (np.cos(phi) * np.sin(theta) * np.cos(psi))),
