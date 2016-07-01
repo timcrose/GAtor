@@ -35,7 +35,6 @@ res_dir = os.path.join(GA_dir, 'res')
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
 conf_tmp_dir = os.path.join(cwd,'conf_tmp/')
-
 #back-up directory
 fail_dir = os.path.join(cwd, 'failed_relaxations')  
 scavenge_dir = os.path.join(cwd,"scavenged_folders")
@@ -53,8 +52,8 @@ db_file = os.path.join(cwd, 'structures.sqlite')  # TODO: change par_dir to cwd
 progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
 default_config = os.path.join(GA_dir, 'res', 'default.conf')
 (options,argv)=argument_opt() #Retrieve the user_input from command line
-ui_conf = os.path.join(cwd, options.user_input)
-#ui_conf = os.path.abspath(sys.argv[-1])
+#ui_conf = os.path.join(cwd, options.user_input)
+ui_conf = os.path.abspath(sys.argv[-1])
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'output.out')
 log_file = os.path.join(cwd,"run_GAtor.log")
@@ -210,4 +209,7 @@ def print_to_file(message):
 
 
 if __name__ == '__main__':
-    print cwd
+    print cwd    
+mkdir_p(tmp_dir)
+mkdir_p(conf_tmp_dir)
+

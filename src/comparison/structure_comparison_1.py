@@ -83,7 +83,7 @@ class Comparison:
         reduces the list of structures that are checked for duplicates within
         a certain window of energy defined by the user
         '''
-        e_tol = float(self.ui.get_eval(comparison_type, 'energy_comp_range'))
+        e_tol = float(self.ui.get_eval(comparison_type, 'energy_comp_window'))
         if e_tol == None: raise Exception
 
         sim_list = []
