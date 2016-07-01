@@ -16,7 +16,7 @@ def main():
 
 class GAtor():
 	'''
-	This is the master class of Genarris
+	This is the master class of GAtorr
 	Takes the path to a configuration file as an necessary input
 	'''
 	def __init__(self):
