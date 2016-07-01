@@ -7,7 +7,7 @@ Created on June 26th, 2016
 import os
 import sys,socket
 import core.file_handler as fh
-from core import user_input, kill, output, run_GA
+from core import user_input, kill, output
 from utilities import parallel_run,stoic_model
 
 def main():
@@ -37,6 +37,7 @@ class GAtor():
 			self.fill_initial_pool()
 
 		if self.ui.get_boolean(sname,"run_GA"):
+			from core import run_GA
 			if self.get("parallel_settings","parallelization_method")!="serial":
 			#Launch parallelism
 				parallel_run.launch_parallel()
