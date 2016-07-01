@@ -51,7 +51,7 @@ class RunGA():
 		self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
 		self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
 		self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
-		self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
+#		self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
 		if self.ui.has_option("parallel_settings","number_of_multiprocesses"):
 			self.number_of_replicas = int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
 		elif self.ui.has_option("parallel_settings","number_of_replicas"):
