@@ -3,12 +3,20 @@
 This module contains the default user input values.
 Values are overridden by textual user input
 '''
-from ConfigParser import SafeConfigParser
-import ast
 
 from core.file_handler import default_config, ui_conf
 import sys
 from select import select
+try:
+        from ConfigParser import SafeConfigParser
+except ImportError:
+        from configparser import SafeConfigParser
+import ast, os
+
+try:
+        from StringIO import StringIO
+except ImportError:
+        from io import StringIO
 
 
 DEFAULT_CONFIG_REPLICA = -1
