@@ -4,7 +4,7 @@ New master script for running of GAtor
 Created on June 26th, 2016
 '''
 
-import os
+import os, subprocess, shutil
 import sys,socket
 import core.file_handler as fh
 from core import user_input, kill, output
@@ -27,7 +27,7 @@ class GAtor():
 			self.testing_mode()
 			return #Under test mode, no further comamnd is read
 
-		if self.ui.get_boolean(sname,"kill_GA"):
+		if self.ui.get_boolean(sname,"kill_ga"):
 			self.kill_GA()
 
 		if self.ui.get_boolean(sname,"clean_folder"):
@@ -36,14 +36,25 @@ class GAtor():
 		if self.ui.get_boolean(sname,"fill_initial_pool"):
 			self.fill_initial_pool()
 
-		if self.ui.get_boolean(sname,"run_GA"):
+		if self.ui.get_boolean(sname,"run_ga"):
 			from core import run_GA
-			if self.get("parallel_settings","parallelization_method")!="serial":
+			if self.ui.get("parallel_settings","parallelization_method")!="serial":
 			#Launch parallelism
 				parallel_run.launch_parallel()
 			else:
+				sname = "parallel_settings"
+				message = "GAtor instance reporting from "+socket.gethostname()
+				if self.ui.has_option(sname,"allocated_nodes"):
+					message += "; controlling nodes: "+", ".join(map(str,self.ui.get_eval(sname,"allocated_nodes")))
+				if self.ui.has_option(sname,"processes_per_replica"):
+					message += "; controlling %i processes" % (self.ui.get_eval(sname,"processes_per_replica"))
+				output.time_log(message)
+
+				
 				stoic = stoic_model.determine_stoic()
 				ga = run_GA.RunGA(self.ui.get_replica_name(),stoic)
+				ga.start()
+				output.move_to_shared_output(self.ui.get_replica_name())
 				
 
 	def testing_mode(self):
@@ -58,6 +69,17 @@ class GAtor():
 		
 		getattr(test_and_debug,test_procedure)()
 		return
+
+	def kill_GA(self):
+		kill.set_kill()
+		return
+
+	def fill_initial_pool(self):
+		IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
+		fh.mkdir_p(fh.tmp_dir)
+		fh.mkdir_p(fh.structure_dir)
+		IP_module.main()
+		
 
 	def clean_folder(self):
 		sname = "clean_folder"
@@ -82,15 +104,15 @@ def clean():
 		files_to_remove = [fh.output_file, fh.restart_relaxation_file, fh.restart_replica_file]
 	except: pass
 	output.time_log("Cleaning all the .out and .err files in: " + fh.cwd, sname)
-	p = subprocess.Popen(['rm *.out'], cwd=cwd, shell=True)
+	p = subprocess.Popen(['rm *.out'], cwd=fh.cwd, shell=True)
 	p.wait()
-	p = subprocess.Popen(['rm *.err'], cwd=cwd, shell=True)
+	p = subprocess.Popen(['rm *.err'], cwd=fh.cwd, shell=True)
 	p.wait()
 	# tmp index is to keep track of replica number
 	for directory in directory_to_remove:
 		if os.path.exists(directory): 
 			output.time_log("Removing directory: "+directory, sname)
-			rmtree(directory)
+			shutil.rmtree(directory)
 
 	for rmfile in files_to_remove:
 		if os.path.exists(rmfile): 

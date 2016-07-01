@@ -100,14 +100,14 @@ def keyboard_input(prompt,allowed_answers=None,time_out=86400, attempts=10):
 	'''
 	user_answer = None
 	while attempts>0:
-		sys.stdout.write(prompt," ")
+		sys.stdout.write(prompt+" ")
 		sys.stdout.flush()
-		rlist, _, _ = select([sys.stdin], [], [], timeout)
+		rlist, _, _ = select([sys.stdin], [], [], time_out)
 		if rlist:
 			user_answer = sys.stdin.readline()
 		else:
 			return None
-		if allowed_answers==None or user_answer in list(allowed_answers):
-			return user_answer
+		if allowed_answers==None or user_answer[0:-1] in list(allowed_answers):
+			return user_answer[0:-1]
 		attempts -= 1
 		

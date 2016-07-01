@@ -137,14 +137,15 @@ def return_IP_non_duplicates(initial_list, ui):
                 continue
             struct.set_property('ID',0)
             structure_collection.add_structure(struct, stoic, 0)
-	struct_coll = StructureCollection(stoic, 0)
-        structure_collection.update_supercollection(structure_supercoll)
-        data_tools.write_energy_hierarchy(struct_coll)
+        if len(initial_list)!=0:
+	    struct_coll = StructureCollection(stoic, 0)
+            structure_collection.update_supercollection(structure_supercoll)
+            data_tools.write_energy_hierarchy(struct_coll)
 
-        print "Total Duplicate Pairs Found: %d" % (len(remove_list))
-	print "Total Checked: %d" % (len(initial_list))
-	print "Total Unique Structures Added: %d" % (len(struct_coll.structures))
-        return len(struct_coll.structures) 
+            print "Total Duplicate Pairs Found: %d" % (len(remove_list))
+	    print "Total Checked: %d" % (len(initial_list))
+	    print "Total Unique Structures Added: %d" % (len(struct_coll.structures))
+            return len(struct_coll.structures) 
 
 def return_duplicate_pairs(initial_list, ui):
         dup_pairs = []
