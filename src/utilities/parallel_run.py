@@ -34,7 +34,7 @@ def launch_parallel():
 		launch_parallel_mpirun()
 
 	elif spawn_method == "srun":
-		launch_parallel_srun()
+		launch_parallel_mpirun(use_srun=True)
 	
 	else:
 		raise ValueError("Unknown parallelization method: "+spawn_method)
