@@ -93,6 +93,7 @@ def launch_parallel_mpirun(use_srun=False):
 			all_processes = get_all_processes("srun")
 		all_nodes = list(set(all_processes))
 
+	output.time_log("All nodes: "+", ".join(map(str,all_nodes)))
 	nop = len(all_processes) #Number of processes
 	non = len(all_nodes) #Number of nodes
 	ppn = int(nop/non) #Processes per node
@@ -144,6 +145,11 @@ def launch_parallel_mpirun(use_srun=False):
 			ppr = ([ppn/(rpn+1)+1]*(ppn%(rpn+1))\
 				+[ppn/(rpn+1)]*(rpn+1-(ppn%(rpn+1))))*add
 			ppr+= ([ppn/rpn+1]*(ppn%rpn)+[ppn/rpn]*(rpn-(ppn%rpn)))*(non-add)
+		else:
+			npr = non / nor
+			add = non % nor
+			npr = [npr+1]*add + [npr]*(nor-add)
+			ppr = [ppn*x for x in npr]
 	else:
 		raise KeyError("mpirun/srun parallelization method requires the setting of at least one of the following parameter within parallel_settings: nodes_per_replica, processes_per_replica, and number_of_replicas; None is found")
 
