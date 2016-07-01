@@ -12,6 +12,8 @@ from utilities import parallel_run,stoic_model
 
 def main():
 #	main_process = GAtor(sys.argv[-1])
+	src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+	sys.path.append(src_dir)
 	main_process = GAtor()
 
 class GAtor():
