@@ -77,9 +77,11 @@ class GAtor():
 		return
 
 	def fill_initial_pool(self):
-		IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
-		fh.mkdir_p(fh.tmp_dir)
+                fh.mkdir_p(fh.tmp_dir)
 		fh.mkdir_p(fh.structure_dir)
+		IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
+		#fh.mkdir_p(fh.tmp_dir)
+		#fh.mkdir_p(fh.structure_dir)
 		IP_module.main()
 		
 
