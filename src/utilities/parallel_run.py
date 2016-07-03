@@ -23,7 +23,10 @@ def launch_parallel():
 		if ui.is_master_process():
 			output.time_log("No parallelization is called")
 		return 
-	elif spawn_method == "subprocess":
+
+	fh.mkdir_p(fh.conf_tmp_dir)
+	
+	if spawn_method == "subprocess":
 		launch_parallel_subprocess()
 
 	elif spawn_method == "mira" or spawn_method == "cetus":
@@ -56,7 +59,7 @@ def launch_parallel_subprocess():
 	processes = []
 
 	for i in range(nor):
-		new_ui.set(sname,"replica_name",misc.get_random_index())
+		new_ui.set(sname,"replica_name",misc.get_random_index())		
 		conf_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".conf")
 		f = open(conf_path,"w")
 		new_ui.write(f)
