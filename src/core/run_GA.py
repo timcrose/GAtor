@@ -45,17 +45,16 @@ class RunGA():
 		self.working_dir = os.path.join(tmp_dir, str(self.replica))
 		self.GA_module_init() # initializes GA modules specified in .conf file
 		self.verbose = self.ui.get_eval('run_settings', 'verbose')        
-		self.control_list = self.ui.get_list('control', 'control_in_filelist')
+#		self.control_list = self.ui.get_list('control', 'control_in_filelist')
 		self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 		self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
-		self.top_en_count = int(self.ui.get('run_settings', 'number_of_top_energies')) 
-		self.max_en_it = int(self.ui.get('run_settings', 'max_iterations_energy'))
+
+		self.prop = self.ui.get("run_settings","property_to_optimize")
+		self.op_style = self.ui.get("run_settings","optimization_style")
+
+		self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
+		self.max_it = self.ui.get_eval('run_settings', 'max_iterations')
 		self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
-#		self.number_of_IP = int(self.ui.get('run_settings', 'number_of_IP'))
-		if self.ui.has_option("parallel_settings","number_of_multiprocesses"):
-			self.number_of_replicas = int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
-		elif self.ui.has_option("parallel_settings","number_of_replicas"):
-			self.number_of_replicas = int(self.ui.get("parallel_settings","number_of_replicas"))
 
 		# Initialize Supercollection
 		self.replica_child_count = 0
@@ -79,7 +78,7 @@ class RunGA():
 		structure_collection.update_supercollection(self.structure_supercoll)
 
 		# Intialiaze restarts
-		restart_replica = self.initialize_restart()
+		restart_replica = self.get_boolean("parallel_settings","restart_replica")
 		restart_count = 0
 		convergeTF = None
 		while True:
@@ -95,12 +94,12 @@ class RunGA():
 
 			#-----Generate Trial Structure -----#
 			struct = self.generate_trial_structure()
-
-                        #----- Compare Pre-relaxed Structure to Collection -----#
-                        if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
-                                convergeTF = False
-                                rmdir_silence(self.working_dir)
-                                continue
+			
+			#----- Compare Pre-relaxed Structure to Collection -----#
+			if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
+				convergeTF = False
+				rmdir_silence(self.working_dir)
+				continue
 
 			#----- Relax Trial Structure -----#
 			mkdir_p(self.working_dir) # make relaxation directory in tmp
@@ -109,24 +108,25 @@ class RunGA():
 				rmdir_silence(self.working_dir)
 				continue
 
-                        #----- Compare Post-relaxed Structure to Collection -----#
-                        if self.structure_comparison(struct, "post_relaxation_comparison") == False:
-                                convergeTF = False
-                                rmdir_silence(self.working_dir)
-                                continue
+			#----- Compare Post-relaxed Structure to Collection -----#
+			if self.structure_comparison(struct, "post_relaxation_comparison") == False:
+				convergeTF = False
+				rmdir_silence(self.working_dir)
+				continue
 
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
 			coll = self.structure_supercoll.get((self.replica_stoic,ref_label))
-			top_en_list = self.return_energy_array(coll)
-			self.check_energy_minimum(struct,top_en_list)
+			top_prop_list = self.return_property_array(coll)
+#			self.check_energy_minimum(struct,top_prop_list)
+			self.check_global_optimization(struct,top_prop_list)
 			
 			#----- Add Structure to collection -----#
 			self.add_to_collection(struct, ref_label)
 
 			#----- End of Iteration Data Tasks -----#
 			restart_count += 1 
-			convergeTF = self.end_of_iteration_tasks(restart_count, top_en_list, begin_time, coll)
+			convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
 
 #----------------------- END OF MAIN TASKS PERFORMED BY EVERY REPLICA ----------------------#
 
@@ -136,18 +136,18 @@ class RunGA():
 		'''
 		This routine reads in the modules defined in ui.conf
 		'''
-		print(self.ui.get('modules','initial_pool_module'))
-		self.initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
+#		print(self.ui.get('modules','initial_pool_module'))
+#		self.initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
 		self.selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
 		self.crossover_module = my_import(self.ui.get('modules', 'crossover_module'), package='crossover')
 		self.mutation_module = my_import(self.ui.get('modules', 'mutation_module'), package='mutation')
 		self.relaxation_module = my_import(self.ui.get('modules', 'relaxation_module'), package='relaxation')
 		self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
 
-	def initialize_restart(self):
-		restart_count = 0
-		restart_replica = self.ui.get_eval("parallel_settings","restart_replicas")
-		return restart_replica
+#	def initialize_restart(self):
+#		restart_count = 0
+#		restart_replica = self.ui.get_eval("parallel_settings","restart_replicas")
+#		return restart_replica
 
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
@@ -166,7 +166,7 @@ class RunGA():
 		added_structs = total_structs-int(number_of_IP)
 		self.output("GA added structures: "+ str(added_structs))
 		data_tools.write_energy_hierarchy(struct_coll0)
-                data_tools.write_energy_vs_iteration(struct_coll0)
+		data_tools.write_energy_vs_iteration(struct_coll0)
 		data_tools.write_spe_vs_iteration(struct_coll0) 
 		if added_structs >= self.number_of_structures:
 			message = ''
@@ -190,20 +190,20 @@ class RunGA():
 		#except: pass
 		return end
 
-	def restart_scheme(self, restart_replica):	
+	def restart_scheme(self,restart_replica):	
 			structures_to_add = {}	
 			struct = False
 			if os.path.isdir(self.working_dir): 
 				#First check if there is a risk of overwriting a name_sake replica's leftover folder
 				struct = self.structure_scavenge_old(self.working_dir)
-			if (struct == False) and restart_replica:
+			if struct == False and restart_replica:
 				folder_to_scavenge = activity.request_folder_to_check()
 				while struct == False and folder_to_scavenge!= False:
 					struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
 					if struct == False:
 						folder_to_scavenge = activity.request_folder_to_check()
 
-			return 
+			return struct
 
 	def generate_trial_structure(self):
 		struct = False 
@@ -223,13 +223,70 @@ class RunGA():
 		e_list = np.sort(e_list.reshape(len(e_list),1),axis=0)
 		return e_list
 
+	def return_property_array(self, coll):
+		prop_list = np.array([])
+		for index, structure in coll:
+			if self.op_style == "minimize":
+				prop = structure.get_property(self.prop)
+			else:
+				prop = -structure.get_property(self.prop) 
+				#Reverse for sorting
+			prop_list = np.append(prop,prop_list)
+		prop_list = np.sort(prop_list.reshape(len(prop_list),1),axis=0)
+		if self.op_style == "maximize":
+			prop_list = [-x for x in prop_list] #Reverse it back
 
-	def check_energy_minimum(self, struct, e_list):
-		en = struct.get_property('energy')
-		global_en= e_list[0][0]		
-		self.output("E_stuct: "+str(en)+"  GM: "+str(global_en))
-		self.check_if_global_minima(en, global_en)
-		return 
+		return prop_list
+
+
+#	def check_energy_minimum(self, struct, e_list):
+#		en = struct.get_property('energy')
+#		global_en= e_list[0][0]		
+#		self.output("E_stuct: "+str(en)+"  GM: "+str(global_en))
+#		self.check_if_global_minima(en, global_en)
+#		return
+
+	def check_global_optimization(self,struct,prop_list):
+		prop = struct.get_property(self.prop)
+		glob = prop_list[0][0] #Best current property
+		self.output("structure's %s: %f; previous global best: %f" %
+		self.prop, prop, glob)	 
+		diff = abs(prop-glob)
+		if self.op_style=="minimize" and prop<glob:
+			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
+			'\n  old minimum:  ' + str(glob) + \
+			'\n  new minimum:  ' + str(prop) + \
+			'\n  difference:  ' + str(diff)
+		if self.op_style=="maximize" and prop>glob:
+			message = '*********** NEW GLOBAL MAXIMUM FOUND ************' + \
+			'\n  old maximum:  ' + str(glob) + \
+			'\n  new maximum:  ' + str(prop) + \
+			'\n  difference:  ' + str(diff)
+		self.output(message)
+
+	def check_local_convergence(self, old_prop_list):
+		#Check if top N structures havent changed in X iterations
+
+		new_e_list = np.array([])
+		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
+		new_prop_list = self.return_property_array(coll_new)
+		new_list_top_prop = new_prop_list[:self.top_count]
+		old_list_top_prop = old_prop_list[:self.top_count]
+
+		self.convergence_count= self.convergence_count + 1
+		for prop_new in new_list_top_prop:
+			if prop_new in old_list_top_prop:
+				continue
+			else:
+				self.output("Top "+str(self.top_count)+" best structures have changed.")
+				self.convergence_count= 0
+				self.output("Convergence counter reset.")
+				self.output("Convergence iteration:  "+ str(self.convergence_count))
+				return "not_converged"
+		self.output("Convergence iteration:  "+ str(self.convergence_count))
+		if self.convergence_count== self.max_it:
+			return "converged" 
+
 
 	def add_to_collection(self, struct, ref_label):	
 		prev_struct_index = None #none for now because only using GA for FF not both
@@ -254,7 +311,7 @@ class RunGA():
 		This is the normal process to create a new structure through crossover and mutation
 		'''
 		#----- Structure Selection -----#
-                self.output("--Beginning normal structure creation process--")
+		self.output("--Beginning normal structure creation process--")
 		self.output("--Structure selection--")	
 		structures_to_cross = self.selection_module.main(self.structure_supercoll, self.replica_stoic, self.replica)
 		if structures_to_cross is False: 
@@ -262,14 +319,14 @@ class RunGA():
 			return False
 
 		#----- Crossover -----#
-                self.output("\n--Crossover--")
+		self.output("\n--Crossover--")
 		new_struct = self.crossover_module.main(structures_to_cross, self.replica)
 		if new_struct is False: 
 			self.output("Crossover failure")
 			return False  
 	
 		#----- Mutation Execution -----#
-                self.output("\n--Mutation--")  
+		self.output("\n--Mutation--")  
 		randnum = np.random.random()	
 		randnum2 = np.random.random()
 		#Single Parents have to be mutated	
@@ -412,18 +469,17 @@ class RunGA():
 		self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
-        def structure_comparison(self, struct, comparison_type):
-                '''
-                This routine takes a structure, updates self.structure_supercoll, and does comparison on the structure
-                '''
-                t1 = time.time()
-                if comparison_type == "pre_relaxation_comparison":
-                    self.output("\n--Pre-relaxation Comparison--")
-                elif comparison_type == "post_relaxation_comparison":
-                    self.output("\n--Post-relaxation Comparison")
-                structure_collection.update_supercollection(self.structure_supercoll)
-                is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)),
-                                                                                            self.replica, comparison_type))
+	def structure_comparison(self, struct, comparison_type):
+		'''
+		This routine takes a structure, updates self.structure_supercoll, and does comparison on the structure
+		'''
+		t1 = time.time()
+		if comparison_type == "pre_relaxation_comparison":
+			self.output("\n--Pre-relaxation Comparison--")
+		elif comparison_type == "post_relaxation_comparison":
+			self.output("\n--Post-relaxation Comparison")
+		structure_collection.update_supercollection(self.structure_supercoll)
+		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica, comparison_type))
                 t2 = time.time()
                 self.output("Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
                 if is_acceptable is False:
@@ -431,86 +487,88 @@ class RunGA():
                         return False  # structure not acceptable start with new selection
 
 	def end_of_iteration_tasks(self, begin_time, old_list_top_en, restart_count, coll):
-			# Remove working directory in /tmp
-			rmdir_silence(self.working_dir)
+		# Remove working directory in /tmp
+		rmdir_silence(self.working_dir)
 
-                        #Check convergence
-                 	converged = self.check_convergence(old_list_top_en)	
-                 	message = 'Success!: \n  stoichiometry-- ' + str(self.replica_stoic) + \
-						  '\n  cascade-- ' + str("key[1]") + \
-						  '\n  structure index-- ' + str("struct_index") + \
-						  '\n  replica child count-- ' + str(self.replica_child_count) + \
-						  '\n  collection count -- ' + str("ID") + \
-						  '\n  replica-- ' + str(self.replica)
-			self.output(message)
+		#Check convergence
+		converged = self.check_convergence(old_list_top_en)	
+		message = 'Success!: \n  stoichiometry-- '+str(self.replica_stoic)+\
+			'\n  cascade-- ' + str("key[1]") + \
+			'\n  structure index-- ' + str("struct_index") + \
+			'\n  replica child count-- ' + str(self.replica_child_count) + \
+			'\n  collection count -- ' + str("ID") + \
+			'\n  replica-- ' + str(self.replica)
 
-			#write energy hierarchy 
-			self.output("Writing hierachy and data files")
-			#data_tools.write_energy_hierarchy(self.structure_coll)		   	
-		        #data_tools.write_energy_vs_iteration(self.structure_coll)
-			#End of Iteration Outputs
-                        IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
-                        number_of_IP = open(IP_dat).read()
-			size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
-			size_of_added = size_of_common - int(number_of_IP)
-                  	self.output('Total size of common pool: '+str(len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)))
-                        self.output('Total number of GA-added structures: '+str(size_of_added))	
-			if converged is "not_converged":
-				self.output("GA not converged yet.")
-				pass	
-			elif converged is "converged":
-				return True	
+		self.output(message)
+
+		#write energy hierarchy 
+		self.output("Writing hierachy and data files")
+		#data_tools.write_energy_hierarchy(self.structure_coll)		   	
+	        #data_tools.write_energy_vs_iteration(self.structure_coll)
+		#End of Iteration Outputs
+		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
+		number_of_IP = open(IP_dat).read()
+		size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
+		size_of_added = size_of_common - int(number_of_IP)
+		self.output('Total size of common pool: '+str(len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)))
+		self.output('Total number of GA-added structures: '+str(size_of_added))	
+		if converged is "not_converged":
+			self.output("GA not converged yet.")
+			pass	
+		elif converged is "converged":
+			return True	
 
 
-	def check_if_global_minima(self, e_new, min_e):	
-		if e_new < min_e:
-			diff = min_e - e_new
-			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
-			'\n  old minima:  ' + str(min_e) + \
-			'\n  new minima:  ' + str(e_new) + \
-			'\n  difference:  ' + str(diff)
-			self.output(message)
+#	def check_if_global_minima(self, e_new, min_e):	
+#		if e_new < min_e:
+#			diff = min_e - e_new
+#			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
+#			'\n  old minima:  ' + str(min_e) + \
+#			'\n  new minima:  ' + str(e_new) + \
+#			'\n  difference:  ' + str(diff)
+#			self.output(message)
 
-	def get_top_energies(self, coll):
-		list_top_ens = np.array([])
-		list_ens = np.array([])
-		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
-		for index, structure in coll_new:
-			energy = structure.get_property('energy')
-			list_ens = np.append(energy,new_e_list)
-		list_top_ens= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
-		list_top_ens = new_e_list[:self.top_en_count]
-		return list_top_ens
+#	def get_top_energies(self, coll):
+#		list_top_ens = np.array([])
+#		list_ens = np.array([])
+#		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
+#		for index, structure in coll_new:
+#			energy = structure.get_property('energy')
+#			list_ens = np.append(energy,new_e_list)
+#		list_top_ens= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
+#		list_top_ens = new_e_list[:self.top_en_count]
+#		return list_top_ens
 
-	def check_convergence(self, old_list_top_en):
-		#Check if top N energies havent changed in X iterations
+#	def check_convergence(self, old_list_top_en):
+#		#Check if top N energies havent changed in X iterations
 		
-		new_e_list = np.array([])
-		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
-		for index, structure in coll_new:
-			energy = structure.get_property('energy')
-			new_e_list = np.append(energy,new_e_list)
-		new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
-		new_list_top_en = new_e_list[:self.top_en_count]
-		min_e = new_e_list[0][0]
-		max_e = new_e_list[-1][0]
+#		new_e_list = np.array([])
+#		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
+#		for index, structure in coll_new:
+#			energy = structure.get_property('energy')
+#			new_e_list = np.append(energy,new_e_list)
+#		new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
+#		new_list_top_en = new_e_list[:self.top_en_count]
+#		min_e = new_e_list[0][0]
+#		max_e = new_e_list[-1][0]
 		
 		#self.output("old top energies:    "+ str(old_list_top_en))
 		#self.output("new top energies:    "+ str(new_list_top_en))
 
-		self.convergence_count= self.convergence_count+ 1
-		for en_new in new_list_top_en:
-			if en_new in old_list_top_en:
-				continue
-			else:
-				self.output("Top "+str(self.top_en_count)+" energies have changed.")
-				self.convergence_count= 0
-				self.output("Convergence counter reset.")
-				self.output("Convergence iteration:  "+ str(self.convergence_count))
-				return "not_converged"
-		self.output("Convergence iteration:  "+ str(self.convergence_count))
-		if self.convergence_count== self.max_en_it:
-			return "converged" 
+
+#		self.convergence_count= self.convergence_count+ 1
+#		for en_new in new_list_top_en:
+#			if en_new in old_list_top_en:
+#				continue
+#			else:
+#				self.output("Top "+str(self.top_en_count)+" energies have changed.")
+#				self.convergence_count= 0
+#				self.output("Convergence counter reset.")
+#				self.output("Convergence iteration:  "+ str(self.convergence_count))
+#				return "not_converged"
+#		self.output("Convergence iteration:  "+ str(self.convergence_count))
+#		if self.convergence_count== self.max_en_it:
+#			return "converged" 
 
 	def avg_fitness(self, min_e, max_e, structure_coll):
 		fitness = {}
