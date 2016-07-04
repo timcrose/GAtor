@@ -8,7 +8,14 @@ import os, subprocess, shutil
 import sys,socket
 import core.file_handler as fh
 from core import user_input, kill, output
-from utilities import parallel_run,stoic_model
+from utilities import parallel_run,stoic_model, misc
+try:
+	import imp.reload as reload #Python 3.0-3.3
+except:
+	try:
+		import importlib.reload as reload #Python 3.4 above
+	except:
+		pass #Python 2
 
 def main():
 #	main_process = GAtor(sys.argv[-1])
@@ -45,11 +52,24 @@ class GAtor():
 				parallel_run.launch_parallel()
 			else:
 				sname = "parallel_settings"
+
+				if self.ui.get_replica_name()=="master":
+				#Need to assign new name
+					self.ui.set(sname,"replica_name",misc.get_random_index())
+					conf_path = os.path.join(fh.conf_tmp_dir,self.ui.get_replica_name()+".conf")
+					f = open(conf_path,"w")
+					self.ui.write(f)
+					f.close()
+					sys.argv.append(conf_path)
+					reload(fh)
+					reload(user_input)
+					reload(output)
+
 				message = "GAtor instance reporting from "+socket.gethostname()
 				if self.ui.has_option(sname,"allocated_nodes"):
-					message += "; controlling nodes: "+", ".join(map(str,self.ui.get_eval(sname,"allocated_nodes")))
+					message += "; controlling node(s): "+", ".join(map(str,self.ui.get_eval(sname,"allocated_nodes")))
 				if self.ui.has_option(sname,"processes_per_replica"):
-					message += "; controlling %i processes" % (self.ui.get_eval(sname,"processes_per_replica"))
+					message += "; controlling %i process(es)" % (self.ui.get_eval(sname,"processes_per_replica"))
 				output.time_log(message)
 
 				
@@ -80,8 +100,6 @@ class GAtor():
                 fh.mkdir_p(fh.tmp_dir)
 		fh.mkdir_p(fh.structure_dir)
 		IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
-		#fh.mkdir_p(fh.tmp_dir)
-		#fh.mkdir_p(fh.structure_dir)
 		IP_module.main()
 		
 
@@ -92,7 +110,7 @@ class GAtor():
 		if user_answer=="y":
 			output.time_log("User confirmation received. Begins cleaning.",sname)
 			clean()
-			output.time_log("Cleaning compleated.",sname)
+			output.time_log("Cleaning completed.",sname)
 		else:
 			output.time_log("User denied cleaning or no user response is received within 30 s.",sname)
 			output.time_log("Moving on",sname)
@@ -112,6 +130,8 @@ def clean():
 	p.wait()
 	p = subprocess.Popen(['rm *.err'], cwd=fh.cwd, shell=True)
 	p.wait()
+#        p = subprocess.Popen(['rm *.log'], cwd=fh.cwd, shell=True)
+#        p.wait()
 	# tmp index is to keep track of replica number
 	for directory in directory_to_remove:
 		if os.path.exists(directory): 
