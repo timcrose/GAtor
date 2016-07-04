@@ -60,9 +60,8 @@ class RunGA():
 		self.replica_child_count = 0
 		self.convergence_count= 0
 		self.structure_supercoll = {}
-		#for i in range(INITIAL_POOL_REFID, len(self.control_list)):  # initializes the structure collections necessary for cascade
-			#self.structure_supercoll[(self.replica_stoic, i)] = StructureCollection(self.replica_stoic, i)
 		self.structure_supercoll[(self.replica_stoic, 0)] = StructureCollection(self.replica_stoic, 0)
+		self.structure_supercoll[(self.replica_stoic, 'duplicates')] = StructureCollection(self.replica_stoic, 'duplicates')
 		structure_collection.update_supercollection(self.structure_supercoll)
 		self.structure_coll = StructureCollection(self.replica_stoic, 0)
 		
@@ -152,7 +151,7 @@ class RunGA():
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
 		self.output('Beginning iteration')
-		self.restart(str(self.replica)+' '+str(restart_count)+' beginning iteration:    ' +str(datetime.datetime.now()))
+		#self.restart(str(self.replica)+' '+str(restart_count)+' beginning iteration:    ' +str(datetime.datetime.now()))
 		begin_time = datetime.datetime.now()
 		return begin_time
 
@@ -441,7 +440,7 @@ class RunGA():
 
 		#----- Check SPE and perform Full Relaxation -----#
 		self.output("\n--SPE Check and Full Relaxation--")
-		self.restart(str(self.replica)+' started_relaxing:    ' +str(datetime.datetime.now()))
+		#self.restart(str(self.replica)+' started_relaxing:    ' +str(datetime.datetime.now()))
 
 		struct = self.relaxation_module.main(struct, self.working_dir, control_check_SPE, control_relax_full, self.replica)
 		if struct is False: 
@@ -449,7 +448,7 @@ class RunGA():
 			return False
 
 		self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
-		self.restart(str(self.replica)+' finished_relaxing:   ' +str(datetime.datetime.now()))
+		#self.restart(str(self.replica)+' finished_relaxing:   ' +str(datetime.datetime.now()))
 
 		for key in struct_info.properties: #Update the information after relaxation
 			if (not key in struct.properties) or (struct.properties[key]==None):
