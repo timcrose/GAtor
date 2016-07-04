@@ -36,20 +36,19 @@ def main():
         initial_list = convert_to_structures(files_to_add)
 
         if ui.get_eval('initial_pool', 'duplicate_check'):
-    		print "Checking initial pool for duplicates"
+		print "Checking initial pool for duplicates"
                 ip_count = return_non_duplicates(initial_list, ui)
-         	print "Final Initial Pool Count: "+ str(ip_count)
-                with open(num_IP_structures,'w') as f:
-                        f.write(str(ip_count))
-                        f.close()
-		return	ip_count
+                print "Final Initial Pool Count: %s" % str(ip_count)
 	else:
 		ip_count = return_all_user_structures(initial_list)
-                print "Final Initial Pool Count: "+ str(ip_count)
-                with open(num_IP_structures,'w') as f:
-                        f.write(str(ip_count))
-                        f.close()
-		return ip_count
+		print "Final Initial Pool Count: %s" % str(ip_count)
+        if ip_count is not None:
+	    with open(num_IP_structures,'w') as f:
+                f.write(str(ip_count))
+                f.close()
+            return  ip_count
+	else: 
+            raise RuntimeError("Initial Pool not filling properly. Try cleaning folder or removing fill_initial_pool = TRUE from ui.conf")
 
 def file_lock_structures(user_structures_dir, added_user_structures):
 	'''
@@ -86,6 +85,7 @@ def convert_to_structures(files_to_add):
 	Args: List of files to add to collection
 	Returns: List of Structures(), 
 	'''
+	#print files_to_add
 	initial_list = []
 	print "Converting all user-input geometries to Structure() instances"
 	for file in files_to_add:	
@@ -118,12 +118,13 @@ def return_all_user_structures(initial_list):
 	'''
         ip_count = 0
         structure_supercoll = {}
+	#print initial_list
         for struct in initial_list:
 	    stoic = struct.get_stoic()
             struct.set_property('ID',0)
             structure_collection.add_structure(struct, stoic, 0)
             ip_count += 1 
-        struct_coll = StructureCollection(stoic, 0)
+            struct_coll = StructureCollection(stoic, 0)
         structure_collection.update_supercollection(structure_supercoll)
         data_tools.write_energy_hierarchy(struct_coll)
         return ip_count
@@ -242,6 +243,10 @@ def get_pymatgen_structure(frac_data):
                                 alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7]))
 	structp = StructureP(lattice, atoms, coords)
 	return structp
+
+def output(message):
+	output.local_message(message, 'init_pool')
+	return
 
 if __name__ == '__main__':
     main()

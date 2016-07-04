@@ -80,8 +80,6 @@ class GAtor():
                 fh.mkdir_p(fh.tmp_dir)
 		fh.mkdir_p(fh.structure_dir)
 		IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
-		#fh.mkdir_p(fh.tmp_dir)
-		#fh.mkdir_p(fh.structure_dir)
 		IP_module.main()
 		
 
@@ -92,7 +90,7 @@ class GAtor():
 		if user_answer=="y":
 			output.time_log("User confirmation received. Begins cleaning.",sname)
 			clean()
-			output.time_log("Cleaning compleated.",sname)
+			output.time_log("Cleaning completed.",sname)
 		else:
 			output.time_log("User denied cleaning or no user response is received within 30 s.",sname)
 			output.time_log("Moving on",sname)
@@ -112,6 +110,8 @@ def clean():
 	p.wait()
 	p = subprocess.Popen(['rm *.err'], cwd=fh.cwd, shell=True)
 	p.wait()
+        p = subprocess.Popen(['rm *.log'], cwd=fh.cwd, shell=True)
+        p.wait()
 	# tmp index is to keep track of replica number
 	for directory in directory_to_remove:
 		if os.path.exists(directory): 
