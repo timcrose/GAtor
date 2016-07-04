@@ -37,6 +37,10 @@ class StructureSelection():
         self.max_cascade = len(self.control_list) - 1
 	self.index = 0
 	self.percent = self.ui.get_eval('selection','percent_best_structs_to_select')
+	self.prop = self.ui.get("run_settings","property_to_optimize")
+	self.op_style = self.ui.get("run_settings","optimization_style")
+	if self.op_style!="maximize" and self.op_style!="minimize":
+		raise ValueError("Unknown type of optimization style in run_settings; supporing maximize and minimize")
 
     def get_structures(self):
 	control_list = self.ui.get_list('control', 'control_in_filelist')
@@ -56,9 +60,43 @@ class StructureSelection():
         if len(structure_coll.structures) == 1: 
             return (structure_coll.get_struct(0), 0)
         else: 
-            fitness_dict = self.get_energy_fitness(structure_coll)  # this can be altered to select for different fitness
+#            fitness_dict = self.get_energy_fitness(structure_coll)  # this can be altered to select for different fitness
+            fitness_dict = self.get_fitness(structure_coll)
             return self.select_best_from_fitness(fitness_dict) 
-            
+
+    def get_fitness(self, structure_coll):
+	'''
+	Take a structure collection of 2 or more structures and returns a dictionary of fitness based on the specified property to optimize
+	'''
+        reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
+	prop_list = np.array([])
+        for index, structure in structure_coll:
+		try:
+        		prop = structure.get_property(self.prop)
+			if self.op_style=="maximize":
+				prop = -prop
+                	prop_list = np.append(prop,prop_list)
+		except ValueError:
+			output.local_message("Structure %s missing the property: %s" % structure.struct_id, self.prop)
+
+        prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
+	#output.local_message("e_list" +str(e_list), self.replica)
+        min_prop = prop_list[0][0]
+  	max_prop = prop_list[-1][0] 
+#	output.local_message("min e" +str(min_e),self.replica)
+#	output.local_message("max " +str(max_e), self.replica) 
+        fitness = {}
+        for index, struct in structure_coll:
+            try: prop = float(struct.get_property(self.prop))
+            except: pass
+            rho = (max_prop - prop) / (max_prop - min_prop)
+            if reverse: rho = 1 - rho
+            if self.ui.get('selection', 'fitness_function') == 'standard':
+                fitness[struct] = rho
+            if self.ui.get('selection', 'fitness_function') == 'exponential':
+                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)  
+        return fitness
+    
     def get_energy_fitness(self, structure_coll):
         '''
         Takes a structure collection of 2 or more structures and returns a dictionary of fitness based on energy
