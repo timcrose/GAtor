@@ -29,13 +29,13 @@ class GAtor():
 			self.testing_mode()
 			return #Under test mode, no further comamnd is read
 
-		if self.ui.get_boolean(sname,"kill_ga"):
+		if self.ui.get_boolean(sname,"kill_ga") and self.ui.is_master_process():
 			self.kill_GA()
 
-		if self.ui.get_boolean(sname,"clean_folder"):
+		if self.ui.get_boolean(sname,"clean_folder") and self.ui.is_master_process():
 			self.clean_folder()
 
-		if self.ui.get_boolean(sname,"fill_initial_pool"):
+		if self.ui.get_boolean(sname,"fill_initial_pool") and self.ui.is_master_process():
 			self.fill_initial_pool()
 
 		if self.ui.get_boolean(sname,"run_ga"):
