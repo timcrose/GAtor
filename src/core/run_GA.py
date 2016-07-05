@@ -112,7 +112,7 @@ class RunGA():
                                 continue
 
 			#---- Compute Spacegroup of Relaxed Structure ----#
-			struct = compute_spacegroup_pymatgen(struct)
+			struct = compute_spacegroup_pymatgen.main(struct)
 			self.output("Space group %s" % (struct.get_property('space_group')))
 
 			#---- Check If Energy is Global Minimum -----#
