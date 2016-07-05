@@ -64,6 +64,9 @@ class GAtor():
 					reload(fh)
 					reload(user_input)
 					reload(output)
+					reload(stoic_model)
+					reload(misc)
+					reload(kill)
 
 				message = "GAtor instance reporting from "+socket.gethostname()
 				if self.ui.has_option(sname,"allocated_nodes"):
@@ -121,7 +124,8 @@ class GAtor():
 def clean():
 	print 'resetting environment'
 	sname = "clean"
-	directory_to_remove = [fh.tmp_dir, fh.structure_dir, fh.conf_tmp_dir]
+	directory_to_remove = [fh.tmp_dir, fh.structure_dir, fh.conf_tmp_dir,
+	fh.success_dir, fh.scavenge_dir, fh.fail_dir]
 	try:
 		files_to_remove = [fh.output_file, fh.restart_relaxation_file, fh.restart_replica_file]
 	except: pass
