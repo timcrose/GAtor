@@ -451,7 +451,7 @@ class RunGA():
                         number_of_IP = open(IP_dat).read()
 			size_of_common = len(StructureCollection(self.replica_stoic, 0).structures)
 			size_of_added = size_of_common - int(number_of_IP)
-                  	self.output('Total size of common pool: '+str(size_of_common)
+                  	self.output('Total size of common pool: '+str(size_of_common))
                         self.output('Total number of GA-added structures: '+str(size_of_added))	
 			if converged is "not_converged":
 				self.output("GA not converged yet.")
