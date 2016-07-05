@@ -51,7 +51,7 @@ def reset_local(replica=ui.get_replica_name()):
     data_file.write(str('') + '\n')
     data_file.close()
     
-def move_to_shared_output(replica=ui.get_replica_name()):
+def move_to_shared_output(replica=ui.get_replica_name(),output_file=output_file):
     local_out_file = os.path.join(cwd, str(replica) + '.out')
     if not os.path.exists(local_out_file): pass
     else: 
