@@ -106,8 +106,11 @@ def add_structure(struct, stoichiometry, input_ref):
     
     path = os.path.join(structure_dir, stoichiometry.get_string(), str(input_ref))
     # gets a new index while file-locked to avoid overwriting
-    index = get_random_index(os.path.join(path, 'index.dat'))
-    struct.struct_id = index
+    if struct.struct_id == None:
+        index = get_random_index(os.path.join(path, 'index.dat'))
+        struct.struct_id = index
+    else:
+        index = struct.struct_id
     # writes data for sharing and geometry for human readability
     mkdir_p(os.path.join(path, str(index)))
     write_data(os.path.join(path, str(index)), 'data.json', struct.dumps())
