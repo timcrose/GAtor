@@ -107,7 +107,7 @@ def write_energy_hierarchy(structure_coll):
     count = 1	
     energy_tuples.sort(key=lambda x: x[3])
     to_write += '#Rank Added Replica    Index            Relaxed Energy   SP Energy      '
-    to_write += 'Volume    A        B       C       Alpha   Beta   Gamma    SG        Mutation Crossover ParentA  ParentB\n'
+    to_write += 'Volume    A        B       C       Alpha   Beta   Gamma    SG        Mutation   Crossover    ParentA     ParentB\n'
     for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
 	to_write +=str(count) + '    '
