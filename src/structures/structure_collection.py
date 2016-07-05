@@ -13,6 +13,7 @@ from core.file_handler import structure_dir, mkdir_p, write_data, read_data, \
     get_random_index
 from structures.structure import Structure, StoicDict
 
+stored_collections = {}
 
 class StructureCollection(object):
     '''
@@ -29,7 +30,8 @@ class StructureCollection(object):
         # a structure collection is unique to its stoichiometry and the input file common to each
         # structue. The input files are stored in the database.
         self.stoichiometry = stoichiometry
-        self.input_ref = int(input_ref)
+	try: self.input_ref = int(input_ref)
+	except: self.input_ref = input_ref
         self.path = os.path.join(structure_dir, stoichiometry.get_string(), str(input_ref))
         if not os.path.exists(self.path): mkdir_p(self.path)
         # read allupdate_local_from_db data into local memory
@@ -127,14 +129,17 @@ def update_supercollection(structure_supercoll):
                           if os.path.isdir(os.path.join(structure_dir, stoic_string, name))]
         for input_ref in list_of_inputs:
             # make a list of structure collection keys to update
-            key_list.append((string_to_stoic(stoic_string), int(input_ref)))
+            key_list.append((string_to_stoic(stoic_string), input_ref))
         
     # update each collection or create new structure_collection in supercollection and update that  
     for key in key_list:
         if not key in structure_supercoll:
             structure_supercoll[key] = StructureCollection(key[0], key[1])
         structure_supercoll[key].update_local()
-        
+
+def store_collection(stoic, input_ref):
+	stored_collections[(stoic,input_ref)] = StructureCollection(stoic,input_ref)
+ 
 def string_to_stoic(stoic_string):
     '''
     Takes a string in the form Mg:2_O:5 and returns the StoicDict representation
