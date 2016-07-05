@@ -62,7 +62,7 @@ def get_energy_tuples(structure_coll):
         energy = '{:.3f}'.format(structure.get_property('energy'))
 	if replica == 'init_pool':
             spe = '{:.3f}'.format(structure.get_property('energy_light_SPE'))
-	else: spe = structure.get_property('spe_energy') 
+	else: spe = '{:.3f}'.format(structure.get_property('spe_energy')) 
 	vol = '{:.1f}'.format(structure.get_property('cell_vol'))
 	a = '{:.2f}'.format(structure.get_property('a'))
 	b = '{:.2f}'.format(structure.get_property('b'))
@@ -70,19 +70,20 @@ def get_energy_tuples(structure_coll):
 	alpha = '{:.1f}'.format(structure.get_property('alpha'))
 	beta = '{:.1f}'.format(structure.get_property('beta'))
 	gamma = '{:.1f}'.format(structure.get_property('gamma'))
+	spacegroup = structure.get_property('space_group')
 	mut = structure.get_property('mutation_type')
         crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
 	if energy is not None: 
-            energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
+            energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
     return energy_tuples
 
 def write_energy_vs_addition(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
     to_write = ''
     energy_tuples.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
 	if rep == 'init_pool':
             continue
 	to_write += str(Id)+'    '+str(energy)+'\n' 
@@ -93,7 +94,7 @@ def write_spe_vs_addition(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
     to_write = ''
     energy_tuples.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
         if rep == 'init_pool':
             continue
         to_write += str(Id)+'    '+str(spe)+'\n'
@@ -106,8 +107,8 @@ def write_energy_hierarchy(structure_coll):
     count = 1	
     energy_tuples.sort(key=lambda x: x[3])
     to_write += '#Rank Added Replica    Index            Relaxed Energy   SP Energy      '
-    to_write += 'Volume    A        B       C       Alpha   Beta   Gamma  Mutation Crossover ParentA  ParentB\n'
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, mut, crosst, par0, par1 in energy_tuples:
+    to_write += 'Volume    A        B       C       Alpha   Beta   Gamma    SG        Mutation Crossover ParentA  ParentB\n'
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
 	to_write +=str(count) + '    '
         to_write +=str(Id) + '    '
@@ -125,6 +126,7 @@ def write_energy_hierarchy(structure_coll):
         to_write +='    ' + str(al)
         to_write +='    ' + str(be)
         to_write +='    ' + str(ga)
+	to_write +='    ' + str(sg)
         to_write +='    ' + str(mut)    
         to_write +='    ' + str(crosst)
         to_write +='    ' + str(par0)

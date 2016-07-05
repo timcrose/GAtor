@@ -15,12 +15,12 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
+from utilities import compute_spacegroup_pymatgen
 from selection import structure_selection
 import copy, shutil
 
 
 def main(replica,stoic):
-
 	mkdir_p(tmp_dir)	
 	mkdir_p(structure_dir)
 	ga = RunGA(replica, stoic)	# run genetic algorithm
@@ -55,9 +55,7 @@ class RunGA():
 			self.number_of_replicas = int(self.ui.get('parallel_settings', 'number_of_multiprocesses'))
 		elif self.ui.has_option("parallel_settings","number_of_replicas"):
 			self.number_of_replicas = int(self.ui.get("parallel_settings","number_of_replicas"))
-
-		# Initialize Supercollection
-		self.replica_child_count = 0
+                self.replica_child_count = 0
 		self.convergence_count= 0
 		self.structure_supercoll = {}
 		self.structure_supercoll[(self.replica_stoic, 0)] = StructureCollection(self.replica_stoic, 0)
@@ -113,6 +111,10 @@ class RunGA():
                                 rmdir_silence(self.working_dir)
                                 continue
 
+			#---- Compute Spacegroup of Relaxed Structure ----#
+			struct = compute_spacegroup_pymatgen(struct)
+			self.output("Space group %s" % (struct.get_property('space_group')))
+
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
 			coll = self.structure_supercoll.get((self.replica_stoic,ref_label))
@@ -165,7 +167,7 @@ class RunGA():
 
 		self.output("GA added structures: "+ str(size_of_added))
 		self.output("Total structures: "+ str(size_of_common))
-		self.output(self.number_of_structures)
+		#self.output(self.number_of_structures)
 		if size_of_added >= self.number_of_structures:
 			message = ''
 			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
@@ -411,7 +413,7 @@ class RunGA():
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
 		self.output("post second check geo: ")
-		self.output(str(struct.get_geometry_atom_format()))
+		#self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
         def structure_comparison(self, struct, comparison_type):

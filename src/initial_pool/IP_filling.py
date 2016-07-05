@@ -12,6 +12,7 @@ from external_libs.filelock import FileLock
 from structures import structure_collection, structure_handling
 from structures.structure import get_geo_from_file, Structure
 from structures.structure_collection import StructureCollection
+from utilities import compute_spacegroup_pymatgen
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
 from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,SpeciesComparator,FrameworkComparator
@@ -123,11 +124,15 @@ def return_all_user_structures(initial_list):
         for struct in initial_list:
 	    stoic = struct.get_stoic()
             struct.set_property('ID',0)
+	    struct = compute_spacegroup_pymatgen.main(struct)
             structure_collection.add_structure(struct, stoic, 0)
             ip_count += 1 
             struct_coll = StructureCollection(stoic, 0)
         structure_collection.update_supercollection(structure_supercoll)
-        data_tools.write_energy_hierarchy(struct_coll)
+	try:
+            data_tools.write_energy_hierarchy(struct_coll)
+	except:
+                raise RuntimeError('Initial pool already filled, try removing fill_initial_pool = TRUE from ui.conf')
         return ip_count
 
 
@@ -145,6 +150,7 @@ def return_non_duplicates(initial_list, ui):
             if struct_fp in remove_list:
                 continue
             struct.set_property('ID',0)
+	    struct = compute_spacegroup_pymatgen.main(struct)
             structure_collection.add_structure(struct, stoic, 0)
         if len(initial_list)!=0:
             struct_coll = StructureCollection(stoic, 0)
