@@ -139,6 +139,13 @@ def update_supercollection(structure_supercoll):
 
 def store_collection(stoic, input_ref):
 	stored_collections[(stoic,input_ref)] = StructureCollection(stoic,input_ref)
+
+def get_collection(stoic,input_ref):
+	if (stoic,input_ref) in stored_collections:
+		return stored_collections[(stoic,input_ref)]
+	else:
+		store_collection(stoic,input_ref)
+		return stored_collections[(stoic,input_ref)]
  
 def string_to_stoic(stoic_string):
     '''
