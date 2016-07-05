@@ -5,7 +5,7 @@ Created on Dec 19, 2013
 '''
 import os
 
-from core.file_handler import cwd, output_file, log_file
+from core.file_handler import cwd, output_file, log_file, tmp_dir
 from core import user_input
 import time
 from external_libs.filelock import FileLock
@@ -21,7 +21,7 @@ def restart_message(message):
 
 
 def local_message(message, replica=ui.get_replica_name()):
-    out_file = os.path.join(cwd, str(replica) + '.out')
+    out_file = os.path.join(cwd, tmp_dir, str(replica) + '.out')
     data_file = open(out_file, 'a')
     data_file.write(str(message) + '\n')
     data_file.close()
@@ -46,13 +46,13 @@ def error(message, replica=ui.get_replica_name()):
     data_file.close()
 
 def reset_local(replica=ui.get_replica_name()):
-    out_file = os.path.join(cwd, str(replica) + '.out')
+    out_file = os.path.join(cwd, tmp_dir, str(replica) + '.out')
     data_file = open(out_file, 'w')
     data_file.write(str('') + '\n')
     data_file.close()
     
 def move_to_shared_output(replica=ui.get_replica_name()):
-    local_out_file = os.path.join(cwd, str(replica) + '.out')
+    local_out_file = os.path.join(cwd, tmp_dir, str(replica) + '.out')
     if not os.path.exists(local_out_file): pass
     else: 
         d_file = open(local_out_file, 'r')

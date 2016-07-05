@@ -150,29 +150,29 @@ class RunGA():
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
 		self.output('Beginning iteration')
-		#self.restart(str(self.replica)+' '+str(restart_count)+' beginning iteration:    ' +str(datetime.datetime.now()))
-		begin_time = datetime.datetime.now()
+                begin_time = datetime.datetime.now()
 		return begin_time
 
-	def check_finished(self,convergeTF):
+	def check_finished(self, convergeTF):
 		end = False
 		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
 		number_of_IP = open(IP_dat).read()
- 		#try:
-		struct_coll0 = self.structure_supercoll.get((self.replica_stoic, 0)) 
-		total_structs = len(struct_coll0.structures)
-		added_structs = total_structs-int(number_of_IP)
-		self.output("GA added structures: "+ str(added_structs))
-		data_tools.write_energy_hierarchy(struct_coll0)
-                data_tools.write_energy_vs_iteration(struct_coll0)
-		data_tools.write_spe_vs_iteration(struct_coll0) 
-		if added_structs >= self.number_of_structures:
+                struct_coll = StructureCollection(self.replica_stoic, 0)
+                struct_coll.update_local()
+                structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database           
+		size_of_common = len(StructureCollection(self.replica_stoic, 0).structures)
+                size_of_added = size_of_common - int(number_of_IP)
+
+		self.output("GA added structures: "+ str(size_of_added))
+		self.output("Total structures: "+ str(size_of_common))
+		self.output(self.number_of_structures)
+		if size_of_added >= self.number_of_structures:
 			message = ''
 			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
 			message +='Number of additions to pool has reached user-specified number: '
-			message += str(added_structs) +'\n'
+			message += str(size_of_added) +'\n'
 			message +='Total size of collection: '
-			message += str(total_structs) +'\n'
+			message += str(size_of_common) +'\n'
 			message += 'GA ended at: '+str(datetime.datetime.now())
 			self.output(message)
 			end = True
@@ -185,7 +185,6 @@ class RunGA():
 			message += str(total_structs) 
 			self.output(message)
 			end = True
-		#except: pass
 		return end
 
 	def restart_scheme(self, restart_replica):	
@@ -231,7 +230,8 @@ class RunGA():
 
 	def add_to_collection(self, struct, ref_label):	
 		prev_struct_index = None #none for now because only using GA for FF not both
-		ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
+		ID = len(StructureCollection(self.replica_stoic, 0).structures) + 1
+		#ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
 		self.replica_child_count = self.replica_child_count + 1
 		struct.set_property('ID', ID) 
 		try:
@@ -240,11 +240,15 @@ class RunGA():
 			struct.set_property('replica', self.replica)	
 			struct.set_property('child_counter', self.replica_child_count)		
 		except: pass
+
 		struct_index = structure_collection.add_structure(struct, self.replica_stoic, ref_label)
-		data_tools.write_energy_vs_iteration(self.structure_supercoll.get((self.replica_stoic,0)))
+		struct_coll = StructureCollection(self.replica_stoic, ref_label)
+		struct_coll.update_local()
 		structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database		
+                data_tools.write_energy_vs_addition(struct_coll)
+                data_tools.write_energy_hierarchy(struct_coll)
+		data_tools.write_spe_vs_addition(struct_coll)
 		self.output("Structure index: "+str(struct_index))
-		#self.output("Added? :"+str(self.structure_supercoll.get((self.replica_stoic,0)).structures))	
 		return
 
 	def structure_create_new(self):        	  
@@ -278,7 +282,7 @@ class RunGA():
 				new_struct = self.mutation_module.main(new_struct, self.replica) 
 		else:
 			self.output('No mutation applied.')
-			new_struct.set_property('mutation_type', 'No_mutation')
+			new_struct.set_property('mutation_type', 'no_mutation')
 		if new_struct is False: 
 			self.output('Mutation failure')
 			return False
@@ -442,16 +446,12 @@ class RunGA():
 						  '\n  replica-- ' + str(self.replica)
 			self.output(message)
 
-			#write energy hierarchy 
-			self.output("Writing hierachy and data files")
-			#data_tools.write_energy_hierarchy(self.structure_coll)		   	
-		        #data_tools.write_energy_vs_iteration(self.structure_coll)
 			#End of Iteration Outputs
                         IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
                         number_of_IP = open(IP_dat).read()
-			size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
+			size_of_common = len(StructureCollection(self.replica_stoic, 0).structures)
 			size_of_added = size_of_common - int(number_of_IP)
-                  	self.output('Total size of common pool: '+str(len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)))
+                  	self.output('Total size of common pool: '+str(size_of_common)
                         self.output('Total number of GA-added structures: '+str(size_of_added))	
 			if converged is "not_converged":
 				self.output("GA not converged yet.")

@@ -47,8 +47,9 @@ def main():
                 f.write(str(ip_count))
                 f.close()
             return  ip_count
-	else: 
-            raise RuntimeError("Initial Pool not filling properly. Try cleaning folder or removing fill_initial_pool = TRUE from ui.conf")
+	else:
+	    return 
+            #raise RuntimeError("Initial Pool not filling properly. Try cleaning folder or removing fill_initial_pool = TRUE from ui.conf")
 
 def file_lock_structures(user_structures_dir, added_user_structures):
 	'''
