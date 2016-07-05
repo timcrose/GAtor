@@ -149,7 +149,7 @@ class FHIAimsRelaxation():
 #			raise ValueError("Missing execute command for FHI-aims")
 
 	output.time_log("Beginning aims execution")
-	output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
+	output.local_message("Aims being called. out_location=%s" % (out_location),self.replica)
 	output.local_message("Binary location is"+bin,self.replica)
 
 	if execute_command == "mpirun":
