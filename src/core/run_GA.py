@@ -15,8 +15,9 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
+from utilities import misc
 from selection import structure_selection
-import copy, shutil
+import copy, shutil, multiprocessing
 
 
 def main(replica,stoic):
@@ -45,7 +46,7 @@ class RunGA():
 		self.working_dir = os.path.join(tmp_dir, str(self.replica))
 		self.GA_module_init() # initializes GA modules specified in .conf file
 		self.verbose = self.ui.get_eval('run_settings', 'verbose')        
-#		self.control_list = self.ui.get_list('control', 'control_in_filelist')
+#		self.control_list = self.ui.get_list('FHI-aims', 'control_in_filelist')
 		self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 		self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
 
@@ -60,10 +61,11 @@ class RunGA():
 		self.replica_child_count = 0
 		self.convergence_count= 0
 		self.structure_supercoll = {}
-		self.structure_supercoll[(self.replica_stoic, 0)] = StructureCollection(self.replica_stoic, 0)
-		self.structure_supercoll[(self.replica_stoic, 'duplicates')] = StructureCollection(self.replica_stoic, 'duplicates')
+		self.structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
+		self.structure_supercoll[(self.replica_stoic, 'duplicates')] = structure_collection.get_collection(self.replica_stoic, 'duplicates')
+
 		structure_collection.update_supercollection(self.structure_supercoll)
-		self.structure_coll = StructureCollection(self.replica_stoic, 0)
+		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
 		
 #------------------------- MAIN TASKS PERFORMED BY EVERY REPLICA -------------------------#
 	def start(self):
@@ -77,7 +79,7 @@ class RunGA():
 		structure_collection.update_supercollection(self.structure_supercoll)
 
 		# Intialiaze restarts
-		restart_replica = self.get_boolean("parallel_settings","restart_replica")
+		restart_replica = self.ui.get_boolean("parallel_settings","restart_replica")
 		restart_count = 0
 		convergeTF = None
 		while True:
@@ -206,12 +208,49 @@ class RunGA():
 
 	def generate_trial_structure(self):
 		struct = False 
-		failed_counter = 0
-		while struct == False:
-			failed_counter +=1
-			if failed_counter == 101:
-				raise RuntimeError("Generating structure failed for the 100th time! Check crossover and mutation module!")
-			struct = self.structure_create_new()
+		sname = "parallel_settings"
+		processes = 1
+		if self.ui.has_option(sname,"processes_per_replica"):
+			processes = self.ui.get_eval(sname,"processes_per_replica")
+			if self.ui.has_option(sname,"processes_per_node"):
+				processes = min(self.ui.get_eval(sname,"processes_per_node"), processes)
+
+		
+		sname = "run_settings"
+		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
+		count = 0
+		begin_time = time.time()
+		while count<total_attempts and struct == False:
+			if processes == 1: #Serial
+				struct = self.structure_create_new()
+			else:
+				p = multiprocessing.Pool(processes=processes)
+				arglist=[(self.replica+"_"+str(x),self.replica_stoic)\
+				for x in range (processes)]
+				results = p.map(structure_create_for_multiprocessing,\
+						arglist)
+				for i in range (processes): #Find a success
+					if results[i]!=False:
+						struct = results[i]
+						break
+				if struct!=False: #Found a success
+					output.move_to_shared_output(self.replica+"_"+str(i),self.replica+".out")
+				else:
+					output.local_message(str(processes)+" attempts have failed to create a new structure")
+				for i in range (processes):
+					try:
+						os.remove(os.path.join(cwd,self.replica+"_"+str(x)+".out"))
+					except OSError:
+						pass
+
+			count += processes
+
+		end_time = time.time()
+		if count == total_attempts and struct==False:
+			raise RuntimeError("Generating structure maxed out on generation attempts.")
+		output.local_message("-- Number of attempts for structure generation: "+str(counter))
+		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" s")
+		
 		return struct
 
 	def return_energy_array(self, coll):
@@ -248,8 +287,8 @@ class RunGA():
 	def check_global_optimization(self,struct,prop_list):
 		prop = struct.get_property(self.prop)
 		glob = prop_list[0][0] #Best current property
-		self.output("structure's %s: %f; previous global best: %f" %
-		self.prop, prop, glob)	 
+		self.output("structure's %s: %f; previous global best: %f" % 
+		(self.prop, prop, glob))
 		diff = abs(prop-glob)
 		if self.op_style=="minimize" and prop<glob:
 			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
@@ -310,7 +349,7 @@ class RunGA():
 		This is the normal process to create a new structure through crossover and mutation
 		'''
 		#----- Structure Selection -----#
-		self.output("--Beginning normal structure creation process--")
+		self.output("-------- Structure Creation --------")
 		self.output("--Structure selection--")	
 		structures_to_cross = self.selection_module.main(self.structure_supercoll, self.replica_stoic, self.replica)
 		if structures_to_cross is False: 
@@ -347,6 +386,10 @@ class RunGA():
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
 		self.set_parents(structures_to_cross, new_struct)
+
+		self.output("\n--Assign structure ID--")
+		new_struct.struct_id = misc.get_random_index()
+		self.output("ID assigned: "+new_struct.struct_id)
 		return new_struct
 	
 	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
@@ -429,32 +472,20 @@ class RunGA():
 		This routines takes a structure and relaxes it
 		Returns False if doesn't meet SPE criteria or relaxation fails
 		'''
-		mkdir_p(self.working_dir) # make relaxation directory in tmp
-		#----- Begin 'Cascade' -----#
-		cascade_counter = 0 
-		control_check_SPE = (read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
-                                                                                           self.control_list[0]))
-		control_relax_full = (read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
-                                                                                           self.control_list[1]))
-		struct_info = copy.deepcopy(struct)
+		mkdir_p_clean(self.working_dir) # make relaxation directory in tmp
 
-		#----- Check SPE and perform Full Relaxation -----#
-		self.output("\n--SPE Check and Full Relaxation--")
-		#self.restart(str(self.replica)+' started_relaxing:    ' +str(datetime.datetime.now()))
-
-		struct = self.relaxation_module.main(struct, self.working_dir, control_check_SPE, control_relax_full, self.replica)
-		if struct is False: 
-			self.output('SPE check not passed or full relaxation failure for '+ str(self.replica))
+		sname = "save_structures"
+		if self.ui.get_boolean(sname,"pre-evaluation"):
+			self.add_structure(struct,"pre-evaluation")
+			
+		struct, stat = self.relaxation_module.main(struct)
+		if stat=="failed" and self.ui.get_boolean(sname,"evaluation_failed"):
+			self.add_structure(struct,"evaluation_failed")
+		if stat=="rejected" and self.ui.get_boolean(sname,"evaluation_rejected"):
+			self.add_structure(struct,"evaluation_rejected")
+		if stat=="failed" or stat=="rejected":
 			return False
-
-		self.output("FHI-aims relaxation wall time (s):   " +str(struct.get_property('relax_time')))		
-		#self.restart(str(self.replica)+' finished_relaxing:   ' +str(datetime.datetime.now()))
-
-		for key in struct_info.properties: #Update the information after relaxation
-			if (not key in struct.properties) or (struct.properties[key]==None):
-				struct.properties[key]=struct_info.properties[key]
-
-
+				
 		#----- Make sure cell is lower triangular -----#
 		self.output("Ensuring cell is lower triangular...")
 		struct=structure_handling.cell_lower_triangular(struct,False)	
@@ -476,13 +507,14 @@ class RunGA():
 		if comparison_type == "pre_relaxation_comparison":
 			self.output("\n--Pre-relaxation Comparison--")
 		elif comparison_type == "post_relaxation_comparison":
-			self.output("\n--Post-relaxation Comparison")
+			self.output("\n--Post-relaxation Comparison--")
 		structure_collection.update_supercollection(self.structure_supercoll)
 		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica, comparison_type))
                 t2 = time.time()
                 self.output("Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
                 if is_acceptable is False:
                         self.output('Newly relaxed structure is not acceptable')
+			
                         return False  # structure not acceptable start with new selection
 
 	def end_of_iteration_tasks(self, begin_time, old_list_top_en, restart_count, coll):
@@ -600,10 +632,80 @@ class RunGA():
 
 	def output(self, message): output.local_message(message, self.replica)
 
+	def add_structure(self,struct,input_ref):
+		structure_collection.add_struture(struct,struct.self.replica_stoic(),"pre-evaluation")
+		self.output("--Added-- structure %s to input_ref %s"
+		% (struct.struct_id,str(input_ref)))
+	
+
 	def restart(self, message): output.restart_message(message)
 
 	#--------------------------------------- END OF FUNCTIONS USED WITHIN MAIN REPLICA TASKS ----------------------------------------#
 
+
+
+
+def structure_create_for_multiprocessing(args):        	  
+	'''
+	This is a function for structure creation reading straight from the ui.conf file
+	'''
+	ui = user_input.get_config()
+	replica, replica_stoic = args
+	#----- Structure Selection -----#
+	output.local_message("--Beginning normal structure creation process--",replica)
+	output.local_message("--Structure selection--", replica)
+	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
+	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
+	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
+	structure_supercoll = {}
+	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
+	structures_to_cross = selection_module.main(structure_supercoll, stoic)
+	replica = ui.get_replica_name()
+
+	if structures_to_cross is False: 
+		output.local_message('Selection failure',replica)
+		return False
+
+	#----- Crossover -----#
+	output.local_message("\n--Crossover--", replica)
+	new_struct = crossover_module.main(structures_to_cross, replica)
+	if new_struct is False:
+		output.local_message("Crossover failure", replica)
+		return False
+	
+	#----- Mutation Execution -----#
+	output.local_message("\n--Mutation--",replica)
+	randnum = np.random.random()	
+	randnum2 = np.random.random()
+	#Single Parents have to be mutated	
+	if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<self.singlemutate:
+		new_struct = mutation_module.main(new_struct, replica)
+		if new_struct!=False and randnum2 < ui.get_eval('mutation', 'double_mutate_prob'):
+			output.local_message("--Second Mutation--",replica)
+			new_struct = mutation_module.main(new_struct, replica) 
+	else:
+		output.local_message('No mutation applied.',replica)
+		new_struct.set_property('mutation_type', 'No_mutation')
+	if new_struct is False: 
+		output.local_message('Mutation failure'.replica)
+		return False
+
+	#----- Cell Check -----#
+	output.local_message("--Cell Checks--",replica)
+	structure_handling.cell_modification(new_struct, replica,create_duplicate=False)
+	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
+		return False
+
+	#----- Set parents ------#
+	for i in range(len(structures_to_cross)):  
+		par_st = structures_to_cross[i]
+		struct.set_property('parent_' + str(i), par_st.get_stoic_str() + '/' \
+		+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
+
+	output.local_message("\n--Assign structure ID--",replica)
+	new_struct.struct_id = misc.get_random_index()
+	output.local_message("ID assigned: "+new_struct.struct_id,replica)
+	return new_struct
 
 if __name__ == '__main__':
 	'''
