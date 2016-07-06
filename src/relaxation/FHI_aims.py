@@ -97,8 +97,8 @@ def main(input_structure):
 		control_path = os.path.join(os.path.join(fh.cwd,control_dir),control_list[i])
 		control_string = fh.read_data(control_path)
 		FHI = FHIAimsRelaxation(input_structure, working_dir, control_string,ui.get_replica_name())
-		output.time_log("\nExecuting FHI-aims using control file: "+control_list[i])
-		output.local_message("FHI-aims evaluation using control file: "+control_list[i])
+		output.time_log("Executing FHI-aims using control file: "+control_list[i])
+		output.local_message("\nFHI-aims evaluation using control file: "+control_list[i])
 		output.local_message("-- Upper energy threshold: "+str(et))
 
 		begin_time = time.time()
@@ -164,8 +164,10 @@ def main(input_structure):
 			output.local_message("-- Successful calc folder saved to "+path)
 
 		if et!=None and energy >= et: #Rejected
-			output.local_message("-- Threshold not met; structure rejected")
+			output.local_message("-- Energy threshold not met; structure rejected")
 			return input_structure,"rejected"
+		else:
+			output.local_message("-- Energy threshold met")
 			
 	return input_structure,"accepted"
 

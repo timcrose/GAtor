@@ -15,23 +15,23 @@ from structures import structure_collection
 from structures.structure import StoicDict
 
 
-def main(structure_supercoll, replica_stoic, replica):
+def main(structure_supercoll, replica_stoic,replica=user_input.get_config().get_replica_name()):
     '''
     For a structure selection module, the method main() must be implemented.
     It must take as arguments a 'Structure supercollection'
     and a 'replica_stoic' which defines the main stoichiometry of the replica calling this module.
     It must return a list of 2 or more Structure objects intended for crossing.
     '''
-    struct_sel = StructureSelection(replica, structure_supercoll, replica_stoic)
+    struct_sel = StructureSelection(structure_supercoll, replica_stoic,replica)
     structure_collection.update_supercollection(structure_supercoll)
     [struct_a, struct_b] = struct_sel.get_structures()  
     return [struct_a, struct_b]
 
 class StructureSelection():
-    def __init__(self, replica, structure_supercoll, replica_stoic):
+    def __init__(self, structure_supercoll, replica_stoic,replica):
         self.ui = user_input.get_config()
-        self.replica = replica
 	self.structure_supercoll = structure_supercoll
+	self.replica = replica
 	self.replica_stoic = replica_stoic
 	self.control_list = self.ui.get_list('control', 'control_in_filelist')
         self.max_cascade = len(self.control_list) - 1
@@ -76,15 +76,12 @@ class StructureSelection():
 			if self.op_style=="maximize":
 				prop = -prop
                 	prop_list = np.append(prop,prop_list)
-		except ValueError:
-			output.local_message("Structure %s missing the property: %s" % structure.struct_id, self.prop)
+		except KeyError:
+			output.local_message("Structure %s missing the property: %s" % (structure.struct_id, self.prop),self.replica)
 
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
-	#output.local_message("e_list" +str(e_list), self.replica)
         min_prop = prop_list[0][0]
   	max_prop = prop_list[-1][0] 
-#	output.local_message("min e" +str(min_e),self.replica)
-#	output.local_message("max " +str(max_e), self.replica) 
         fitness = {}
         for index, struct in structure_coll:
             try: prop = float(struct.get_property(self.prop))
@@ -111,14 +108,9 @@ class StructureSelection():
 
                         energy = structure.get_property('energy_tier_1')
                         e_list = np.append(energy,e_list)
-#		except ValueError:
-#			output.local_message("Structure has no 'energy' property",self.replica)
         e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
-	#output.local_message("e_list" +str(e_list), self.replica)
         min_e = e_list[0][0]
   	max_e = e_list[-1][0] 
-#	output.local_message("min e" +str(min_e),self.replica)
-#	output.local_message("max " +str(max_e), self.replica) 
         fitness = {}
         for index, struct in structure_coll:
             try: energy = float(struct.get_property('energy'))

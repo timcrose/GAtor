@@ -22,6 +22,7 @@ def launch_parallel():
 	if spawn_method == "serial":
 		if ui.is_master_process():
 			output.time_log("No parallelization is called")
+			
 		return 
 
 	fh.mkdir_p(fh.conf_tmp_dir)

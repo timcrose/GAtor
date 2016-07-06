@@ -17,15 +17,16 @@ from structures.structure_collection import StructureCollection
 from utilities import stoic_model
 from structures import structure_collection
 from utilities.stoic_model import determine_stoic
+from external_libs.filelock import FileLock
 
 
+ui = user_input.get_config()
 INPUT_REF = -1
 
 def main(argv):
     '''
     enter here the functions you wish to execute when this module is run
     '''
-    ui = user_input.get_config()
     supercoll = {} 
     structure_collection.update_supercollection(supercoll)
     stoic = determine_stoic(os.path.join(cwd, argv[1]))
@@ -59,10 +60,10 @@ def get_energy_tuples(structure_coll):
     for index, structure in structure_coll:
 	ID = structure.get_property('ID')
 	replica = structure.get_property('replica')
-        energy = '{:.3f}'.format(structure.get_property('energy'))
-	if replica == 'init_pool':
-            spe = '{:.3f}'.format(structure.get_property('energy_light_SPE'))
-	else: spe = '{:.3f}'.format(structure.get_property('spe_energy')) 
+        energy = '{:.3f}'.format(structure.get_property(ui.get_property_to_optimize()))
+#	if replica == 'init_pool':
+#            spe = '{:.3f}'.format(structure.get_property('energy_light_SPE'))
+#	else: spe = '{:.3f}'.format(structure.get_property('spe_energy')) 
 	vol = '{:.1f}'.format(structure.get_property('cell_vol'))
 	a = '{:.2f}'.format(structure.get_property('a'))
 	b = '{:.2f}'.format(structure.get_property('b'))
@@ -76,14 +77,14 @@ def get_energy_tuples(structure_coll):
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
 	if energy is not None: 
-            energy_tuples.append((ID, replica, index, energy, spe, vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
+            energy_tuples.append((ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
     return energy_tuples
 
 def write_energy_vs_addition(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
     to_write = ''
     energy_tuples.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
 	if rep == 'init_pool':
             continue
 	to_write += str(Id)+'    '+str(energy)+'\n' 
@@ -106,9 +107,9 @@ def write_energy_hierarchy(structure_coll):
     to_write = ''
     count = 1	
     energy_tuples.sort(key=lambda x: x[3])
-    to_write += '#Rank Added Replica    Index            Relaxed Energy   SP Energy      '
+    to_write += '#Rank Added Replica    Index            Optimized Property      '
     to_write += 'Volume    A        B       C       Alpha   Beta   Gamma    SG        Mutation   Crossover    ParentA     ParentB\n'
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
 	to_write +=str(count) + '    '
         to_write +=str(Id) + '    '
@@ -118,7 +119,7 @@ def write_energy_hierarchy(structure_coll):
         to_write += str(structure_coll.get_input_ref()) + '/'
         to_write += str(index) + '/'
         to_write +='    ' + str(energy)
-	to_write +='    ' + str(spe)
+#	to_write +='    ' + str(spe)
         to_write +='    ' + str(vol)
         to_write +='    ' + str(a)
         to_write +='    ' + str(b)

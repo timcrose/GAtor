@@ -25,9 +25,12 @@ class ListSafeConfigParser(SafeConfigParser):
 	'''Inherits SafeConfigParser and provides list parsing with json'''
 	
 	# TODO: maybe i could use literaleval(super.get()) instead, so to always return lists and ints
-	def get_list(self, section, option):
+	def get_list(self, section, option,eval=False):
 		'''provides list parsing with json'''
-		return self.get(section, option).split()
+		if not eval:
+			return self.get(section, option).split()
+		else:
+			return [ast.literal_eval(x) for x in self.get(section,option).split()]
 	
 	def get_eval(self, section, option):
 		return ast.literal_eval(self.get(section, option))
@@ -57,6 +60,9 @@ class ListSafeConfigParser(SafeConfigParser):
 
 	def get_replica_name(self):
 		return self.get("parallel_settings","replica_name")
+	
+	def get_property_to_optimize(self):
+		return self.get("run_settings","property_to_optimize")
 
 	def is_master_process(self):
 		return not self.get_boolean("parallel_settings","im_not_master_process")

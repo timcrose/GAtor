@@ -289,6 +289,7 @@ class RunGA():
 		self.output("structure's %s: %f; previous global best: %f" % 
 		(self.prop, prop, glob))
 		diff = abs(prop-glob)
+		message = ""
 		if self.op_style=="minimize" and prop<glob:
 			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
 			'\n  old minimum:  ' + str(glob) + \
@@ -339,12 +340,12 @@ class RunGA():
 		except: pass
 
 		struct_index = structure_collection.add_structure(struct, self.replica_stoic, ref_label)
-		struct_coll = StructureCollection(self.replica_stoic, ref_label)
+		struct_coll = structure_collection.get_collection(self.replica_stoic, ref_label)
 		struct_coll.update_local()
 		structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database		
                 data_tools.write_energy_vs_addition(struct_coll)
                 data_tools.write_energy_hierarchy(struct_coll)
-		data_tools.write_spe_vs_addition(struct_coll)
+#		data_tools.write_spe_vs_addition(struct_coll)
 		self.output("Structure index: "+str(struct_index))
 		return
 
@@ -526,9 +527,8 @@ class RunGA():
 		rmdir_silence(self.working_dir)
 
 		#Check convergence
-		converged = self.check_convergence(old_list_top_en)	
-		message = 'Success!: \n  stoichiometry-- '+str(self.replica_stoic)+\
-			'\n  cascade-- ' + str("key[1]") + \
+		converged = self.check_local_convergence(old_list_top_en)	
+		message = 'Success!: \n  stoichiometry-- '+self.replica_stoic.get_string()+\
 			'\n  structure index-- ' + str("struct_index") + \
 			'\n  replica child count-- ' + str(self.replica_child_count) + \
 			'\n  collection count -- ' + str("ID") + \
@@ -537,7 +537,7 @@ class RunGA():
 		self.output(message)
 
 		#write energy hierarchy 
-		self.output("Writing hierachy and data files")
+#		self.output("Writing hierachy and data files")
 		#data_tools.write_energy_hierarchy(self.structure_coll)		   	
 	        #data_tools.write_energy_vs_iteration(self.structure_coll)
 		#End of Iteration Outputs

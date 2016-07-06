@@ -30,6 +30,7 @@ def main():
 	Returns: Total number of initial structures added to the collection.
     	'''
 	ui = user_input.get_config()
+	replica = "init_pool"
     	user_structures_dir = os.path.join(cwd, ui.get('initial_pool', 'user_structures_dir'))
     	added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
 	num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
@@ -38,15 +39,21 @@ def main():
 
 	if len(initial_list) == 0:
 		output.time_log("Initial pool already filled")
+		output.local_message("Initial pool already filled",replica)
 		return 0
 
         if ui.get_eval('initial_pool', 'duplicate_check'):
 		output.time_log("Checking initial pool for duplicates")
+		output.local_message("Checking initial pool for duplicates",replica)
                 ip_count = return_non_duplicates(initial_list)
 		output.time_log("Final initial pool count: %i" % ip_count)
+		output.local_message("Final initial pool count: %i" % ip_count,replica)
 	else:
 		ip_count = return_all_user_structures(initial_list)
 		output.time_log("Final initial pool count: %i" % ip_count)
+		output.local_message("Final initial pool count: %i" % ip_count,replica)
+
+	output.move_to_shared_output(replica="init_pool")
 
         if ip_count!=0 and ip_count!=None:
 	    with open(num_IP_structures,'w') as f:
