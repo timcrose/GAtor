@@ -474,7 +474,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
-		st="Cell modification required for structure\n" % str(struct.struct_id)
+		st="Cell modification required for structure\n" 
 		st+="Geometry before modification:\n"
 		st+=before
 		st+="Geometry after modification:\n"
