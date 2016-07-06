@@ -386,6 +386,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	Method found in the 2011 Lonie paper
 	Make the skewed angle correct
 	'''
+	output.local_message("Cell modification begins for replica: "+replica,replica)
 	napm=int(len(struct.geometry)/nmpc)
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
@@ -473,14 +474,14 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
-		str="------Cell modification required------\n"
-		str+="Geometry before modification:\n"
-		str+=before
-		str+="Geometry after modification:\n"
-		str+=print_aims(struct)
-		output.local_message(str,replica)
+		st="Cell modification required for structure\n" % str(struct.struct_id)
+		st+="Geometry before modification:\n"
+		st+=before
+		st+="Geometry after modification:\n"
+		st+=print_aims(struct)
+		output.local_message(st,replica)
 	if count==0 and verbose:
-		output.local_message("--------Cell Modification Unnecessary--------",replica)
+		output.local_message("Cell modification unnecessary for structure",replica)
 	return struct
 
 def cell_check(struct,replica):
@@ -491,7 +492,7 @@ def cell_check(struct,replica):
 	sname = "cell_check_settings"
 	output.local_message("--------Begin cell check--------",replica)
 	struct = copy.deepcopy(struct)
-	struct = cell_modification(struct,create_duplicate=False)
+	struct = cell_modification(struct,replica=replica,create_duplicate=False)
 
 	#Volume check
 	standard_volume=ui.get_eval(sname,"standard_volume")
