@@ -15,13 +15,12 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
-from utilities import misc
+from utilities import misc, compute_spacegroup_pymatgen
 from selection import structure_selection
 import copy, shutil, multiprocessing
 
 
 def main(replica,stoic):
-
 	mkdir_p(tmp_dir)	
 	mkdir_p(structure_dir)
 	ga = RunGA(replica, stoic)	# run genetic algorithm
@@ -115,11 +114,14 @@ class RunGA():
 				rmdir_silence(self.working_dir)
 				continue
 
+			#---- Compute Spacegroup of Relaxed Structure ----#
+			struct = compute_spacegroup_pymatgen.main(struct)
+			self.output("Space group %s" % (struct.get_property('space_group')))
+
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
 			coll = self.structure_supercoll.get((self.replica_stoic,ref_label))
 			top_prop_list = self.return_property_array(coll)
-#			self.check_energy_minimum(struct,top_prop_list)
 			self.check_global_optimization(struct,top_prop_list)
 			
 			#----- Add Structure to collection -----#
@@ -153,29 +155,28 @@ class RunGA():
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
 		self.output('Beginning iteration')
-		#self.restart(str(self.replica)+' '+str(restart_count)+' beginning iteration:    ' +str(datetime.datetime.now()))
 		begin_time = datetime.datetime.now()
 		return begin_time
 
-	def check_finished(self,convergeTF):
+	def check_finished(self, convergeTF):
 		end = False
 		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
 		number_of_IP = open(IP_dat).read()
- 		#try:
-		struct_coll0 = self.structure_supercoll.get((self.replica_stoic, 0)) 
-		total_structs = len(struct_coll0.structures)
-		added_structs = total_structs-int(number_of_IP)
-		self.output("GA added structures: "+ str(added_structs))
-		data_tools.write_energy_hierarchy(struct_coll0)
-		data_tools.write_energy_vs_iteration(struct_coll0)
-		data_tools.write_spe_vs_iteration(struct_coll0) 
-		if added_structs >= self.number_of_structures:
+		
+                struct_coll = structure_collection.get_collection(self.replica_stoic, 0)
+                struct_coll.update_local()
+		size_of_common = len(struct_coll.structures)
+                size_of_added = size_of_common - int(number_of_IP)
+
+		self.output("GA added structures: "+ str(size_of_added))
+		self.output("Total structures: "+ str(size_of_common))
+		if size_of_added >= self.number_of_structures:
 			message = ''
 			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
 			message +='Number of additions to pool has reached user-specified number: '
-			message += str(added_structs) +'\n'
+			message += str(size_of_added) +'\n'
 			message +='Total size of collection: '
-			message += str(total_structs) +'\n'
+			message += str(size_of_common) +'\n'
 			message += 'GA ended at: '+str(datetime.datetime.now())
 			self.output(message)
 			end = True
@@ -188,7 +189,6 @@ class RunGA():
 			message += str(total_structs) 
 			self.output(message)
 			end = True
-		#except: pass
 		return end
 
 	def restart_scheme(self,restart_replica):	
@@ -277,13 +277,6 @@ class RunGA():
 		return prop_list
 
 
-#	def check_energy_minimum(self, struct, e_list):
-#		en = struct.get_property('energy')
-#		global_en= e_list[0][0]		
-#		self.output("E_stuct: "+str(en)+"  GM: "+str(global_en))
-#		self.check_if_global_minima(en, global_en)
-#		return
-
 	def check_global_optimization(self,struct,prop_list):
 		prop = struct.get_property(self.prop)
 		glob = prop_list[0][0] #Best current property
@@ -328,7 +321,8 @@ class RunGA():
 
 	def add_to_collection(self, struct, ref_label):	
 		prev_struct_index = None #none for now because only using GA for FF not both
-		ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
+		ID = len(StructureCollection(self.replica_stoic, 0).structures) + 1
+		#ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
 		self.replica_child_count = self.replica_child_count + 1
 		struct.set_property('ID', ID) 
 		try:
@@ -337,11 +331,15 @@ class RunGA():
 			struct.set_property('replica', self.replica)	
 			struct.set_property('child_counter', self.replica_child_count)		
 		except: pass
+
 		struct_index = structure_collection.add_structure(struct, self.replica_stoic, ref_label)
-		data_tools.write_energy_vs_iteration(self.structure_supercoll.get((self.replica_stoic,0)))
+		struct_coll = StructureCollection(self.replica_stoic, ref_label)
+		struct_coll.update_local()
 		structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database		
+                data_tools.write_energy_vs_addition(struct_coll)
+                data_tools.write_energy_hierarchy(struct_coll)
+		data_tools.write_spe_vs_addition(struct_coll)
 		self.output("Structure index: "+str(struct_index))
-		#self.output("Added? :"+str(self.structure_supercoll.get((self.replica_stoic,0)).structures))	
 		return
 
 	def structure_create_new(self):        	  
@@ -375,7 +373,7 @@ class RunGA():
 				new_struct = self.mutation_module.main(new_struct, self.replica) 
 		else:
 			self.output('No mutation applied.')
-			new_struct.set_property('mutation_type', 'No_mutation')
+			new_struct.set_property('mutation_type', 'no_mutation')
 		if new_struct is False: 
 			self.output('Mutation failure')
 			return False
@@ -496,7 +494,7 @@ class RunGA():
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
 		self.output("post second check geo: ")
-		self.output(str(struct.get_geometry_atom_format()))
+		#self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
 	def structure_comparison(self, struct, comparison_type):
@@ -541,7 +539,7 @@ class RunGA():
 		number_of_IP = open(IP_dat).read()
 		size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
 		size_of_added = size_of_common - int(number_of_IP)
-		self.output('Total size of common pool: '+str(len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)))
+		self.output('Total size of common pool: '+str(size_of_common))
 		self.output('Total number of GA-added structures: '+str(size_of_added))	
 		if converged is "not_converged":
 			self.output("GA not converged yet.")
@@ -572,7 +570,6 @@ class RunGA():
 
 #	def check_convergence(self, old_list_top_en):
 #		#Check if top N energies havent changed in X iterations
-		
 #		new_e_list = np.array([])
 #		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
 #		for index, structure in coll_new:
