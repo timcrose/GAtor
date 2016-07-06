@@ -61,12 +61,7 @@ class GAtor():
 					self.ui.write(f)
 					f.close()
 					sys.argv.append(conf_path)
-					reload(fh)
-					reload(user_input)
-					reload(output)
-					reload(stoic_model)
-					reload(misc)
-					reload(kill)
+					reload_modules()
 
 				message = "GAtor instance reporting from "+socket.gethostname()
 				if self.ui.has_option(sname,"allocated_nodes"):
@@ -100,8 +95,6 @@ class GAtor():
 		return
 
 	def fill_initial_pool(self):
-                fh.mkdir_p(fh.tmp_dir)
-		fh.mkdir_p(fh.structure_dir)
 		IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
 		IP_module.main()
 		
@@ -118,14 +111,23 @@ class GAtor():
 			output.time_log("User denied cleaning or no user response is received within 30 s.",sname)
 			output.time_log("Moving on",sname)
 
-			
 
+def reload_modules():
+	'''
+	These modules need to be reloaded after the configuration file is changed
+	'''
+	reload(fh)
+	reload(user_input)
+	reload(output)
+	reload(stoic_model)
+	reload(misc)
+	reload(kill)
 
 def clean():
 	print 'resetting environment'
 	sname = "clean"
-	directory_to_remove = [fh.tmp_dir, fh.structure_dir, fh.conf_tmp_dir,
-	fh.success_dir, fh.scavenge_dir, fh.fail_dir]
+	directory_to_clean = [fh.tmp_dir, fh.structure_dir, fh.conf_tmp_dir,
+	fh.success_dir, fh.scavenge_dir, fh.fail_dir, fh.out_tmp_dir]
 	try:
 		files_to_remove = [fh.output_file, fh.restart_relaxation_file, fh.restart_replica_file]
 	except: pass
@@ -134,13 +136,10 @@ def clean():
 	p.wait()
 	p = subprocess.Popen(['rm *.err'], cwd=fh.cwd, shell=True)
 	p.wait()
-#        p = subprocess.Popen(['rm *.log'], cwd=fh.cwd, shell=True)
-#        p.wait()
 	# tmp index is to keep track of replica number
-	for directory in directory_to_remove:
-		if os.path.exists(directory): 
-			output.time_log("Removing directory: "+directory, sname)
-			shutil.rmtree(directory)
+	for directory in directory_to_clean:
+		output.time_log("Cleaning directory: "+directory, sname)
+		fh.mkdir_p_clean(directory)
 
 	for rmfile in files_to_remove:
 		if os.path.exists(rmfile): 
