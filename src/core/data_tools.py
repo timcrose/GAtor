@@ -106,8 +106,8 @@ def write_energy_hierarchy(structure_coll):
     energy_tuples = get_energy_tuples(structure_coll)
     to_write = ''
     count = 1	
-    energy_tuples.sort(key=lambda x: x[3])
-    to_write += '#Rank Added Replica    Index            Optimized Property      '
+    energy_tuples.sort(key=lambda x: float(x[3]))
+    to_write += '#Rank Added Replica    Index           Optimized Property   '
     to_write += 'Volume    A        B       C       Alpha   Beta   Gamma    SG        Mutation   Crossover    ParentA     ParentB\n'
     for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
 #       to_write += structure_coll.get_stoic().get_string() + '/'
