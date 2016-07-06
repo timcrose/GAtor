@@ -1,1 +1,1 @@
-python ../src/GAtor_master.py ui.conf
+python ../src/GAtor_master.py clean.conf
