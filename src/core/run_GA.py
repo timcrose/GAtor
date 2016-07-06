@@ -55,7 +55,6 @@ class RunGA():
 		self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
 		self.max_it = self.ui.get_eval('run_settings', 'max_iterations')
 		self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
-
 		# Initialize Supercollection
 		self.replica_child_count = 0
 		self.convergence_count= 0
@@ -118,6 +117,10 @@ class RunGA():
 			struct = compute_spacegroup_pymatgen.main(struct)
 			self.output("Space group %s" % (struct.get_property('space_group')))
 
+			#---- Compute Spacegroup of Relaxed Structure ----#
+			struct = compute_spacegroup_pymatgen.main(struct)
+			self.output("Space group %s" % (struct.get_property('space_group')))
+
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
 			coll = self.structure_supercoll.get((self.replica_stoic,ref_label))
@@ -170,6 +173,7 @@ class RunGA():
 
 		self.output("GA added structures: "+ str(size_of_added))
 		self.output("Total structures: "+ str(size_of_common))
+
 		if size_of_added >= self.number_of_structures:
 			message = ''
 			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
@@ -579,7 +583,6 @@ class RunGA():
 #		new_list_top_en = new_e_list[:self.top_en_count]
 #		min_e = new_e_list[0][0]
 #		max_e = new_e_list[-1][0]
-		
 		#self.output("old top energies:    "+ str(old_list_top_en))
 		#self.output("new top energies:    "+ str(new_list_top_en))
 

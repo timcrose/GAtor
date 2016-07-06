@@ -136,6 +136,8 @@ def clean():
 	p.wait()
 	p = subprocess.Popen(['rm *.err'], cwd=fh.cwd, shell=True)
 	p.wait()
+        p = subprocess.Popen(['rm *.log'], cwd=fh.cwd, shell=True)
+        p.wait()
 	# tmp index is to keep track of replica number
 	for directory in directory_to_clean:
 		output.time_log("Cleaning directory: "+directory, sname)

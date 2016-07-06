@@ -48,7 +48,7 @@ def main():
 		ip_count = return_all_user_structures(initial_list)
 		output.time_log("Final initial pool count: %i" % ip_count)
 
-        if ip_count is not None:
+        if ip_count!=0 and ip_count!=None:
 	    with open(num_IP_structures,'w') as f:
                 f.write(str(ip_count))
                 f.close()
@@ -131,9 +131,8 @@ def return_all_user_structures(initial_list):
 	    struct = compute_spacegroup_pymatgen.main(struct)
             structure_collection.add_structure(struct, stoic, 0)
             ip_count += 1
- 
-        return ip_count
 
+        return ip_count
 
 def return_non_duplicates(initial_list):
 	ui = user_input.get_config()

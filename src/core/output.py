@@ -46,7 +46,7 @@ def error(message, replica=ui.get_replica_name()):
     data_file.close()
 
 def reset_local(replica=ui.get_replica_name()):
-    out_file = os.path.join(cwd, tmp_dir, str(replica) + '.out')
+    out_file = os.path.join(out_tmp_dir, str(replica) + '.out')
     data_file = open(out_file, 'w')
     data_file.write(str('') + '\n')
     data_file.close()
