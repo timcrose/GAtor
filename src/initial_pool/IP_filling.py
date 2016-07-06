@@ -12,6 +12,7 @@ from external_libs.filelock import FileLock
 from structures import structure_collection, structure_handling
 from structures.structure import get_geo_from_file, Structure
 from structures.structure_collection import StructureCollection
+from utilities import compute_spacegroup_pymatgen
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
 from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,SpeciesComparator,FrameworkComparator
@@ -35,20 +36,25 @@ def main():
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
         initial_list = convert_to_structures(files_to_add)
 
+	if len(initial_list) == 0:
+		output.time_log("Initial pool already filled")
+		return 0
+
         if ui.get_eval('initial_pool', 'duplicate_check'):
-		print "Checking initial pool for duplicates"
-                ip_count = return_non_duplicates(initial_list, ui)
-                print "Final Initial Pool Count: %s" % str(ip_count)
+		output.time_log("Checking initial pool for duplicates")
+                ip_count = return_non_duplicates(initial_list)
+		output.time_log("Final initial pool count: %i" % ip_count)
 	else:
 		ip_count = return_all_user_structures(initial_list)
-		print "Final Initial Pool Count: %s" % str(ip_count)
+		output.time_log("Final initial pool count: %i" % ip_count)
+
         if ip_count is not None:
 	    with open(num_IP_structures,'w') as f:
                 f.write(str(ip_count))
                 f.close()
             return  ip_count
 	else: 
-            raise RuntimeError("Initial Pool not filling properly. Try cleaning folder or removing fill_initial_pool = TRUE from ui.conf")
+	    return 
 
 def file_lock_structures(user_structures_dir, added_user_structures):
 	'''
@@ -122,16 +128,15 @@ def return_all_user_structures(initial_list):
         for struct in initial_list:
 	    stoic = struct.get_stoic()
             struct.set_property('ID',0)
+	    struct = compute_spacegroup_pymatgen.main(struct)
             structure_collection.add_structure(struct, stoic, 0)
-            ip_count += 1 
-            struct_coll = StructureCollection(stoic, 0)
-        if len(initial_list)!=0:
-            structure_collection.update_supercollection(structure_supercoll)
-            data_tools.write_energy_hierarchy(struct_coll)
+            ip_count += 1
+ 
         return ip_count
 
 
-def return_non_duplicates(initial_list, ui):
+def return_non_duplicates(initial_list):
+	ui = user_input.get_config()
         remove_list = []
         structure_supercoll = {}
 	#ebins = return_energy_groups(initial_list, ui)
@@ -145,6 +150,7 @@ def return_non_duplicates(initial_list, ui):
             if struct_fp in remove_list:
                 continue
             struct.set_property('ID',0)
+	    struct = compute_spacegroup_pymatgen.main(struct)
             structure_collection.add_structure(struct, stoic, 0)
         if len(initial_list)!=0:
             struct_coll = StructureCollection(stoic, 0)
@@ -245,9 +251,6 @@ def get_pymatgen_structure(frac_data):
 	structp = StructureP(lattice, atoms, coords)
 	return structp
 
-def output(message):
-	output.local_message(message, 'init_pool')
-	return
 
 if __name__ == '__main__':
     main()
