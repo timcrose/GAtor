@@ -133,8 +133,14 @@ def write_energy_hierarchy(structure_coll):
         to_write +='    ' + str(par1)
         to_write += '\n'
 	count +=1
-    with open(os.path.join(tmp_dir, 'energy_hierarchy.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: f.write(to_write)
-    os.system("chmod 771 "+os.path.join(tmp_dir,'energy_hierarchy.'+str(structure_coll.get_input_ref())+'.dat'))
+    
+    stoic = structure_coll.get_stoic()
+    input_ref = structure_coll.get_input_ref()
+    filename = "energy_hierarchy_%s_%s.dat" % (str(stoic),str(input_ref))
+    with FileLock(filename,tmp_dir,3600):
+        f = open(os.path.join(tmp_dir,filename),"w")
+        f.write(to_write)
+        os.system("chmod g=u " + os.path.join(tmp_dir,filename))
 
 def make_user_structure_directory(structure_coll, energy_tuples, n_structures=10):
     path = os.path.join(tmp_dir, 'user_structures')
