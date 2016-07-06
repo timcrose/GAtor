@@ -35,9 +35,12 @@ res_dir = os.path.join(GA_dir, 'res')
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
 conf_tmp_dir = os.path.join(cwd,'conf_tmp/')
+out_tmp_dir = os.path.join(cwd,'out_tmp/')
+
 #back-up directory
-fail_dir = os.path.join(cwd, 'failed_relaxations')  
-scavenge_dir = os.path.join(cwd,"scavenged_folders")
+fail_dir = os.path.join(cwd, 'save_calc_failed')  
+success_dir = os.path.join(cwd,"save_calc_success")
+scavenge_dir = os.path.join(cwd,"save_calc_scavenged")
 
 # filesystem storage
 structure_dir = os.path.join(cwd, 'structures')
