@@ -489,7 +489,7 @@ def cell_check(struct,replica):
 	Should only be performed after cell_modification is done
 	'''
 	sname = "cell_check_settings"
-	output.local_message("--------Begin cell check--------")
+	output.local_message("--------Begin cell check--------",replica)
 	struct = copy.deepcopy(struct)
 	struct = cell_modification(struct,create_duplicate=False)
 
@@ -565,79 +565,10 @@ def cell_check(struct,replica):
 			output.local_message("New structure passed all atomic distance check(s)",replica)
 	else:
 		if verbose:
-			output.local_message("new structure failed the atomic distance check",replica)
+			output.local_message("New structure failed the atomic distance check",replica)
 		return False
 
 
-	#First checks close encounter between all atoms user Aim's default 0.4 bohr=0.211672 Angstrom
-	total_atoms=len(struct.geometry)
-	napm=total_atoms/nmpc
-	tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]]
-	default_closeness = 0.211672
-	for a1 in range (total_atoms-1):
-		for a2 in range (a1+1,total_atoms): #Atoms should not be compared to those from the same molecule
-			for tr_choice in range (27):
-				new_apos=[struct.geometry[a2][j]+struct.properties["lattice_vector_a"][j]*tr[tr_choice][0]+struct.properties["lattice_vector_b"][j]*tr[tr_choice][1]+struct.properties["lattice_vector_c"][j]*tr[tr_choice][2] for j in range (3)] #Move the molecule by the fractional vector specified by tr[tr_choice]
-				diff=[struct.geometry[a1][j]-new_apos[j] for j in range (3)]
-				if numpy.linalg.norm(diff)<default_closeness:
-					if verbose:
-						output.local_message("The new structure failed close encounter check. Default closeness criteria is "+str(default_closeness)+".\nRestarting iteration.\n", replica)
-						return False
-	if verbose: output.local_message("The new structure has passed the close encounter check. Default closeness criteria is "+str(default_closeness)+".",replica)
-
-
-	length_range=ui.get_eval("cell_check_settings","lattice_length_range")
-	if standard_volume!=None and length_range!=None:
-		(lower_length, upper_length)=[standard_volume**(1/(3+0.0))*length_range[i] for i in range (2)]
-		list=['a','b','c']
-		if verbose:
-			output.local_message("Cell vector length check is called. These are the lengths: a=%f, b=%f, c=%f" % (struct.properties['a'],struct.properties['b'],struct.properties['c']), replica)
-		for i in range (3):
-			if struct.properties[list[i]]>upper_length or struct.properties[list[i]]<lower_length:
-				if verbose: output.local_message("The new structure has an unreasonable '%s' vector.\nRestart iteration\n" % (list[i]),replica)
-				return False
-		if verbose:
-			output.local_message("The new structure's lattice vectors are all reasonable.",replica)
-	elif verbose:
-		output.local_message("No lattice vector length check is called.",replica)
-	cm_distance=ui.get_eval("cell_check_settings","center_of_mass_distance")
-	if cm_distance!=None:
-		napm=int(len(struct.geometry)/nmpc)
-		cmlist=[cm_calculation(struct,range(napm*i,napm*i+napm)) for i in range (nmpc)] #Calculates the center of mass of all molecules
-		output.local_message("The center of mass check is called. This is the list of center of mass %s" % (str(cmlist)),replica)
-		tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]] 
-		#Each molecule will have to be compared with the 27 equivalent of the other one in order to conduct the distance check
-		for m1 in range (nmpc-1):
-			for m2 in range (m1+1,nmpc):
-				for tr_choice in range (27):
-					new_cm=[cmlist[m2][j]+struct.properties["lattice_vector_a"][j]*tr[tr_choice][0]+struct.properties["lattice_vector_b"][j]*tr[tr_choice][1]+struct.properties["lattice_vector_c"][j]*tr[tr_choice][2] for j in range (3)] #Move the molecule by the fractional vector specified by tr[tr_choice]
-					diff=[cmlist[m1][j]-new_cm[j] for j in range (3)]
-					if numpy.linalg.norm(diff)<cm_distance:
-						if verbose:
-							output.local_message("The new structure has molecules sitting too close to each other in terms of center of mass. tr_choice=%i, diff=%s\nRestarting iteration.\n" %(tr_choice,str(diff)), replica)
-						return False
-		if verbose: output.local_message("The new strcture has passed the center of mass distance check.",replica)
-	elif verbose:
-		output.local_message("No center of mass distance check is called.",replica)
-	atom_distance=ui.get_eval("cell_check_settings","interatomic_distance")
-	if atom_distance!=None:
-		total_atoms=len(struct.geometry)
-		napm=total_atoms/nmpc
-		tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]]
-		for a1 in range (total_atoms-1):
-			for a2 in range ((a1/napm+1)*napm,total_atoms): #Atoms should not be compared to those from the same molecule
-				for tr_choice in range (27):
-					new_apos=[struct.geometry[a2][j]+struct.properties["lattice_vector_a"][j]*tr[tr_choice][0]+struct.properties["lattice_vector_b"][j]*tr[tr_choice][1]+struct.properties["lattice_vector_c"][j]*tr[tr_choice][2] for j in range (3)] #Move the molecule by the fractional vector specified by tr[tr_choice]
-					diff=[struct.geometry[a1][j]-new_apos[j] for j in range (3)]
-					if numpy.linalg.norm(diff)<atom_distance:
-						if verbose:
-							output.local_message("The new structure has atoms from different molecules sitting too close to each other.\nRestarting iteration.\n", replica)
-						return False
-		if verbose: output.local_message("The new structure has passed the interatomic distance check.",replica)
-	elif verbose:
-		output.local_message("No interatomic distance check is called.",replica)
-	if verbose:
-		output.local_message("The new structure has passed through all the cell check being called.",replica)
 	return True
 
 def COM_distance_check(struct,nmpc=None,lowerbound=None):
