@@ -137,7 +137,7 @@ def write_energy_hierarchy(structure_coll):
     
     stoic = structure_coll.get_stoic()
     input_ref = structure_coll.get_input_ref()
-    filename = "energy_hierarchy_%s_%s.dat" % (str(stoic),str(input_ref))
+    filename = "energy_hierarchy_%s_%s.dat" % (stoic.get_string(),str(input_ref))
     with FileLock(filename,tmp_dir,3600):
         f = open(os.path.join(tmp_dir,filename),"w")
         f.write(to_write)
