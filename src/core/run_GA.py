@@ -89,10 +89,11 @@ class RunGA():
 			if end: return
 
 			#----- Restart Scheme -----#
-			self.restart_scheme(restart_replica)
+			struct = self.restart_scheme(restart_replica)
 
-			#-----Generate Trial Structure -----#
-			struct = self.generate_trial_structure()
+			if struct == False: 
+				#-----Generate Trial Structure -----#
+				struct = self.generate_trial_structure()
 			
 			#----- Compare Pre-relaxed Structure to Collection -----#
 			if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
@@ -224,6 +225,7 @@ class RunGA():
 		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
 		count = 0
 		begin_time = time.time()
+		self.output("Generating trial structure with %i processes" % processes)
 		while count<total_attempts and struct == False:
 			if processes == 1: #Serial
 				struct = self.structure_create_new()
@@ -238,12 +240,12 @@ class RunGA():
 						struct = results[i]
 						break
 				if struct!=False: #Found a success
-					output.move_to_shared_output(self.replica+"_"+str(i),self.replica+".out")
+					output.move_to_shared_output(self.replica+"_"+str(i),os.path.join(out_tmp_dir,self.replica+".out"))
 				else:
 					output.local_message(str(processes)+" attempts have failed to create a new structure")
 				for i in range (processes):
 					try:
-						os.remove(os.path.join(cwd,self.replica+"_"+str(x)+".out"))
+						os.remove(os.path.join(out_tmp_dir,self.replica+"_"+str(i)+".out"))
 					except OSError:
 						pass
 
@@ -252,7 +254,7 @@ class RunGA():
 		end_time = time.time()
 		if count == total_attempts and struct==False:
 			raise RuntimeError("Generating structure maxed out on generation attempts.")
-		output.local_message("-- Number of attempts for structure generation: "+str(counter))
+		output.local_message("-- Number of attempts for structure generation: "+str(count))
 		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" s")
 		
 		return struct
@@ -507,9 +509,9 @@ class RunGA():
 		'''
 		t1 = time.time()
 		if comparison_type == "pre_relaxation_comparison":
-			self.output("\n--Pre-relaxation Comparison--")
+			self.output("\n-------- Pre-relaxation Comparison --------")
 		elif comparison_type == "post_relaxation_comparison":
-			self.output("\n--Post-relaxation Comparison--")
+			self.output("\n-------- Post-relaxation Comparison --------")
 		structure_collection.update_supercollection(self.structure_supercoll)
 		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica, comparison_type))
                 t2 = time.time()
@@ -650,7 +652,7 @@ def structure_create_for_multiprocessing(args):
 	This is a function for structure creation reading straight from the ui.conf file
 	'''
 	ui = user_input.get_config()
-	replica, replica_stoic = args
+	replica, stoic = args
 	#----- Structure Selection -----#
 	output.local_message("--Beginning normal structure creation process--",replica)
 	output.local_message("--Structure selection--", replica)
@@ -659,8 +661,7 @@ def structure_create_for_multiprocessing(args):
 	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
 	structure_supercoll = {}
 	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
-	structures_to_cross = selection_module.main(structure_supercoll, stoic)
-	replica = ui.get_replica_name()
+	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
 
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
@@ -678,28 +679,31 @@ def structure_create_for_multiprocessing(args):
 	randnum = np.random.random()	
 	randnum2 = np.random.random()
 	#Single Parents have to be mutated	
-	if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<self.singlemutate:
+	if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<ui.get_eval('mutation', 'mutation_probability'):
 		new_struct = mutation_module.main(new_struct, replica)
 		if new_struct!=False and randnum2 < ui.get_eval('mutation', 'double_mutate_prob'):
 			output.local_message("--Second Mutation--",replica)
 			new_struct = mutation_module.main(new_struct, replica) 
+
 	else:
 		output.local_message('No mutation applied.',replica)
 		new_struct.set_property('mutation_type', 'No_mutation')
+
 	if new_struct is False: 
 		output.local_message('Mutation failure'.replica)
 		return False
 
 	#----- Cell Check -----#
 	output.local_message("--Cell Checks--",replica)
-	structure_handling.cell_modification(new_struct, replica,create_duplicate=False)
+	output.local_message("Replica reporting: "+replica)
+	structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
 		return False
 
 	#----- Set parents ------#
 	for i in range(len(structures_to_cross)):  
 		par_st = structures_to_cross[i]
-		struct.set_property('parent_' + str(i), par_st.get_stoic_str() + '/' \
+		new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
 		+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
 
 	output.local_message("\n--Assign structure ID--",replica)
