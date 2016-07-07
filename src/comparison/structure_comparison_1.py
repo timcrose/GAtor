@@ -95,7 +95,7 @@ class Comparison:
 	for index, comp_struct in self.structure_coll:
             comp_en = float(comp_struct.get_property('energy'))	
             if en - e_tol <= comp_en <= en + e_tol:
-		self.output("comp en: " +str(comp_en)) 
+#		self.output("comp en: " +str(comp_en)) 
                 sim_list.append((index, comp_struct)) 
         self.output("Number of Structures w/in duplicate energy window: "+str(len(sim_list)))
         return sim_list
