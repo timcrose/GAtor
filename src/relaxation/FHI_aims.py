@@ -232,6 +232,7 @@ class FHIAimsRelaxation():
 #	output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
 #	output.local_message("Binary location is"+bin,self.replica)
 
+	original_dir = os.getcwd()
 	if execute_command == "mpirun":
 		arglist = ["mpirun","-wdir",self.working_dir]
 		if ui.has_option("parallel_settings","allocated_nodes"):
@@ -267,6 +268,10 @@ class FHIAimsRelaxation():
 		if ui.has_option("parallel_settings","additional_arguments"):
 			arglist += ui.get_eval("parallel_settings","additional_arguments")
 
+	elif execute_command == "shell":
+		os.chdir(self.working_dir)
+		arglist = [os.path.abspath(self.bin)]
+
 	aimsout=os.path.join(self.working_dir,"aims.out")
 	for i in range (10):
 		outfile=open(aimsout,"w")
@@ -280,6 +285,7 @@ class FHIAimsRelaxation():
 		except: #OSError Errno 3 Process does not exist
 			output.time_log("Nodes failure ; replica will pass out from now on")
 			time.sleep(86400)
+			os.chdir(original_dir)
 			return False
 			
 		time_limit=60
@@ -308,6 +314,7 @@ class FHIAimsRelaxation():
 
 		if i==9:
 			output.time_log("WARNING: Repeated launch failure ; exiting",self.replica)
+			os.chdir(original_dir)
 			return False
 	counter=0; last=os.stat(aimsout).st_size
 	while counter<update_poll_times and p.poll()==None: #The output file needs to update at least once in every 5 minutes
@@ -336,9 +343,8 @@ class FHIAimsRelaxation():
 	outfile.close()
 	output.local_message("-- aims job exit status: "+str(p.poll()),self.replica)
 	output.time_log("aims job exited with status "+str(p.poll()),self.replica)
+	os.chdir(original_dir)
 	
-#	if environment=="Edison_login": #change it back to the current directory
-#		os.chdir(current_dir)
 
     def output(self, message): output.local_message(message, self.replica)
 
