@@ -31,9 +31,9 @@ def main(struct, structure_coll, replica, comparison_type):
     elif comparison_type == "post_relaxation_comparison":
         comp = Comparison(struct, structure_coll, replica, comparison_type)
         # make sure energy is higher than the worst in the collection
-        en_result = comp.acceptable_energy()
-        if en_result is False:
-            return False
+#        en_result = comp.acceptable_energy()
+#        if en_result is False:
+#            return False
 	structs_to_compare = comp.get_similar_energy_structures(comparison_type)
 	dup_result = comp.check_if_duplicate(struct, structs_to_compare, comparison_type)
     if dup_result:
@@ -95,7 +95,7 @@ class Comparison:
 	for index, comp_struct in self.structure_coll:
             comp_en = float(comp_struct.get_property('energy'))	
             if en - e_tol <= comp_en <= en + e_tol:
-		#self.output("comp en: " +str(comp_en)) 
+#		self.output("comp en: " +str(comp_en)) 
                 sim_list.append((index, comp_struct)) 
         self.output("Number of Structures w/in duplicate energy window: "+str(len(sim_list)))
         return sim_list
