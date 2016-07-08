@@ -34,7 +34,7 @@ class FillInitialPool():
         self.num_initial_pool_structures = int(self.ui.get('initial_pool', 'num_initial_pool_structures'))
         self.control_in = read_data(os.path.join(cwd, self.ui.get('control', 'control_in_directory')),
                                     self.ui.get('control', 'initial_pool'))
-        self.verbose = self.ui.get_eval('run_settings', 'verbose')
+        self.verbose = self.ui.verbose()
     	self.working_dir = os.path.join(tmp_dir, str(self.replica))   
 	self.control_list = self.ui.get_list('control', 'control_in_filelist') 
     

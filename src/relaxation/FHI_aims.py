@@ -35,12 +35,18 @@ def main(input_structure):
 	control_list = ui.get_list(sname,"control_in_filelist")
 	control_dir = ui.get(sname,"control_in_directory")
 	abs_success = ui.get_boolean(sname,"absolute_success")
-	upi = ui.get_list(sname,"update_poll_interval",eval=True)
-	if len(upi)!=len(control_list):
-		raise ValueError("Number of specified update poll interval must match that of control.in files")
-	upt = ui.get_list(sname,"update_poll_times",eval=True)
-	if len(upt)!=len(control_list):
-		raise ValueError("Number of specified update poll times must match that of control.in files")
+	if ui.get_boolean(sname,"monitor_execution"):
+		monitor = True
+		upt = ui.get_list(sname,"update_poll_times",eval=True)
+		if len(upt)!=len(control_list):
+			raise ValueError("Number of specified update poll interval must match that of control.in files")
+		upi = ui.get_list(sname,"update_poll_interval",eval=True)
+		if len(upi)!=len(control_list):
+			raise ValueError("Number of specified update poll times must match that of control.in files")
+	else:
+		monitor = False
+		upt = [None]*len(control_list)
+		upi = [None]*len(control_list)
 
 	if ui.has_option(sname,"absolute_energy_thresholds"):
 		at = ui.get_list(sname,"absolute_energy_thresholds",eval=True)
@@ -118,7 +124,7 @@ def main(input_structure):
 		output.local_message("-- Upper energy threshold: "+str(et))
 
 		begin_time = time.time()
-		FHI.execute(upi[i],upt[i])
+		FHI.execute(monitor,upi[i],upt[i])
 		end_time = time.time()
 
 		output.local_message("-- Job execution time: " + str(end_time-begin_time) + " s")
@@ -238,10 +244,21 @@ class FHIAimsRelaxation():
         control_file.write(self.control_in_string)
         control_file.close()
 
-    def execute(self,update_poll_interval,update_poll_times):
+    def execute(self,enable_monitor=False,update_poll_interval=None,update_poll_times=None):
         '''
 	Directly calls mpirun to run the aims executable        
 	'''
+	def end_of_execution_tasks():
+		outfile.close()
+		output.local_message("-- aims job exit status: "
+					+ str(p.poll()),self.replica)
+		output.time_log("aims job exited with status "
+				+ str(p.poll()),self.replica)
+		os.chdir(original_dir)
+
+	if enable_monitor and (update_poll_interval==None or update_poll_times==None):
+		raise ValueError("FHI-aims job monitoring enabled, but no poll interval or times specified")
+
 	out_location = str(self.working_dir)
         ui=user_input.get_config()
         bin=ui.get('FHI-aims','path_to_aims_executable')
@@ -292,7 +309,17 @@ class FHIAimsRelaxation():
 		arglist = [os.path.abspath(self.bin)]
 
 	aimsout=os.path.join(self.working_dir,"aims.out")
-	for i in range (10):
+	if not enable_monitor:
+		outfile = open(aimsout,"w")
+		get_execute_clearance(request_folder=self.working_dir)
+		output.time_log("aims job execute clearance acquired",self.replica)
+		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
+		p=subprocess.Popen(arglist,stdout=outfile)
+		p.wait()
+		end_of_execution_tasks()
+		return True
+
+	for i in range (10): #Allow 10 times for the job to successfully launch
 		outfile=open(aimsout,"w")
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
@@ -357,12 +384,8 @@ class FHIAimsRelaxation():
 			self.set_permission()
 		except:
 			pass
-
-			
-	outfile.close()
-	output.local_message("-- aims job exit status: "+str(p.poll()),self.replica)
-	output.time_log("aims job exited with status "+str(p.poll()),self.replica)
-	os.chdir(original_dir)
+	
+	end_of_execution_tasks()
 	
 
     def output(self, message): output.local_message(message, self.replica)

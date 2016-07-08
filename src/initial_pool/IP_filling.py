@@ -42,7 +42,7 @@ def main():
 		output.local_message("Initial pool already filled",replica)
 		return 0
 
-        if ui.get_eval('initial_pool', 'duplicate_check'):
+        if ui.get_boolean('initial_pool', 'duplicate_check'):
 		output.time_log("Checking initial pool for duplicates")
 		output.local_message("Checking initial pool for duplicates",replica)
                 ip_count = return_non_duplicates(initial_list)
@@ -118,7 +118,7 @@ def set_IP_structure_matcher(ui):
 	L_tol =ui.get_eval('initial_pool', 'ltol')
 	S_tol = ui.get_eval('initial_pool', 'stol')
 	Angle_tol = ui.get_eval('initial_pool', 'angle_tol')
-	Scale = ui.get_eval('initial_pool', 'scale_vol')
+	Scale = ui.get_boolean('initial_pool', 'scale_vol')
 	sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, 
                           scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
 	return sm

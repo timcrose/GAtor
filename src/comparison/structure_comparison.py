@@ -158,7 +158,7 @@ class Comparison:
         L_tol =ui.get_eval(comparison_type, 'ltol')
         S_tol = ui.get_eval(comparison_type, 'stol')
         Angle_tol = ui.get_eval(comparison_type, 'angle_tol')
-        Scale = ui.get_eval(comparison_type, 'scale_vol')
+        Scale = ui.get_boolean(comparison_type, 'scale_vol')
         sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, 
                           scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
         return sm

@@ -46,6 +46,22 @@ class ListSafeConfigParser(SafeConfigParser):
 			return True
 		return False
 
+	def get_list_of_booleans(self,section,option):
+		'''
+		Allows only TRUE and FALSE in the list
+		'''
+		l = self.get_list(section,option)
+		result = []
+		for k in l:
+			if k == "TRUE":
+				l.append(True)
+			elif k == "FALSE":
+				l.append(False)
+			else:
+				raise ValueError("List of boolean parameter must contain only TRUE and FALSE, all caps")
+		
+		
+
 	def get_section_as_dict(self,section,eval=False):
 		'''
 		Return all the option under a section as a dictionary
@@ -63,6 +79,15 @@ class ListSafeConfigParser(SafeConfigParser):
 	
 	def get_property_to_optimize(self):
 		return self.get("run_settings","property_to_optimize")
+	
+	def verbose(self):
+		return self.get_boolean("run_settings","verbose")
+
+	def all_geo(self):
+		return self.get_boolean("run_settings","output_all_geometries")
+	
+	def ortho(self):
+		return self.get_boolean("unit_cell_settings","orthogonalize_unit_cell")
 
 	def is_master_process(self):
 		return not self.get_boolean("parallel_settings","im_not_master_process")

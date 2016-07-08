@@ -127,7 +127,8 @@ def clean():
 	print 'resetting environment'
 	sname = "clean"
 	directory_to_clean = [fh.tmp_dir, fh.structure_dir, fh.conf_tmp_dir,
-	fh.success_dir, fh.scavenge_dir, fh.fail_dir, fh.out_tmp_dir]
+	fh.out_tmp_dir]
+	directory_to_remove = [fh.success_dir, fh.scavenge_dir, fh.fail_dir]
 	try:
 		files_to_remove = [fh.output_file, fh.restart_relaxation_file, fh.restart_replica_file]
 	except: pass
@@ -140,6 +141,11 @@ def clean():
 	for directory in directory_to_clean:
 		output.time_log("Cleaning directory: "+directory, sname)
 		fh.mkdir_p_clean(directory)
+
+	for directory in directory_to_remove:
+		if os.path.exists(directory):
+			output.time_log("Removing directory: "+directory, sname)
+			shutil.rmtree(directory,ignore_errors=True)
 
 	for rmfile in files_to_remove:
 		if os.path.exists(rmfile): 

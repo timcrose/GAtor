@@ -24,7 +24,7 @@ def main(replica,stoic):
 	mkdir_p(tmp_dir)	
 	mkdir_p(structure_dir)
 	ga = RunGA(replica, stoic)	# run genetic algorithm
-	if ga.ui.get_eval('run_settings', 'recover_from_crashes') is not True: # catch crashes
+	if ga.ui.get_boolean('run_settings', 'recover_from_crashes') is not True: # catch crashes
 		ga.start()  # no exception catching
 	else:
 		while True:
@@ -44,7 +44,7 @@ class RunGA():
 		self.replica_stoic = stoic
 		self.working_dir = os.path.join(tmp_dir, str(self.replica))
 		self.GA_module_init() # initializes GA modules specified in .conf file
-		self.verbose = self.ui.get_eval('run_settings', 'verbose')        
+		self.verbose = self.ui.verbose()        
 #		self.control_list = self.ui.get_list('FHI-aims', 'control_in_filelist')
 		self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 		self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
@@ -61,6 +61,7 @@ class RunGA():
 		self.structure_supercoll = {}
 		self.structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
 		self.structure_supercoll[(self.replica_stoic, 'duplicates')] = structure_collection.get_collection(self.replica_stoic, 'duplicates')
+		data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
 
 		structure_collection.update_supercollection(self.structure_supercoll)
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
@@ -151,10 +152,6 @@ class RunGA():
 		self.relaxation_module = my_import(self.ui.get('modules', 'relaxation_module'), package='relaxation')
 		self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
 
-#	def initialize_restart(self):
-#		restart_count = 0
-#		restart_replica = self.ui.get_eval("parallel_settings","restart_replicas")
-#		return restart_replica
 
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
@@ -673,6 +670,9 @@ def structure_create_for_multiprocessing(args):
 	if new_struct is False:
 		output.local_message("Crossover failure", replica)
 		return False
+	if ui.all_geo:
+		output.local_message("Current structure geometry:\n" + 
+		new_struct.get_geometry_atom_format(),replica)
 	
 	#----- Mutation Execution -----#
 	output.local_message("\n--Mutation--",replica)
@@ -681,9 +681,15 @@ def structure_create_for_multiprocessing(args):
 	#Single Parents have to be mutated	
 	if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<ui.get_eval('mutation', 'mutation_probability'):
 		new_struct = mutation_module.main(new_struct, replica)
+		if new_struct!=False and ui.all_geo:
+			output.local_message("Current structure geometry:\n" 
+			+ new_struct.get_geometry_atom_format(),replica)
 		if new_struct!=False and randnum2 < ui.get_eval('mutation', 'double_mutate_prob'):
 			output.local_message("--Second Mutation--",replica)
-			new_struct = mutation_module.main(new_struct, replica) 
+			new_struct = mutation_module.main(new_struct, replica)
+			if new_struct!=False and ui.all_geo:
+				output.local_message("Current structure geometry:\n"
+				+ new_struct.geometry_atom_format(),replica) 
 
 	else:
 		output.local_message('No mutation applied.',replica)
@@ -693,10 +699,12 @@ def structure_create_for_multiprocessing(args):
 		output.local_message('Mutation failure'.replica)
 		return False
 
+	if ui.ortho():
+		output.local_message("--Cell Orthogonalization--")
+		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
+
 	#----- Cell Check -----#
 	output.local_message("--Cell Checks--",replica)
-	output.local_message("Replica reporting: "+replica)
-	structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
 		return False
 
