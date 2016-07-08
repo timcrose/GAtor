@@ -670,7 +670,7 @@ def structure_create_for_multiprocessing(args):
 	if new_struct is False:
 		output.local_message("Crossover failure", replica)
 		return False
-	if ui.all_geo:
+	if ui.all_geo():
 		output.local_message("Current structure geometry:\n" + 
 		new_struct.get_geometry_atom_format(),replica)
 	
@@ -681,15 +681,15 @@ def structure_create_for_multiprocessing(args):
 	#Single Parents have to be mutated	
 	if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<ui.get_eval('mutation', 'mutation_probability'):
 		new_struct = mutation_module.main(new_struct, replica)
-		if new_struct!=False and ui.all_geo:
+		if new_struct!=False and ui.all_geo():
 			output.local_message("Current structure geometry:\n" 
 			+ new_struct.get_geometry_atom_format(),replica)
 		if new_struct!=False and randnum2 < ui.get_eval('mutation', 'double_mutate_prob'):
 			output.local_message("--Second Mutation--",replica)
 			new_struct = mutation_module.main(new_struct, replica)
-			if new_struct!=False and ui.all_geo:
+			if new_struct!=False and ui.all_geo():
 				output.local_message("Current structure geometry:\n"
-				+ new_struct.geometry_atom_format(),replica) 
+				+ new_struct.get_geometry_atom_format(),replica) 
 
 	else:
 		output.local_message('No mutation applied.',replica)
