@@ -17,11 +17,12 @@ import copy
 import exceptions
 from core import file_handler
 from core import user_input
-molar_mass={'H':1,'C':12,'N':14,'O':16,'S':32} #deprecated
-lat_interp={0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
-ui=user_input.get_config()
-verbose=ui.get_eval('run_settings','verbose')
-nmpc=ui.get_eval('unit_cell_settings','num_molecules')
+
+lat_interp = {0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
+ui = user_input.get_config()
+verbose = ui.verbose()
+all_geo = ui.all_geo()
+nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 olm = output.local_message
 
 def cell_lower_triangular(struct,create_duplicate=True):
@@ -233,7 +234,6 @@ def mole_recognize(struct):
 	the orientation is determined according to the standard geometry
 	found in run_calcs/molecules
 	'''
-	ui=user_input.get_config() 
 	molecules=ui.get_eval('unit_cell_settings','molecule_list')
 	sum=0;count=-1
 	result=[]
@@ -386,7 +386,6 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	Method found in the 2011 Lonie paper
 	Make the skewed angle correct
 	'''
-	output.local_message("Cell modification begins for replica: "+replica,replica)
 	napm=int(len(struct.geometry)/nmpc)
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
@@ -405,7 +404,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 		if (struct.properties['gamma']>120) or (struct.properties['gamma']<60):
 			count+=1
 		if count==1:
-			before=print_aims(struct)
+#			before=print_aims(struct)
 			test=True
 			if struct.properties['a']>=struct.properties['b']:
 				frac=numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(numpy.linalg.norm(struct.properties["lattice_vector_b"])**2)
@@ -424,10 +423,12 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
 			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
 			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
+
 		if (struct.properties['beta']>120) or (struct.properties['beta']<60):
 			count+=1
+
 		if count==1:
-			before=print_aims(struct)
+#			before=print_aims(struct)
 			test=True
 			if struct.properties['a']>=struct.properties['c']:
 				frac=numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(numpy.linalg.norm(struct.properties["lattice_vector_c"])**2)
@@ -446,10 +447,12 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
 			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
 			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
+
 		if (struct.properties['alpha']>120) or (struct.properties['alpha']<60):
 			count+=1
+
 		if count==1:
-			before=print_aims(struct)
+#			before=print_aims(struct)
 			test=True
 			#d=struct.properties
 			if struct.properties['b']>=struct.properties['c']:
@@ -474,14 +477,21 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
-		st="Cell modification required for structure\n" 
-		st+="Geometry before modification:\n"
-		st+=before
-		st+="Geometry after modification:\n"
-		st+=print_aims(struct)
+		st="Cell modification required for structure " 
+		if struct.struct_id!=None:
+			st += str(struct.struct_id)
+		else:
+			st += "\n"
+		
+		if all_geo: 
+			st += "Geometry after modification:\n"
+			st += print_aims(struct)
 		output.local_message(st,replica)
 	if count==0 and verbose:
-		output.local_message("Cell modification unnecessary for structure",replica)
+		st = "Cell modification uncessary for structure "
+		if struct.struct_id!=None:
+			st += str(struct.struct_id)
+		output.local_message(st,replica)
 	return struct
 
 def cell_check(struct,replica):
@@ -692,11 +702,6 @@ def combined_distance_check(struct,replica):
 					return False
 	return True
 			
-
-
-
-	
-
 
 def list_rotation(llist,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_rad=None,origin=[0,0,0],deg=None,rad=None,create_duplicate=True):
 	'''
