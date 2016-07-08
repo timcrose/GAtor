@@ -47,13 +47,20 @@ def main(input_structure):
 		if len(at)!=len(control_list):
 			raise ValueError("Number of absolute energy thresholds not matching number of control.in files specified")
 	else:
-		at = None
+		at = [None]*len(control_list)
 	if ui.has_option(sname,"relative_energy_thresholds"):
 		rt = ui.get_list(sname,"relative_energy_thresholds",eval=True)
 		if len(rt)!=len(control_list):
 			raise ValueError("Number of relative energy thresholds not matching number of control.in files specified")
 	else:
-		rt = None
+		rt = [None]*len(control_list)
+
+	if ui.has_option(sname,"reject_if_worst_energy"):
+		worst_energy = ui.get_list_of_booleans(sname,"reject_if_worst_energy")
+		if len(worst_energy)!=len(control_list):
+			raise ValueError("Number of reject_if_worst_energy boolean flags not matching number of control.in files specified")
+	else:
+		worst_energy = [False]*len(control_list)
 
 	if ui.has_option(sname,"store_energy_names"):
 		sen = ui.get_list(sname,"store_energy_names")
@@ -74,25 +81,34 @@ def main(input_structure):
 
 	#####################Beginning cascade#####################
 	for i in range(len(control_list)):
+		if rt[i]!=None or worst_energy[i]:
+			struct_coll = get_collection(stoic,0)
+			struct_coll.update_local()
+			energies = []
+			for key, struct in struct_coll:
+				energies.append(struct.get_property(ren[i]))
+		
 		et = None #energy threshold
-		if rt != None and rt[i]!=None:
+		if rt != None and rt[i]!=None: #Relative threshold
 			if ren!=None:
 				ekey = ren[i]
 			else:
 				ekey = "energy"
-			energies = []
-
-			struct_coll = get_collection(stoic,0)
-			struct_coll.update_local()
-			for key, struct in struct_coll:
-				energies.append(struct.get_property(ekey))
 			et = min(energies)+rt[i]
 
-		if at != None and at[i]!=None:
+		if at != None and at[i]!=None: #Absolte threshold
 			if et == None:
 				et = at[i]
 			else:
 				et = min(et,et[i])
+
+		if worst_energy[i]: #Reject if worst energy:
+			struct_coll = get_collection(stoic,0)
+			struct_coll.update_local()
+			if et == None:
+				et = max(energies)
+			else:
+				et = min(et,max(energies))
 
 		control_path = os.path.join(os.path.join(fh.cwd,control_dir),control_list[i])
 		control_string = fh.read_data(control_path)
@@ -148,6 +164,9 @@ def main(input_structure):
 		#Update geometry if necessary
 		if extract_result == "relaxed": 
 			output.local_message("-- Updated geometry retrieved")
+			if ui.all_geo():
+				output.local_message(FHI.result_struct.\
+				get_geometry_atom_format())
 			input_structure.geometry = FHI.result_struct.geometry
 			properties = ["lattice_vector_a","lattice_vector_b",\
 		"lattice_vector_c","cell_vol","a","b","c","alpha","beta","gamma"]
