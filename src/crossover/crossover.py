@@ -9,7 +9,7 @@ import numpy as np
 import random
 from core import user_input, output
 from structures.structure import StoicDict, Structure
-from structures import structure_handling
+#from structures import structure_handling
 
 def main(list_of_structures, replica):
     '''
@@ -18,29 +18,30 @@ def main(list_of_structures, replica):
     '''
 
     num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
-    max_attempts = int(user_input.get_config().get_eval('crossover', 'max_attempts'))
+#    max_attempts = int(user_input.get_config().get_eval('crossover', 'max_attempts'))
     parent_a = list_of_structures[0]
     parent_b = list_of_structures[1]
  
-    cross_attempts = 0
-    while cross_attempts != max_attempts:
-        output.local_message("Attempting crossover: "+str(cross_attempts+1), replica)
-        if num_mols == 2:
-            geo_opts = [1, 2, 3, 4]
-        elif num_mols == 4 or num_mols == 8:
-            geo_opts = [1, 2, 3, 4, 5, 6, 7, 8]
-        lat_opts = [1, 2, 3, 4, 5, 6, 7]
-        cross_method = [random.choice(geo_opts), random.choice(lat_opts)]
-        output.local_message("Crossover type:  " + str(cross_method), replica)
-        output_parent_properties(parent_a, parent_b, replica)
-	cross_obj = Crossover(cross_method, parent_a, parent_b, num_mols, replica)
-	child_struct = cross_obj.cross()
-	cell_check = structure_handling.cell_check(child_struct, replica)
-        if cell_check == False:
-                cross_attempts = cross_attempts + 1
-        if cell_check == True:
-                output.local_message("Crossover:  " + str(cross_attempts+1) +" successful" , replica)
-                cross_attempts = max_attempts
+#   cross_attempts = 0
+#   while cross_attempts != max_attempts:
+#    output.local_message("Attempting crossover: "+str(cross_attempts+1), replica)
+    if num_mols == 2:
+        geo_opts = [1, 2, 3, 4]
+    elif num_mols == 4 or num_mols == 8:
+        geo_opts = [1, 2, 3, 4, 5, 6, 7, 8]
+    lat_opts = [1, 2, 3, 4, 5, 6, 7]
+    cross_method = [random.choice(geo_opts), random.choice(lat_opts)]
+    output.local_message("Crossover type:  " + str(cross_method), replica)
+    output_parent_properties(parent_a, parent_b, replica)
+    cross_obj = Crossover(cross_method, parent_a, parent_b, num_mols, replica)
+    child_struct = cross_obj.cross()
+#    cell_check = structure_handling.cell_check(child_struct, replica)
+#    if cell_check == False:
+#        cross_attempts = cross_attempts + 1
+#    if cell_check == True:
+#    output.local_message("Crossover:  " + str(cross_attempts+1) +" successful" , replica)
+#                cross_attempts = max_attempts
+    output.local_message("-- Crossover completed" , replica)
     return child_struct
 
 class Crossover(object):

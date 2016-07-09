@@ -500,83 +500,94 @@ def cell_check(struct,replica):
 	Should only be performed after cell_modification is done
 	'''
 	sname = "cell_check_settings"
-	output.local_message("--------Begin cell check--------",replica)
+#	output.local_message("--------Begin cell check--------",replica)
 	struct = copy.deepcopy(struct)
 	struct = cell_modification(struct,replica=replica,create_duplicate=False)
 
 	#Volume check
-	standard_volume=ui.get_eval(sname,"standard_volume")
+	standard_volume=ui.get_eval(sname,"target_volume")
 	ucv = struct.get_unit_cell_volume()
 	if standard_volume!=None:
-		if verbose: output.local_message("The new structure's volume: %f" % ucv,replica)
+		if verbose: output.local_message("Volume check:", replica)
+		if verbose: output.local_message("-- New structure's volume: %f" % ucv,replica)
 		upper_volume=ui.get_eval(sname,"volume_upper_ratio")*standard_volume
 		lower_volume=ui.get_eval(sname,"volume_lower_ratio")*standard_volume
-		if verbose: output.local_message("Specified allowed volume range: %f - %f" % (lower_volume,upper_volume),replica)
+		if verbose: output.local_message("-- Allowed range: %f - %f" % (lower_volume,upper_volume),replica)
 
 		if ucv > upper_volume or ucv < lower_volume:
 			if verbose: 
-				output.local_message("The new structure's volume falls out of the acceptable range",replica)
+				output.local_message("-- Failed volume check\n",replica)
 			return False
 		elif verbose:
-			output.local_message("The new structure is found to have a reasonable volume.",replica)
+			output.local_message("-- Passed volume check\n",replica)
 	elif verbose:
-		output.local_message("No volume check is called.",replica)
+		output.local_message("##No volume check is called##",replica)
 
 
-	#Lattice vector principle component check
+	#Lattice vector principal component check
 	#Note: this check assumes that the lattice vectors are put into lower triangular form
 	#This is done in run_GA.py
 	if ui.get_boolean(sname,"lattice_vector_check"):
+		if verbose: output.local_message("Lattice vector principal componenet check:",replica)
 		lv = ["lattice_vector_a","lattice_vector_b","lattice_vector_c"]
 		if verbose:
-			for k in lv:
-				output.local_message("New structure's "+k+": "+" ".join(map(str,struct.properties[k])),replica)
+			for i in range(3):
+				output.local_message("-- Principal component of " + 
+				lv[i]+": "+str(struct.properties[lv[i]][i]),replica)
 
 		lower_bound = ui.get_eval(sname,"lattice_vector_lower_ratio")*ucv**(1/3.0)
 		upper_bound = ui.get_eval(sname,"lattice_vector_upper_ratio")*ucv**(1/3.0)
 		if ui.has_option(sname,"lattice_vector_lower_bound"):
-			lower_bound = max(lower_bound,ui.get_eval(sname,"lattice_vector_lower_bound"))
-		if ui.has_option(sname,"lattice_vector_upper_bound"):
-			upper_bound = min(upper_bound,ui.get_eval(sname,"lattice_vector_upper_bound"))
-		cell_lower_triangular(struct,False)
+			lower_bound = max(lower_bound,
+			ui.get_eval(sname,"lattice_vector_lower_bound"))
 
+		if ui.has_option(sname,"lattice_vector_upper_bound"):
+			upper_bound = min(upper_bound,
+			ui.get_eval(sname,"lattice_vector_upper_bound"))
+
+#		cell_lower_triangular(struct,False)
 		if verbose:
-			output.local_message("Acceptable principal component range: %f - %f" % (lower_bound, upper_bound),replica)
+			output.local_message("-- Acceptable range: %f - %f"
+					% (lower_bound, upper_bound),replica)
 
 		for i in range (3):
 			if struct.properties[lv[i]][i] > upper_bound\
 			or struct.properties[lv[i]][i] < lower_bound:
 				if verbose:
-					output.local_message("New structure's %s principal component falls out of acceptable range" % lv[i],replica)
+					output.local_message("-- %s failed principal component check\n" % lv[i],replica)
 					return False
 		if verbose:
-			output.local_message("New structure passed lattice principal component test.", replica)
+			output.local_message("-- Passed principal component check\n", replica)
 	elif verbose:
-		output.local_message("No lattice principal component check is called.", replica)
+		output.local_message("##No lattice principal component check is called##", replica)
 
 
 	#Now enters a series of closeness checks
 	#These all require the cells to be orthogonalized
 	if ui.has_option(sname,"COM_distance_check"):
+		if verbose: output.local_message("COM distance check:",replica)
 		lowerbound = ui.get_eval(sname,"COM_distance_check")
 		if verbose:
-			output.local_message("COM distance check minimum distance: %f " % lowerbound,replica)
+			output.local_message("-- Minimum distance: %f " 
+						% lowerbound,replica)
 		if COM_distance_check(struct,nmpc,lowerbound):
-			output.local_message("New structure passed COM distance check.",replica)
+			output.local_message("-- Passed COM distance check\n",replica)
 		else:
-			output.local_message("New structure failed COM distance check.",replica)
+			output.local_message("-- Failed COM distance check\n",replica)
 			return False
+	elif verbose:
+		output.local_message("##No COM distance check is called##")
 
 	if verbose:
-		output.local_message("Combined interatomic distance check",replica)
-		output.local_message("Note: Even if neither interatomic distance check or specific radius check is called\nthis combined check still conducts the default full atomic distance check",replica)
+		output.local_message("Combined interatomic distance check:",replica)
+#		output.local_message("Note: Even if neither interatomic distance check or specific radius check is called\nthis combined check still conducts the default full atomic distance check",replica)
 
 	if combined_distance_check(struct,replica):
 		if verbose:
-			output.local_message("New structure passed all atomic distance check(s)",replica)
+			output.local_message("-- Passed all atomic distance check(s)\n",replica)
 	else:
 		if verbose:
-			output.local_message("New structure failed the atomic distance check",replica)
+			output.local_message("-- Failed atomic distance check\n",replica)
 		return False
 
 
@@ -648,7 +659,8 @@ def combined_distance_check(struct,replica):
 			for k in range (j+1,(i+1)*napm):
 				if struct.get_atom_distance(j,k) < min_dist:
 					if verbose:
-						olm("New structure has atoms within the same molecule too close to one another",replica)
+						olm("-- Atoms %i and %i too close"
+						% (j,k) ,replica)
 					return False
 
 	if min_dist_2!=None:
@@ -659,22 +671,29 @@ def combined_distance_check(struct,replica):
 	#Next make sure molecules won't run into its own replicas
 
 	tr = [[x,y,z] for x in range (0,2) for y in range (0,2) for z in range (0,2) if x!=0 or y!=0 or z!=0]
-	radius = ui.get_section_as_dict("specific_radius")
+	radius = ui.get_section_as_dict("specific_radius",eval=True)
 	for a1 in range (total_atoms):
 		for tr_choice in tr:
 			new_apos = [struct.geometry[a1][j]+struct.properties["lattice_vector_a"][j]*tr_choice[0]+struct.properties["lattice_vector_b"][j]*tr_choice[1]+struct.properties["lattice_vector_c"][j]*tr_choice[2] for j in range (3)]
 			for a2 in range (a1-a1%napm,a1-a1%napm+napm):
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
 				dist = numpy.linalg.norm(diff)
-				if dist < min_dist:
-					olm("New structure failed atomic distance check with distance of "+str(dist),replica)
+				if dist < min_dist and verbose:
+					olm("-- Atoms %i and %i too close"
+					% (a1,a2), replica)
+					olm("-- Distance: "+str(dist),replica)
+	
+				if dist<min_dist:
 					return False
 
-				if (sr!=None and struct.geometry[a1][3] in radius
-				and struct.geometry[a2][3] in radius
-				and dist<(radius.radius[struct.geometry[a1][3]]
-				+radius.radius[struct.geometry[a2][3]])*sr):
-					olm("New structure failed specific radius check with distance of "+str(dist),replica)
+				a1_s = struct.geometry[a1][3].lower()
+				a2_s = struct.geometry[a2][3].lower()
+				if (sr!=None and a1_s in radius and a2_s in radius 
+				and dist<(radius[a1_s]+radius[a2_s])*sr):
+					if verbose:
+						olm("-- Atoms %i and %i too close",\
+						replica)
+						olm("-- Specific radius proportion: %f" % (dist/radius[a1_s]/radius[a2_s]),replica)
 					return False
 	
 
@@ -690,16 +709,25 @@ def combined_distance_check(struct,replica):
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
 				dist = numpy.linalg.norm(diff)
 
+				if dist < min_dist and verbose:
+					olm("-- Atoms %i and %i too close"
+					% (a1,a2), replica)
+					olm("-- Distance: "+str(dist),replica)
+
 				if dist < min_dist:
-					olm("New structure failed atomic distance check",replica)
 					return False
 
-				if (sr!=None and struct.geometry[a1][3] in radius
-				and struct.geometry[a2][3] in radius
-				and dist<(radius.radius[struct.geometry[a1][3]]
-				+radius.radius[struct.geometry[a2][3]])*sr):
-					olm("New structure failed specific radius check",replica)
+				a1_s = struct.geometry[a1][3].lower()
+				a2_s = struct.geometry[a2][3].lower()
+				if (sr!=None and a1_s in radius and a2_s in radius 
+				and dist<(radius[a1_s]+radius[a2_s])*sr):
+					if verbose:
+						olm("-- Atoms %i and %i too close",\
+						replica)
+						olm("-- Specific radius proportion: %f" % (dist/radius[a1_s]/radius[a2_s]),replica)
+	
 					return False
+	
 	return True
 			
 

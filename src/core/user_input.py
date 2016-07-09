@@ -54,12 +54,12 @@ class ListSafeConfigParser(SafeConfigParser):
 		result = []
 		for k in l:
 			if k == "TRUE":
-				l.append(True)
+				result.append(True)
 			elif k == "FALSE":
-				l.append(False)
+				result.append(False)
 			else:
-				raise ValueError("List of boolean parameter must contain only TRUE and FALSE, all caps")
-		
+				raise ValueError("List of boolean parameter must contain only TRUE and FALSE, all caps; received: "+str(k))
+		return result
 		
 
 	def get_section_as_dict(self,section,eval=False):

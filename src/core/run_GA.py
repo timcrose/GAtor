@@ -169,8 +169,8 @@ class RunGA():
 		size_of_common = len(struct_coll.structures)
                 size_of_added = size_of_common - int(number_of_IP)
 
-		self.output("GA added structures: "+ str(size_of_added))
-		self.output("Total structures: "+ str(size_of_common))
+		self.output("GA added structures: %i; total structures: %i" 
+			% (size_of_added,size_of_common))
 
 		if size_of_added >= self.number_of_structures:
 			message = ''
@@ -222,12 +222,14 @@ class RunGA():
 		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
 		count = 0
 		begin_time = time.time()
-		self.output("Generating trial structure with %i processes" % processes)
+		self.output("\nGenerating trial structure with %i processes" % processes)
+		if processes > 1:
+			p = multiprocessing.Pool(processes=processes)
 		while count<total_attempts and struct == False:
 			if processes == 1: #Serial
-				struct = self.structure_create_new()
+				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
 			else:
-				p = multiprocessing.Pool(processes=processes)
+#				p = multiprocessing.Pool(processes=processes)
 				arglist=[(self.replica+"_"+str(x),self.replica_stoic)\
 				for x in range (processes)]
 				results = p.map(structure_create_for_multiprocessing,\
@@ -239,7 +241,7 @@ class RunGA():
 				if struct!=False: #Found a success
 					output.move_to_shared_output(self.replica+"_"+str(i),os.path.join(out_tmp_dir,self.replica+".out"))
 				else:
-					output.local_message(str(processes)+" attempts have failed to create a new structure")
+					output.local_message("-- "+str(processes)+" attempts have failed to create a new structure")
 				for i in range (processes):
 					try:
 						os.remove(os.path.join(out_tmp_dir,self.replica+"_"+str(i)+".out"))
@@ -251,6 +253,7 @@ class RunGA():
 		end_time = time.time()
 		if count == total_attempts and struct==False:
 			raise RuntimeError("Generating structure maxed out on generation attempts.")
+		output.local_message("New trial structure generated:")
 		output.local_message("-- Number of attempts for structure generation: "+str(count))
 		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" s")
 		
@@ -513,9 +516,9 @@ class RunGA():
 		structure_collection.update_supercollection(self.structure_supercoll)
 		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica, comparison_type))
                 t2 = time.time()
-                self.output("Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
+                self.output("-- Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
                 if is_acceptable is False:
-                        self.output('Newly relaxed structure is not acceptable')
+                        self.output('-- Structure is not acceptable')
 			
                         return False  # structure not acceptable start with new selection
 
@@ -533,10 +536,6 @@ class RunGA():
 
 		self.output(message)
 
-		#write energy hierarchy 
-#		self.output("Writing hierachy and data files")
-		#data_tools.write_energy_hierarchy(self.structure_coll)		   	
-	        #data_tools.write_energy_vs_iteration(self.structure_coll)
 		#End of Iteration Outputs
 		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
 		number_of_IP = open(IP_dat).read()
@@ -550,55 +549,6 @@ class RunGA():
 		elif converged is "converged":
 			return True	
 
-
-#	def check_if_global_minima(self, e_new, min_e):	
-#		if e_new < min_e:
-#			diff = min_e - e_new
-#			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
-#			'\n  old minima:  ' + str(min_e) + \
-#			'\n  new minima:  ' + str(e_new) + \
-#			'\n  difference:  ' + str(diff)
-#			self.output(message)
-
-#	def get_top_energies(self, coll):
-#		list_top_ens = np.array([])
-#		list_ens = np.array([])
-#		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
-#		for index, structure in coll_new:
-#			energy = structure.get_property('energy')
-#			list_ens = np.append(energy,new_e_list)
-#		list_top_ens= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
-#		list_top_ens = new_e_list[:self.top_en_count]
-#		return list_top_ens
-
-#	def check_convergence(self, old_list_top_en):
-#		#Check if top N energies havent changed in X iterations
-#		new_e_list = np.array([])
-#		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
-#		for index, structure in coll_new:
-#			energy = structure.get_property('energy')
-#			new_e_list = np.append(energy,new_e_list)
-#		new_e_list= np.sort(new_e_list.reshape(len(new_e_list),1),axis=0)
-#		new_list_top_en = new_e_list[:self.top_en_count]
-#		min_e = new_e_list[0][0]
-#		max_e = new_e_list[-1][0]
-		#self.output("old top energies:    "+ str(old_list_top_en))
-		#self.output("new top energies:    "+ str(new_list_top_en))
-
-
-#		self.convergence_count= self.convergence_count+ 1
-#		for en_new in new_list_top_en:
-#			if en_new in old_list_top_en:
-#				continue
-#			else:
-#				self.output("Top "+str(self.top_en_count)+" energies have changed.")
-#				self.convergence_count= 0
-#				self.output("Convergence counter reset.")
-#				self.output("Convergence iteration:  "+ str(self.convergence_count))
-#				return "not_converged"
-#		self.output("Convergence iteration:  "+ str(self.convergence_count))
-#		if self.convergence_count== self.max_en_it:
-#			return "converged" 
 
 	def avg_fitness(self, min_e, max_e, structure_coll):
 		fitness = {}
@@ -651,8 +601,8 @@ def structure_create_for_multiprocessing(args):
 	ui = user_input.get_config()
 	replica, stoic = args
 	#----- Structure Selection -----#
-	output.local_message("--Beginning normal structure creation process--",replica)
-	output.local_message("--Structure selection--", replica)
+	output.local_message("-------- Structure creation process --------",replica)
+	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
 	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
@@ -665,7 +615,7 @@ def structure_create_for_multiprocessing(args):
 		return False
 
 	#----- Crossover -----#
-	output.local_message("\n--Crossover--", replica)
+	output.local_message("\n---- Crossover ----", replica)
 	new_struct = crossover_module.main(structures_to_cross, replica)
 	if new_struct is False:
 		output.local_message("Crossover failure", replica)
@@ -675,7 +625,7 @@ def structure_create_for_multiprocessing(args):
 		new_struct.get_geometry_atom_format(),replica)
 	
 	#----- Mutation Execution -----#
-	output.local_message("\n--Mutation--",replica)
+	output.local_message("\n---- Mutation ----",replica)
 	randnum = np.random.random()	
 	randnum2 = np.random.random()
 	#Single Parents have to be mutated	
@@ -692,19 +642,19 @@ def structure_create_for_multiprocessing(args):
 				+ new_struct.get_geometry_atom_format(),replica) 
 
 	else:
-		output.local_message('No mutation applied.',replica)
+		output.local_message('-- No mutation applied',replica)
 		new_struct.set_property('mutation_type', 'No_mutation')
 
 	if new_struct is False: 
-		output.local_message('Mutation failure'.replica)
+		output.local_message('-- Mutation failure'.replica)
 		return False
 
 	if ui.ortho():
-		output.local_message("--Cell Orthogonalization--")
+		output.local_message("---- Cell Orthogonalization ----")
 		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 
 	#----- Cell Check -----#
-	output.local_message("--Cell Checks--",replica)
+	output.local_message("\n---- Cell Checks ----",replica)
 	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
 		return False
 
@@ -714,9 +664,9 @@ def structure_create_for_multiprocessing(args):
 		new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
 		+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
 
-	output.local_message("\n--Assign structure ID--",replica)
+	output.local_message("\n---- Assign structure ID ----",replica)
 	new_struct.struct_id = misc.get_random_index()
-	output.local_message("ID assigned: "+new_struct.struct_id,replica)
+	output.local_message("-- ID assigned: "+new_struct.struct_id,replica)
 	return new_struct
 
 if __name__ == '__main__':

@@ -82,7 +82,7 @@ def main(input_structure):
 	else:
 		ren = ["energy"]*len(control_list)
 
-	output.local_message("-------- FHI-aims evaluation --------")
+	output.local_message("\n-------- FHI-aims evaluation --------")
 	stoic = input_structure.get_stoic()
 
 	#####################Beginning cascade#####################
