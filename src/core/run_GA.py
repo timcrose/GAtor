@@ -74,7 +74,7 @@ class RunGA():
 		''' 
 
 		# Report Replica to Common Output and Update Supercollection
-		self.output("\n--Replica %s updating local pool--" %(self.replica))
+		self.output("----Replica %s updating local pool----" %(self.replica))
 		structure_collection.update_supercollection(self.structure_supercoll)
 
 		# Intialiaze restarts
@@ -155,8 +155,11 @@ class RunGA():
 
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
-		self.output('Beginning iteration')
-		begin_time = datetime.datetime.now()
+                begin_time = datetime.datetime.now()
+		st = ' ------------------------------------------------------------------------'
+		self.output(st)
+		self.output('| Replica %s Beginning New Iteration: %s |' % (self.replica, begin_time))
+		self.output(st)
 		return begin_time
 
 	def check_finished(self, convergeTF):
@@ -222,7 +225,7 @@ class RunGA():
 		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
 		count = 0
 		begin_time = time.time()
-		self.output("\nGenerating trial structure with %i processes" % processes)
+		self.output("Generating trial structure with %i processes" % processes)
 		if processes > 1:
 			p = multiprocessing.Pool(processes=processes)
 		while count<total_attempts and struct == False:
@@ -362,6 +365,7 @@ class RunGA():
 			return False
 
 		#----- Crossover -----#
+		self.output("Parents sucessfully selected")
 		self.output("\n--Crossover--")
 		new_struct = self.crossover_module.main(structures_to_cross, self.replica)
 		if new_struct is False: 
@@ -601,7 +605,7 @@ def structure_create_for_multiprocessing(args):
 	ui = user_input.get_config()
 	replica, stoic = args
 	#----- Structure Selection -----#
-	output.local_message("-------- Structure creation process --------",replica)
+	output.local_message("\n-------- Structure creation process --------",replica)
 	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
@@ -610,9 +614,11 @@ def structure_create_for_multiprocessing(args):
 	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
 	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
 
+
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
+	output.local_message("Parents Selected Successfully")
 
 	#----- Crossover -----#
 	output.local_message("\n---- Crossover ----", replica)

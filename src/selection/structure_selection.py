@@ -155,7 +155,7 @@ class StructureSelection():
 	dec_comp = 1-dec
         #random_num = np.random.random()
 	random_num = np.random.uniform(dec_comp,1.0)
-	output.local_message("selection random num: "+str(random_num),self.replica)
+	#output.local_message("selection random num: "+str(random_num),self.replica)
         # selects first element to be greater than random number
         return list(filter((lambda x : x[1] > random_num), fitness))[0]
     

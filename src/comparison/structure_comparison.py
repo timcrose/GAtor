@@ -37,7 +37,7 @@ def main(struct, structure_coll, replica, comparison_type):
 	structs_to_compare = comp.get_similar_energy_structures(comparison_type)
 	dup_result = comp.check_if_duplicate(struct, structs_to_compare, comparison_type)
     if dup_result:
-        output.local_message("The structure compared is unique. ", replica)
+        output.local_message("-- The structure compared is unique. ", replica)
     return dup_result # Boolean
 
 

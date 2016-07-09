@@ -45,7 +45,7 @@ def main():
         if ui.get_boolean('initial_pool', 'duplicate_check'):
 		output.time_log("Checking initial pool for duplicates")
 		output.local_message("Checking initial pool for duplicates",replica)
-                ip_count = return_non_duplicates(initial_list)
+                ip_count = return_non_duplicates(initial_list, replica)
 		output.time_log("Final initial pool count: %i" % ip_count)
 		output.local_message("Final initial pool count: %i" % ip_count,replica)
 	else:
@@ -100,7 +100,6 @@ def convert_to_structures(files_to_add):
 	'''
 	#print files_to_add
 	initial_list = []
-	print "Converting all user-input geometries to Structure() instances"
 	for file in files_to_add:	
 		struct = Structure()
 		struct.build_geo_from_json_file(file)
@@ -131,23 +130,26 @@ def return_all_user_structures(initial_list):
 	'''
         ip_count = 0
         structure_supercoll = {}
-	#print initial_list
         for struct in initial_list:
 	    stoic = struct.get_stoic()
             struct.set_property('ID',0)
 	    struct = compute_spacegroup_pymatgen.main(struct)
             structure_collection.add_structure(struct, stoic, 0)
             ip_count += 1
-
         return ip_count
 
-def return_non_duplicates(initial_list):
+def return_non_duplicates(initial_list, replica):
+	'''
+	Called when duplicate check is required. Uses RDF and pymatgen similarity comparison
+        Args: The initial list of Structures() from the user-defined folder
+        Returns: The total number of structures added
+        '''
 	ui = user_input.get_config()
         remove_list = []
         structure_supercoll = {}
 	#ebins = return_energy_groups(initial_list, ui)
         #dup_pairs = return_duplicate_pairs(ebins, ui)
-	dup_pairs = return_duplicate_pairs(initial_list, ui)
+	dup_pairs = return_duplicate_pairs(initial_list, ui, replica)
         for path, path_dup in dup_pairs:
             remove_list.append(path_dup)
         for struct in initial_list:
@@ -161,14 +163,13 @@ def return_non_duplicates(initial_list):
         if len(initial_list)!=0:
             struct_coll = StructureCollection(stoic, 0)
             structure_collection.update_supercollection(structure_supercoll)
-            data_tools.write_energy_hierarchy(struct_coll)
-
-            print "Total Duplicate Pairs Found: %d" % (len(remove_list))
-            print "Total Checked: %d" % (len(initial_list))
-            print "Total Unique Structures Added: %d" % (len(struct_coll.structures))
+            if ui.verbose(): 
+	    	output.local_message("Total duplicate pairs found: %d" % (len(remove_list)),replica)
+            	output.local_message("Total checked: %d" % (len(initial_list)),replica)
+            	output.local_message("Total unique structures added: %d" % (len(struct_coll.structures)),replica)
             return len(struct_coll.structures)
 
-def return_duplicate_pairs(initial_list, ui):
+def return_duplicate_pairs(initial_list, ui, replica):
     dup_pairs = []
     ip_dup_output = open(os.path.join(tmp_dir, "IP_duplicates.dat"),'w')
     for struct, structc in itertools.combinations(initial_list, 2):
@@ -176,11 +177,12 @@ def return_duplicate_pairs(initial_list, ui):
         if rdf_tol < ui.get_eval('initial_pool', 'RDF_diff_tol'):
 	    fit = compute_pymatgen_fit(struct, structc, ui)
 	    if fit:
-	        print "Found duplicate pair:"
-	        struct_fp = struct.get_property('file_path')
+		struct_fp = struct.get_property('file_path')
 	        structc_fp = structc.get_property('file_path')
-	        print struct_fp
-	        print structc_fp
+		if ui.verbose():
+			output.local_message("Found duplicate pair", replica)
+			output.local_message("%s" % struct_fp, replica)
+			output.local_message("%s" % structc_fp, replica)
 	        dup_pairs.append((struct_fp, structc_fp))
     for pair in dup_pairs:
         ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')

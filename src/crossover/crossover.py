@@ -31,7 +31,7 @@ def main(list_of_structures, replica):
             geo_opts = [1, 2, 3, 4, 5, 6, 7, 8]
         lat_opts = [1, 2, 3, 4, 5, 6, 7]
         cross_method = [random.choice(geo_opts), random.choice(lat_opts)]
-        output.local_message("Crossover type:  " + str(cross_method), replica)
+        output.local_message("-- Crossover type:  " + str(cross_method), replica)
         output_parent_properties(parent_a, parent_b, replica)
 	cross_obj = Crossover(cross_method, parent_a, parent_b, num_mols, replica)
 	child_struct = cross_obj.cross()
@@ -159,7 +159,7 @@ class Crossover(object):
                 lattice = [latA_b, latB_a, latC_a]
 	elif cross_method[1] == 7:
                 rand_vec = [random.uniform(0.25,0.75) for i in range(3)]
-                self.output("Random Frac to Combine Lattices: " +str(rand_vec))
+                #self.output("Random Frac to Combine Lattices: " +str(rand_vec))
                 latA = rand_vec[0]*np.array(latA_a) + (1 - rand_vec[0])*np.array(latA_b)
                 latB = rand_vec[1]*np.array(latB_a) + (1 - rand_vec[1])*np.array(latB_b)
                 latC = rand_vec[2]*np.array(latC_a) + (1 - rand_vec[2])*np.array(latC_b)
@@ -200,21 +200,21 @@ class Crossover(object):
         return length
 
     def output_child_properties(self, child):
-        child_vecs = child.get_lattice_magnitudes()
-	child_angs = child.get_lattice_angles()
-        message = ('Child lattice vectors:  ' + str(child_vecs)+
-                   '\nChild lattice angles:  ' + str(child_angs))
+	child_vecs = np.array(map(float, child.get_lattice_magnitudes()))
+	child_angs = np.array(map(float, child.get_lattice_angles()))
+        message = ('-- Child lattice vectors: ' + str(child_vecs).strip('[').strip(']') +
+                   '\n-- Child lattice angles: ' + str(child_angs).strip('[').strip(']'))
 	self.output(message)
 
     def output(self, message): output.local_message(message, self.replica)
 
 def output_parent_properties(parent_a, parent_b, replica):
-    parent_a_vecs = parent_a.get_lattice_magnitudes()
-    parent_b_vecs = parent_b.get_lattice_magnitudes()
-    parent_a_angs = parent_a.get_lattice_angles()
-    parent_b_angs = parent_b.get_lattice_angles()
-    message = ('Parent A lattice vectors:  ' + str(parent_a_vecs)+
-               '\nParent A lattice angles:  ' + str(parent_a_angs)+
-               '\nParent B lattice vectors:  ' + str(parent_b_vecs)+
-               '\nParent B lattice angles:  ' + str(parent_b_angs))
+    parent_a_vecs = np.array(map(float, parent_a.get_lattice_magnitudes()))
+    parent_b_vecs = np.array(map(float, parent_b.get_lattice_magnitudes()))
+    parent_a_angs = np.array(map(float, parent_a.get_lattice_angles()))
+    parent_b_angs = np.array(map(float, parent_b.get_lattice_angles()))
+    message = ('-- Parent A lattice vectors: ' + str(parent_a_vecs).strip('[').strip(']') +
+               '\n-- Parent A lattice angles: ' + str(parent_a_angs).strip('[').strip(']') +
+               '\n-- Parent B lattice vectors: ' + str(parent_b_vecs).strip('[').strip(']') +
+               '\n-- Parent B lattice angles: ' + str(parent_b_angs).strip('[').strip(']'))
     output.local_message(message, replica)
