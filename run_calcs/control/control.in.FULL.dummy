@@ -32,7 +32,7 @@
 
 ########## DUMMY PART BECAUSE relax geo tolerance is set high for testing of GA################
 #  Relaxation
- relax_geometry trm 1.e0 #uncomment for internal relaxation
+ relax_geometry trm 1.e-1 #uncomment for internal relaxation
 # relax_unit_cell full #uncomment for unit cell relaxation
 # relax_unit_cell fixed_angles #uncomment for unit cell relaxation with fixed angles
 # restart_relaxations .true.
