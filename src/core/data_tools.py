@@ -34,10 +34,10 @@ def main(argv):
     if stoic == False: raise Exception
     structure_coll = StructureCollection(stoic, INPUT_REF)
     structure_coll.update_local()
-    energy_tuples = get_energy_tuples(structure_coll)
-    energy_tuples.sort(key=lambda x: x[1])
-    loe = [item[1] for item in energy_tuples]
-    index = energy_tuples[0][0]
+    energy_list = get_energy_list(structure_coll)
+    energy_list.sort(key=lambda x: x[1])
+    loe = [item[1] for item in energy_list]
+    index = energy_list[0][0]
     best_structure = structure_coll.get_struct(index)
     try:
         jmol(best_structure, str(index))
@@ -45,7 +45,7 @@ def main(argv):
     try:
         plot_energies(loe)  # ,len(loe) - 50)
     except: pass
-    print structure_coll.get_struct(energy_tuples[0][0]).get_geometry_atom_format()
+    print structure_coll.get_struct(energy_list[0][0]).get_geometry_atom_format()
     write_energy_hierarchy(structure_coll)
 
 def write_avg_fitness(Ig, fit_avg, structure_coll):
@@ -55,8 +55,8 @@ def write_avg_fitness(Ig, fit_avg, structure_coll):
     with open(os.path.join(tmp_dir, 'fitness.' + str(structure_coll.get_input_ref()) + '.dat'), 'a+') as f: f.write(to_write)
     os.system("chmod g=u "+os.path.join(tmp_dir,'fitness.'+str(structure_coll.get_input_ref())+'.dat'))
  
-def get_energy_tuples(structure_coll):
-    energy_tuples = []
+def get_energy_list(structure_coll):
+    energy_list = []
     for index, structure in structure_coll:
 	ID = structure.get_property('ID')
 	replica = structure.get_property('replica')
@@ -71,20 +71,20 @@ def get_energy_tuples(structure_coll):
 	alpha = '{:.1f}'.format(structure.get_property('alpha'))
 	beta = '{:.1f}'.format(structure.get_property('beta'))
 	gamma = '{:.1f}'.format(structure.get_property('gamma'))
-	spacegroup = structure.get_property('space_group')
+	spacegroup = '{0!s}'.format(structure.get_property('space_group').replace(' ',''))
 	mut = structure.get_property('mutation_type')
         crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
 	if energy is not None: 
-            energy_tuples.append((ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[16:], str(parent1)[16:]))
-    return energy_tuples
+            energy_list.append([ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[16:], str(parent1)[16:]])
+    return energy_list
 
 def write_energy_vs_addition(structure_coll):
-    energy_tuples = get_energy_tuples(structure_coll)
+    energy_list = get_energy_list(structure_coll)
     to_write = ''
-    energy_tuples.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
+    energy_list.sort(key=lambda x: x[0])
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_list:
 	if rep == 'init_pool':
             continue
 	to_write += str(Id)+'    '+str(energy)+'\n' 
@@ -92,10 +92,10 @@ def write_energy_vs_addition(structure_coll):
             f.write(to_write)
 
 def write_spe_vs_addition(structure_coll):
-    energy_tuples = get_energy_tuples(structure_coll)
+    energy_list = get_energy_list(structure_coll)
     to_write = ''
-    energy_tuples.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
+    energy_list.sort(key=lambda x: x[0])
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_list:
         if rep == 'init_pool':
             continue
         to_write += str(Id)+'    '+str(spe)+'\n'
@@ -103,53 +103,33 @@ def write_spe_vs_addition(structure_coll):
             f.write(to_write)
 
 def write_energy_hierarchy(structure_coll):
-    energy_tuples = get_energy_tuples(structure_coll)
-    to_write = ''
-    count = 1	
-    energy_tuples.sort(key=lambda x: float(x[3]))
-    to_write += '#Rank Added Replica    Index           Optimized Property   '
-    to_write += 'Volume    A        B       C       Alpha   Beta   Gamma    SG        Mutation   Crossover    ParentA     ParentB\n'
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_tuples:
-#       to_write += structure_coll.get_stoic().get_string() + '/'
-	to_write +=str(count) + '    '
-        to_write +=str(Id) + '    '
-	if rep =='init_pool':
-	        to_write +='  '+str(rep) + '    '
-	else: to_write += str(rep) + '    '
-        to_write += str(structure_coll.get_input_ref()) + '/'
-        to_write += str(index) + '/'
-        to_write +='    ' + str(energy)
-#	to_write +='    ' + str(spe)
-        to_write +='    ' + str(vol)
-        to_write +='    ' + str(a)
-        to_write +='    ' + str(b)
-        to_write +='    ' + str(c)
-        to_write +='    ' + str(al)
-        to_write +='    ' + str(be)
-        to_write +='    ' + str(ga)
-	to_write +='    ' + str(sg)
-        to_write +='    ' + str(mut)    
-        to_write +='    ' + str(crosst)
-        to_write +='    ' + str(par0)
-        to_write +='    ' + str(par1)
-        to_write += '\n'
-	count +=1
-    
-    stoic = structure_coll.get_stoic()
-    input_ref = structure_coll.get_input_ref()
-    filename = "energy_hierarchy_%s_%s.dat" % (stoic.get_string(),str(input_ref))
-    with FileLock(filename,tmp_dir,3600):
-        f = open(os.path.join(tmp_dir,filename),"w")
-        f.write(to_write)
-        os.system("chmod g=u " + os.path.join(tmp_dir,filename))
+	to_write = ''
+	ranked_energy_list = []
+	energy_list = get_energy_list(structure_coll)
+	energy_list.sort(key=lambda x: float(x[3]))
+	for count in range(len(energy_list)):
+		ranked_energy_list.append([count + 1] + energy_list[count])
+	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
+                                                             'Spacegroup', 'Mutation', 'Crossover', 'ParentA', 'ParentB'])
+	form = '{:<5} {:<5} {:<10} {:<23} {:<12} {:<8} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<11} {:<8} {:<9} {:<8} {:<8}'
+	to_write += form.format(*header) + '\n'
+	for line in ranked_energy_list:
+		to_write += form.format(*line) + '\n'
+    	stoic = structure_coll.get_stoic()
+    	input_ref = structure_coll.get_input_ref()
+    	filename = "energy_hierarchy_%s_%s.dat" % (stoic.get_string(),str(input_ref))
+    	with FileLock(filename,tmp_dir,3600):
+        	f = open(os.path.join(tmp_dir,filename),"w")
+        	f.write(to_write)
+		os.system("chmod g=u " + os.path.join(tmp_dir,filename))
 
-def make_user_structure_directory(structure_coll, energy_tuples, n_structures=10):
+def make_user_structure_directory(structure_coll, energy_list, n_structures=10):
     path = os.path.join(tmp_dir, 'user_structures')
     mkdir_p(path)
     for i in n_structures:
         try:
-            struct = structure_coll.get_struct(energy_tuples[i][0])
-            write_data(path, struct.get_stoic_str() + '_' + energy_tuples[i][0], struct.get_geo_atom_format())
+            struct = structure_coll.get_struct(energy_list[i][0])
+            write_data(path, struct.get_stoic_str() + '_' + energy_list[i][0], struct.get_geo_atom_format())
         except: raise Exception
              
 def write_geometries_to_file(structure_coll):
