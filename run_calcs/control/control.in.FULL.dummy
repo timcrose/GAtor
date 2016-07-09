@@ -21,7 +21,7 @@
 #  sc_accuracy_forces 1E-4 #uncomment for relaxation
   sc_iter_limit      500
 #  restart restart_file
-
+max_relaxation_steps 1
 #  Eigenvalue solution
   KS_method	     scalapack_fast
     empty_states       6
