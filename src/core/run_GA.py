@@ -618,7 +618,6 @@ def structure_create_for_multiprocessing(args):
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
-	output.local_message("Parents Selected Successfully")
 
 	#----- Crossover -----#
 	output.local_message("\n---- Crossover ----", replica)
