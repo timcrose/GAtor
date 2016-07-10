@@ -53,7 +53,7 @@ class RunGA():
 		self.number_of_GA_structures = int(self.ui.get('run_settings', 'end_GA_structures_added'))
                 self.number_of_tot_structures = int(self.ui.get('run_settings', 'end_GA_structures_total'))
 		self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
-		self.max_it = self.ui.get_eval('run_settings', 'max_iterations')
+		self.max_it = self.ui.get_eval('run_settings', 'max_iterations_no_change')
 		# Initialize Supercollection
 		self.replica_child_count = 0
 		self.convergence_count= 0
@@ -170,7 +170,7 @@ class RunGA():
 		size_of_common = len(struct_coll.structures)
                 size_of_added = size_of_common - int(number_of_IP)
 
-		self.output('-- Total size of common pool: %i;  Total number of GA-added structures: %i' 
+		self.output('-- Total size of common pool: %i   Total number of GA-added structures: %i' 
                          % (size_of_common, size_of_added))
 		cst = '|~*~**~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~|'
 		st =  '|-------------------------------------------------------------------------|'
@@ -191,7 +191,7 @@ class RunGA():
                         message +='Total size of pool has reached user-specified number: '
                         message += str(size_of_common) +'\n'
                         message +='Number of GA additions to pool: '
-                        message += str(size_of_common) +'\n'
+                        message += str(size_of_added) +'\n'
                         message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
                         self.output(message)
                         end = True
@@ -201,13 +201,34 @@ class RunGA():
 			message +=' energies havent changed in user-specfied number of iterations: '
 			message += str(self.max_it) +'\n'
                         message +='Number of GA additions to pool: '
-                        message += str(size_of_common) +'\n'
+                        message += str(size_of_added) +'\n'
 			message +='Total size of collection: '
-			message += str(total_structs) +'\n'
+			message += str(size_of_common) +'\n'
                         message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
 			self.output(message)
 			end = True
 		return end
+
+        def check_local_convergence(self, old_prop_list):
+                #Check if top N structures havent changed in X iterations
+                new_e_list = np.array([])
+                coll_new = self.structure_supercoll.get((self.replica_stoic,0))
+                new_prop_list = self.return_property_array(coll_new)
+                new_list_top_prop = new_prop_list[:self.top_count]
+                old_list_top_prop = old_prop_list[:self.top_count]
+                self.convergence_count= self.convergence_count + 1
+                for prop_new in new_list_top_prop:
+                        if prop_new in old_list_top_prop:
+                                continue
+                        else:
+                                self.output("-- Top "+str(self.top_count)+" best structures have changed.")
+                                self.convergence_count= 0
+                                self.output("-- Convergence counter reset.")
+                                self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
+                                return "not_converged"
+                self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
+                if self.convergence_count== self.max_it:
+                        return "converged"
 
 	def restart_scheme(self,restart_replica):	
 			structures_to_add = {}	
@@ -317,30 +338,6 @@ class RunGA():
 			'\n  new maximum:  ' + str(prop) + \
 			'\n  difference:  ' + str(diff)
 		self.output(message)
-
-	def check_local_convergence(self, old_prop_list):
-		#Check if top N structures havent changed in X iterations
-
-		new_e_list = np.array([])
-		coll_new = self.structure_supercoll.get((self.replica_stoic,0)) 
-		new_prop_list = self.return_property_array(coll_new)
-		new_list_top_prop = new_prop_list[:self.top_count]
-		old_list_top_prop = old_prop_list[:self.top_count]
-
-		self.convergence_count= self.convergence_count + 1
-		for prop_new in new_list_top_prop:
-			if prop_new in old_list_top_prop:
-				continue
-			else:
-				self.output("-- Top "+str(self.top_count)+" best structures have changed.")
-				self.convergence_count= 0
-				self.output("-- Convergence counter reset.")
-				self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
-				return "not_converged"
-		self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
-		if self.convergence_count== self.max_it:
-			return "converged" 
-
 
 	def add_to_collection(self, struct, ref_label):	
 		prev_struct_index = None #none for now because only using GA for FF not both
@@ -510,7 +507,7 @@ class RunGA():
 			return False
 				
 		#----- Make sure cell is lower triangular -----#
-		self.output("-- Ensuring cell is lower triangular")
+		#self.output("-- Ensuring cell is lower triangular")
 		struct=structure_handling.cell_lower_triangular(struct,False)	
 		a=struct.get_property('lattice_vector_a')
 		b=struct.get_property('lattice_vector_b')
@@ -542,7 +539,7 @@ class RunGA():
 
 	def success_message(self, struct, struct_index):
 		message = ""
-		message += "\n---- Structure Successfully Added to Common Pool! ----"
+		message += "---- Structure Successfully Added to Common Pool! ----"
 		message += "\n-- Structure's index: %s " % (struct_index)
 		message += "\n-- Added from replica: %s " % (self.replica)
 
@@ -560,7 +557,7 @@ class RunGA():
 		number_of_IP = open(IP_dat).read()
 		size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
 		size_of_added = size_of_common - int(number_of_IP)
-		self.output('-- Total size of common pool: %i;  Total number of GA-added structures: %i' 
+		self.output('-- Total size of common pool: %i   Total number of GA-added structures: %i' 
                          % (size_of_common, size_of_added))
 		if converged is "not_converged":
 			self.output("GA not converged yet.")

@@ -36,8 +36,8 @@ def main():
 	num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
 
-        st = ' -------------------------------------------------------------------------'
-	gst = '|----------------------  GAtor filling initial pool  ---------------------|'
+        st = ' ------------------------------------------------------------------------'
+	gst = '|                       GAtor filling initial pool                       |'
 	output.local_message(st, replica)
 	output.local_message(gst, replica)
         output.local_message(st, replica)
@@ -141,6 +141,8 @@ def return_all_user_structures(initial_list):
 	    stoic = struct.get_stoic()
             struct.set_property('ID',0)
 	    struct = compute_spacegroup_pymatgen.main(struct)
+            struct.set_property('crossover_type', '')
+	    struct.set_property('mutation_type', '')
             structure_collection.add_structure(struct, stoic, 0)
             ip_count += 1
         return ip_count
@@ -166,6 +168,8 @@ def return_non_duplicates(initial_list, replica):
                 continue
             struct.set_property('ID',0)
 	    struct = compute_spacegroup_pymatgen.main(struct)
+	    struct.set_property('crossover_type', '')
+            struct.set_property('mutation_type', '')
             structure_collection.add_structure(struct, stoic, 0)
         if len(initial_list)!=0:
             struct_coll = StructureCollection(stoic, 0)

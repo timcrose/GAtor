@@ -121,7 +121,7 @@ def main(input_structure):
 		FHI = FHIAimsRelaxation(input_structure, working_dir, control_string,ui.get_replica_name())
 		output.time_log("Executing FHI-aims using control file: "+control_list[i])
 		output.local_message("\nFHI-aims evaluation using control file: "+control_list[i])
-		output.local_message("-- Upper energy threshold: "+str(et))
+		output.local_message("-- Worst energy threshold: "+str(et))
 
 		begin_time = time.time()
 		FHI.execute(monitor,upi[i],upt[i])
@@ -193,7 +193,7 @@ def main(input_structure):
 			return input_structure,"rejected"
 		else:
 			output.local_message("-- Energy threshold met")
-			
+        output.local_message('\n|-------------------- End FHI-aims evaluation --------------------|')			
 	return input_structure,"accepted"
 
 class FHIAimsRelaxation():
