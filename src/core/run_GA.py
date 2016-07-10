@@ -76,7 +76,7 @@ class RunGA():
 		structure_collection.update_supercollection(self.structure_supercoll)
 
 		# Intialiaze restarts
-		restart_replica = self.ui.get_boolean("parallel_settings","restart_replica")
+		restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
 		restart_count = 0
 		convergeTF = None
 		while True:

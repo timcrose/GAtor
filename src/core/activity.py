@@ -45,7 +45,7 @@ def request_folder_to_check():
 	Updates folder.info if the time has exceeded user defined
 	'''
 	ui = user_input.get_config()
-	time_wait = ui.get_eval("parallel_settings","update_folder_interval")
+	time_wait = ui.get_eval("run_settings","update_folder_interval")
 	result=False
 	with FileLock("folder.info",tmp_dir,3600):
 		need_update=False
