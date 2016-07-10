@@ -115,8 +115,7 @@ class RunGA():
 
 			#---- Compute Spacegroup of Relaxed Structure ----#
 			struct = compute_spacegroup_pymatgen.main(struct)
-			self.output("-- Structure's space group %s" % (struct.get_property('space_group')))
-
+			self.output("-- Structure's space group: %s" % (struct.get_property('space_group')))
 
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
@@ -170,7 +169,7 @@ class RunGA():
 		size_of_common = len(struct_coll.structures)
                 size_of_added = size_of_common - int(number_of_IP)
 
-		self.output('-- Total size of common pool: %i   Total number of GA-added structures: %i' 
+		self.output(' Total size of common pool: %i   Total number of GA-added structures: %i' 
                          % (size_of_common, size_of_added))
 		cst = '|~*~**~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~|'
 		st =  '|-------------------------------------------------------------------------|'
@@ -197,7 +196,7 @@ class RunGA():
                         end = True
 		if convergeTF == True:
 			message = ''
-			message += header + 'Top'+str(self.top_count)
+			message += header + 'Top '+str(self.top_count)
 			message +=' energies havent changed in user-specfied number of iterations: '
 			message += str(self.max_it) +'\n'
                         message +='Number of GA additions to pool: '
@@ -557,7 +556,7 @@ class RunGA():
 		number_of_IP = open(IP_dat).read()
 		size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
 		size_of_added = size_of_common - int(number_of_IP)
-		self.output('-- Total size of common pool: %i   Total number of GA-added structures: %i' 
+		self.output(' Total size of common pool: %i   Total number of GA-added structures: %i' 
                          % (size_of_common, size_of_added))
 		if converged is "not_converged":
 			self.output("GA not converged yet.")

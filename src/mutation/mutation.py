@@ -37,7 +37,7 @@ def select_mutator(input_struct, num_mols, replica):
         mut_choice = np.random.choice(mutation_list)
     except:
         mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
-    message = "Mutation Choice:    " +str(mut_choice)
+    message = "-- Mutation Choice: " +str(mut_choice)
     output.local_message(message, replica)
 
     if mut_choice == "Trans_mol":
