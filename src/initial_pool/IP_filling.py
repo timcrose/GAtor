@@ -35,6 +35,8 @@ def main():
     	added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
 	num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
+	output.local_message("|---------------- GAtor filling initial pool ----------------|",replica)
+	output.local_message("User's initial pool: %s" % (user_structures_dir))
         initial_list = convert_to_structures(files_to_add)
 
 	if len(initial_list) == 0:
@@ -44,7 +46,7 @@ def main():
 
         if ui.get_boolean('initial_pool', 'duplicate_check'):
 		output.time_log("Checking initial pool for duplicates")
-		output.local_message("Checking initial pool for duplicates",replica)
+		output.local_message("---- Checking initial pool for duplicates ----",replica)
                 ip_count = return_non_duplicates(initial_list, replica)
 		output.time_log("Final initial pool count: %i" % ip_count)
 		output.local_message("Final initial pool count: %i" % ip_count,replica)
@@ -181,8 +183,8 @@ def return_duplicate_pairs(initial_list, ui, replica):
 	        structc_fp = structc.get_property('file_path')
 		if ui.verbose():
 			output.local_message("Found duplicate pair", replica)
-			output.local_message("%s" % struct_fp, replica)
-			output.local_message("%s" % structc_fp, replica)
+			output.local_message("-- %s" % struct_fp, replica)
+			output.local_message("-- %s" % structc_fp, replica)
 	        dup_pairs.append((struct_fp, structc_fp))
     for pair in dup_pairs:
         ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')

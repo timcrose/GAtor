@@ -33,7 +33,9 @@ def cell_lower_triangular(struct,create_duplicate=True):
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
 
-	if abs(struct.properties["lattice_vector_a"][1])<0.001 and abs(struct.properties["lattice_vector_a"][2])<0.001 and abs(struct.properties["lattice_vector_b"][2])<0.001:
+	if (abs(struct.properties["lattice_vector_a"][1])<0.001 and 
+            abs(struct.properties["lattice_vector_a"][2])<0.001 and 
+	    abs(struct.properties["lattice_vector_b"][2])<0.001):
 		return struct
 
 	struct.properties.update(lattice_parameters(struct)) #Add in case not calculated
@@ -158,7 +160,8 @@ def cell_extension(struct,create_duplicate=True):
 
 def cell_populate_molecules(struct,mole_info_list):
 	'''
-	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; requires the mole_info_list to be comprehensive and matching with the number of molecules specified in unit_cell_settings
+	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; 
+        requires the mole_info_list to be comprehensive and matching with the number of molecules specified in unit_cell_settings
 	mole_info_list should be a list of tuples defined as:
 	[COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle]
 	'''
@@ -477,7 +480,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
-		st="Cell modification required for structure " 
+		st="-- Cell modification required for structure " 
 		if struct.struct_id!=None:
 			st += str(struct.struct_id)
 		else:
@@ -488,7 +491,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 			st += print_aims(struct)
 		output.local_message(st,replica)
 	if count==0 and verbose:
-		st = "Cell modification uncessary for structure "
+		st = "-- Cell modification uncessary for structure "
 		if struct.struct_id!=None:
 			st += str(struct.struct_id)
 		output.local_message(st,replica)
@@ -528,7 +531,7 @@ def cell_check(struct,replica):
 	#Note: this check assumes that the lattice vectors are put into lower triangular form
 	#This is done in run_GA.py
 	if ui.get_boolean(sname,"lattice_vector_check"):
-		if verbose: output.local_message("Lattice vector principal componenet check:",replica)
+		if verbose: output.local_message("Lattice vector principal component check:",replica)
 		lv = ["lattice_vector_a","lattice_vector_b","lattice_vector_c"]
 		if verbose:
 			for i in range(3):
@@ -580,8 +583,6 @@ def cell_check(struct,replica):
 
 	if verbose:
 		output.local_message("Combined interatomic distance check:",replica)
-#		output.local_message("Note: Even if neither interatomic distance check or specific radius check is called\nthis combined check still conducts the default full atomic distance check",replica)
-
 	if combined_distance_check(struct,replica):
 		if verbose:
 			output.local_message("-- Passed all atomic distance check(s)\n",replica)
@@ -603,7 +604,11 @@ def COM_distance_check(struct,nmpc=None,lowerbound=None):
 	napm=int(len(struct.geometry)/nmpc)
 	
 	cmlist=[cm_calculation(struct,range(napm*i,napm*i+napm)) for i in range (nmpc)] #Calculates the center of mass of all molecules
-	tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]] 
+	tr=([[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],
+             	[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],
+		[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],
+		[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],
+		[-1,1,-1],[-1,-1,1],[-1,-1,-1]]) 
 	#Each molecule will have to be compared with the 27 equivalent of the other one in order to conduct the distance check
 	min_dist = min([numpy.linalg.norm(struct.properties["lattice_vector_a"]),numpy.linalg.norm(struct.properties["lattice_vector_b"]),numpy.linalg.norm(struct.properties["lattice_vector_c"])])
 	if min_dist<lowerbound:
@@ -635,19 +640,19 @@ def combined_distance_check(struct,replica):
 	sname = "cell_check_settings"
 	min_dist = ui.get_eval(sname,"full_atomic_distance_check")
 	if verbose:
-		olm("Full atomic distance check minimum distance between all pairs of atoms: %f" % min_dist, replica)
+		olm("-- Full atomic distance check minimum distance between all pairs of atoms: %f" % min_dist, replica)
 	
 	if ui.has_option(sname,"interatomic_distance_check"):
 		min_dist_2 = ui.get_eval(sname,"interatomic_distance_check")
 		if verbose:
-			olm("Interatomic distance check enforcing minimum distance between pairs of atoms from different molecules: %f" % min_dist_2, replica)
+			olm("-- Interatomic distance check enforcing minimum distance interatomic pairs of atoms: %f" % min_dist_2, replica)
 	else:
 		min_dist_2 = None
 
 	if ui.has_option(sname,"specific_radius_proportion"):
 		sr = ui.get_eval(sname,"specific_radius_proportion")
 		if verbose:
-			olm("Specific radius check enforcing minimum proportion: %f" % sr, replica)
+			olm("-- Specific radius check enforcing minimum proportion: %f" % sr, replica)
 	else:
 		sr = None
 

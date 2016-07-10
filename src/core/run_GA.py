@@ -119,9 +119,6 @@ class RunGA():
 			struct = compute_spacegroup_pymatgen.main(struct)
 			self.output("Space group %s" % (struct.get_property('space_group')))
 
-			#---- Compute Spacegroup of Relaxed Structure ----#
-			struct = compute_spacegroup_pymatgen.main(struct)
-			self.output("Space group %s" % (struct.get_property('space_group')))
 
 			#---- Check If Energy is Global Minimum -----#
 			ref_label = 0
@@ -496,7 +493,7 @@ class RunGA():
 			return False
 				
 		#----- Make sure cell is lower triangular -----#
-		self.output("Ensuring cell is lower triangular...")
+		self.output("-- Ensuring cell is lower triangular")
 		struct=structure_handling.cell_lower_triangular(struct,False)	
 		a=struct.get_property('lattice_vector_a')
 		b=struct.get_property('lattice_vector_b')
@@ -504,7 +501,7 @@ class RunGA():
 		struct.set_property('lattice_vector_a',list(a))
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
-		self.output("post second check geo: ")
+		#self.output("post second check geo: ")
 		#self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
@@ -514,9 +511,9 @@ class RunGA():
 		'''
 		t1 = time.time()
 		if comparison_type == "pre_relaxation_comparison":
-			self.output("\n-------- Pre-relaxation Comparison --------")
+			self.output("\n---- Pre-relaxation Comparison  ----")
 		elif comparison_type == "post_relaxation_comparison":
-			self.output("\n-------- Post-relaxation Comparison --------")
+			self.output("\n---- Post-relaxation Comparison ----")
 		structure_collection.update_supercollection(self.structure_supercoll)
 		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica, comparison_type))
                 t2 = time.time()
@@ -605,7 +602,7 @@ def structure_create_for_multiprocessing(args):
 	ui = user_input.get_config()
 	replica, stoic = args
 	#----- Structure Selection -----#
-	output.local_message("\n-------- Structure creation process --------",replica)
+	output.local_message("\n|---------------- Structure creation process ----------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
@@ -648,7 +645,7 @@ def structure_create_for_multiprocessing(args):
 
 	else:
 		output.local_message('-- No mutation applied',replica)
-		new_struct.set_property('mutation_type', 'No_mutation')
+		new_struct.set_property('mutation_type', 'no_mutation')
 
 	if new_struct is False: 
 		output.local_message('-- Mutation failure'.replica)
