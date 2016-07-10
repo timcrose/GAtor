@@ -35,8 +35,13 @@ def main():
     	added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
 	num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
-	output.local_message("|---------------- GAtor filling initial pool ----------------|",replica)
-	output.local_message("User's initial pool: %s" % (user_structures_dir))
+
+        st = ' -------------------------------------------------------------------------'
+	gst = '|----------------------  GAtor filling initial pool  ---------------------|'
+	output.local_message(st, replica)
+	output.local_message(gst, replica)
+        output.local_message(st, replica)
+	output.local_message("Initial pool: %s" % (user_structures_dir), replica)
         initial_list = convert_to_structures(files_to_add)
 
 	if len(initial_list) == 0:

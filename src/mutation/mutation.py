@@ -95,7 +95,7 @@ class RandomTranslationMutation(object):
         ''' Randomly displaces the COM of each molecule within gaussian dist'''
         for mol in mol_list:
             rand_disp = np.random.standard_normal(3) * st_dev            
-            self.output(rand_disp)
+            #self.output(rand_disp)
             for atom in mol:
                 for i in range(2):
                     atom[i] = atom[i] - rand_disp[i]
@@ -231,7 +231,7 @@ class RandomStrainMutation(object):
     def rand_strain(self, lat_mat):
         strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
-        self.output("strain_mat" + str(strain_mat))
+        #self.output("strain_mat" + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
@@ -288,8 +288,8 @@ class RandomSymmetryStrainMutation(object):
         strain_param = np.random.normal(scale=self.st_dev, size=1)
         strain_list = strain_param*get_rand_sym_strain(lat_mat)
         strain_mat = get_strain_mat(strain_list)
-        self.output("Strain parameter: " + str(strain_param).strip('[').strip(']'))
-        self.output("Strain_matrix: \n" + str(strain_mat).strip('[').strip(']'))
+        #self.output("Strain parameter: " + str(strain_param).strip('[').strip(']'))
+        #self.output("Strain_matrix: \n" + str(strain_mat).strip('[').strip(']'))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
@@ -351,7 +351,7 @@ class RandomStrainMutationMoveMols(object):
     def rand_strain(self, lat_mat):
         strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
-        self.output("strain_mat" + str(strain_mat))
+        #self.output("strain_mat" + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
@@ -417,8 +417,8 @@ class RandomSymmetryStrainMutationMoveMols(object):
         strain_param = np.random.normal(scale=self.st_dev, size=1)
         strain_list = strain_param*get_rand_sym_strain(lat_mat)
         strain_mat = get_strain_mat(strain_list)
-        self.output("Strain parameter: " + str(strain_param))
-        self.output("Strain_matrix: \n" + str(strain_mat))
+        #self.output("Strain parameter: " + str(strain_param))
+        #self.output("Strain_matrix: \n" + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)

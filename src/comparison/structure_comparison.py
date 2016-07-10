@@ -97,7 +97,7 @@ class Comparison:
             if en - e_tol <= comp_en <= en + e_tol:
 #		self.output("comp en: " +str(comp_en)) 
                 sim_list.append((index, comp_struct)) 
-        self.output("Number of Structures w/in duplicate energy window: "+str(len(sim_list)))
+        self.output("-- Number of structures w/in duplicate energy tolerance: "+str(len(sim_list)))
         return sim_list
 
     def check_if_duplicate(self, struct, comp_list, comparison_type):
@@ -106,10 +106,10 @@ class Comparison:
 	for indexc, structc in comp_list:
             fit = self.compute_pymatgen_fit(struct, structc, comparison_type)
             if fit:
-                self.output("Structure is a duplicate of another in common pool")
-		self.output("Structure ID in Common pool is: %s" % indexc)
+                self.output("-- Structure is a duplicate of another in common pool")
+		self.output("-- Structure ID in Common pool is: %s" % indexc)
 		index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
-		self.output("Duplicate Structure ID in duplicates pool is: %s" % index)
+		self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
 		dup_pair.append(("0/"+ str(index),"duplicates/"+str(indexc)))
 	        for pair in dup_pair:
 	            dup_output.write('\t'.join(str(s) for s in pair) + '\n')

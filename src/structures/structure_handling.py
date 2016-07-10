@@ -511,7 +511,7 @@ def cell_check(struct,replica):
 	standard_volume=ui.get_eval(sname,"target_volume")
 	ucv = struct.get_unit_cell_volume()
 	if standard_volume!=None:
-		if verbose: output.local_message("Volume check:", replica)
+		if verbose: output.local_message("-- Volume check:", replica)
 		if verbose: output.local_message("-- New structure's volume: %f" % ucv,replica)
 		upper_volume=ui.get_eval(sname,"volume_upper_ratio")*standard_volume
 		lower_volume=ui.get_eval(sname,"volume_lower_ratio")*standard_volume
@@ -703,7 +703,11 @@ def combined_distance_check(struct,replica):
 	
 
 	#Then compare each atom pair from different molecules
-	tr=[[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]]
+	tr=([[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],
+           [0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],
+           [1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],
+           [-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],
+           [-1,1,-1],[-1,-1,1],[-1,-1,-1]])
 	struct = move_molecule_in(struct,nmpc=total_atoms) #Move in to prevent too far away from cell
 	for a1 in range (total_atoms-napm):
 		for tr_choice in tr:

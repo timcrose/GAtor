@@ -45,16 +45,15 @@ class RunGA():
 		self.working_dir = os.path.join(tmp_dir, str(self.replica))
 		self.GA_module_init() # initializes GA modules specified in .conf file
 		self.verbose = self.ui.verbose()        
-#		self.control_list = self.ui.get_list('FHI-aims', 'control_in_filelist')
+		#self.control_list = self.ui.get_list('FHI-aims', 'control_in_filelist')
 		self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
 		self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
-
 		self.prop = self.ui.get("run_settings","property_to_optimize")
 		self.op_style = self.ui.get("run_settings","optimization_style")
-
+		self.number_of_GA_structures = int(self.ui.get('run_settings', 'end_GA_structures_added'))
+                self.number_of_tot_structures = int(self.ui.get('run_settings', 'end_GA_structures_total'))
 		self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
 		self.max_it = self.ui.get_eval('run_settings', 'max_iterations')
-		self.number_of_structures = int(self.ui.get('run_settings', 'number_of_structures'))
 		# Initialize Supercollection
 		self.replica_child_count = 0
 		self.convergence_count= 0
@@ -62,7 +61,6 @@ class RunGA():
 		self.structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
 		self.structure_supercoll[(self.replica_stoic, 'duplicates')] = structure_collection.get_collection(self.replica_stoic, 'duplicates')
 		data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
-
 		structure_collection.update_supercollection(self.structure_supercoll)
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
 		
@@ -74,7 +72,7 @@ class RunGA():
 		''' 
 
 		# Report Replica to Common Output and Update Supercollection
-		self.output("----Replica %s updating local pool----" %(self.replica))
+		self.output("----Replica %s running GA on common pool----" %(self.replica))
 		structure_collection.update_supercollection(self.structure_supercoll)
 
 		# Intialiaze restarts
@@ -117,7 +115,7 @@ class RunGA():
 
 			#---- Compute Spacegroup of Relaxed Structure ----#
 			struct = compute_spacegroup_pymatgen.main(struct)
-			self.output("Space group %s" % (struct.get_property('space_group')))
+			self.output("-- Structure's space group %s" % (struct.get_property('space_group')))
 
 
 			#---- Check If Energy is Global Minimum -----#
@@ -127,7 +125,10 @@ class RunGA():
 			self.check_global_optimization(struct,top_prop_list)
 			
 			#----- Add Structure to collection -----#
-			self.add_to_collection(struct, ref_label)
+			struct_index = self.add_to_collection(struct, ref_label)
+
+			#----- Success Message -----#
+			self.success_message(struct, struct_index)
 
 			#----- End of Iteration Data Tasks -----#
 			restart_count += 1 
@@ -153,9 +154,9 @@ class RunGA():
 	def beginning_tasks(self, restart_count):
 		output.move_to_shared_output(self.replica)
                 begin_time = datetime.datetime.now()
-		st = ' ------------------------------------------------------------------------'
+		st = ' -------------------------------------------------------------------------'
 		self.output(st)
-		self.output('| Replica %s Beginning New Iteration: %s |' % (self.replica, begin_time))
+		self.output('|  Replica %s Beginning New Iteration: %s |' % (self.replica, begin_time))
 		self.output(st)
 		return begin_time
 
@@ -169,26 +170,41 @@ class RunGA():
 		size_of_common = len(struct_coll.structures)
                 size_of_added = size_of_common - int(number_of_IP)
 
-		self.output("GA added structures: %i; total structures: %i" 
-			% (size_of_added,size_of_common))
-
-		if size_of_added >= self.number_of_structures:
+		self.output('-- Total size of common pool: %i;  Total number of GA-added structures: %i' 
+                         % (size_of_common, size_of_added))
+		cst = '|~*~**~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~|'
+		st =  '|-------------------------------------------------------------------------|'
+		header = '\n' + st + '\n' + cst + '\n' 
+                if size_of_added >= self.number_of_GA_structures:
 			message = ''
-			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
-			message +='Number of additions to pool has reached user-specified number: '
+			message += header
+			message +='Number of GA additions to pool has reached user-specified number: '
 			message += str(size_of_added) +'\n'
-			message +='Total size of collection: '
+			message +='Total size of pool: '
 			message += str(size_of_common) +'\n'
-			message += 'GA ended at: '+str(datetime.datetime.now())
+			message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
 			self.output(message)
 			end = True
+		if size_of_common >= self.number_of_tot_structures:
+                        message = ''
+			message += header
+                        message +='Total size of pool has reached user-specified number: '
+                        message += str(size_of_common) +'\n'
+                        message +='Number of GA additions to pool: '
+                        message += str(size_of_common) +'\n'
+                        message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
+                        self.output(message)
+                        end = True
 		if convergeTF == True:
 			message = ''
-			message +=' ~*~*~*~*~* GA CONVERGED *~*~*~*~*~\n'
-			message +='Top energies havent changed in user-specfied number of iterations: '
-			message += str(self.max_en_it) +'\n'
+			message += header + 'Top'+str(self.top_count)
+			message +=' energies havent changed in user-specfied number of iterations: '
+			message += str(self.max_it) +'\n'
+                        message +='Number of GA additions to pool: '
+                        message += str(size_of_common) +'\n'
 			message +='Total size of collection: '
-			message += str(total_structs) 
+			message += str(total_structs) +'\n'
+                        message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
 			self.output(message)
 			end = True
 		return end
@@ -286,7 +302,7 @@ class RunGA():
 	def check_global_optimization(self,struct,prop_list):
 		prop = struct.get_property(self.prop)
 		glob = prop_list[0][0] #Best current property
-		self.output("structure's %s: %f; previous global best: %f" % 
+		self.output("-- Structure's %s: %f \n-- Previous global minimum: %f" % 
 		(self.prop, prop, glob))
 		diff = abs(prop-glob)
 		message = ""
@@ -316,12 +332,12 @@ class RunGA():
 			if prop_new in old_list_top_prop:
 				continue
 			else:
-				self.output("Top "+str(self.top_count)+" best structures have changed.")
+				self.output("-- Top "+str(self.top_count)+" best structures have changed.")
 				self.convergence_count= 0
-				self.output("Convergence counter reset.")
-				self.output("Convergence iteration:  "+ str(self.convergence_count))
+				self.output("-- Convergence counter reset.")
+				self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
 				return "not_converged"
-		self.output("Convergence iteration:  "+ str(self.convergence_count))
+		self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
 		if self.convergence_count== self.max_it:
 			return "converged" 
 
@@ -345,9 +361,8 @@ class RunGA():
 		structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database		
                 data_tools.write_energy_vs_addition(struct_coll)
                 data_tools.write_energy_hierarchy(struct_coll)
-#		data_tools.write_spe_vs_addition(struct_coll)
-		self.output("Structure index: "+str(struct_index))
-		return
+		#data_tools.write_spe_vs_addition(struct_coll)
+		return struct_index
 
 	def structure_create_new(self):        	  
 		'''
@@ -371,12 +386,14 @@ class RunGA():
 	
 		#----- Mutation Execution -----#
 		self.output("\n--Mutation--")  
-		randnum = np.random.random()	
-		randnum2 = np.random.random()
+		rand1 = np.random.random()	
+		rand2 = np.random.random()
 		#Single Parents have to be mutated	
-		if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<self.singlemutate:
+		if (new_struct.get_property('crossover_type') == [1,1] or 
+                    new_struct.get_property('crossover_type') == [2,2] or 
+                    rand1<self.singlemutate):
 			new_struct = self.mutation_module.main(new_struct, self.replica)
-			if new_struct!=False and randnum2 < self.doublemutate:
+			if new_struct!=False and rand2 < self.doublemutate:
 				self.output("--Second Mutation--")
 				new_struct = self.mutation_module.main(new_struct, self.replica) 
 		else:
@@ -523,27 +540,28 @@ class RunGA():
 			
                         return False  # structure not acceptable start with new selection
 
+	def success_message(self, struct, struct_index):
+		message = ""
+		message += "\n---- Structure Successfully Added to Common Pool! ----"
+		message += "\n-- Structure's index: %s " % (struct_index)
+		message += "\n-- Added from replica: %s " % (self.replica)
+
+                self.output(message)
+
 	def end_of_iteration_tasks(self, begin_time, old_list_top_en, restart_count, coll):
 		# Remove working directory in /tmp
 		rmdir_silence(self.working_dir)
 
 		#Check convergence
 		converged = self.check_local_convergence(old_list_top_en)	
-		message = 'Success!: \n  stoichiometry-- '+self.replica_stoic.get_string()+\
-			'\n  structure index-- ' + str("struct_index") + \
-			'\n  replica child count-- ' + str(self.replica_child_count) + \
-			'\n  collection count -- ' + str("ID") + \
-			'\n  replica-- ' + str(self.replica)
-
-		self.output(message)
 
 		#End of Iteration Outputs
 		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
 		number_of_IP = open(IP_dat).read()
 		size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
 		size_of_added = size_of_common - int(number_of_IP)
-		self.output('Total size of common pool: '+str(size_of_common))
-		self.output('Total number of GA-added structures: '+str(size_of_added))	
+		self.output('-- Total size of common pool: %i;  Total number of GA-added structures: %i' 
+                         % (size_of_common, size_of_added))
 		if converged is "not_converged":
 			self.output("GA not converged yet.")
 			pass	
@@ -602,7 +620,7 @@ def structure_create_for_multiprocessing(args):
 	ui = user_input.get_config()
 	replica, stoic = args
 	#----- Structure Selection -----#
-	output.local_message("\n|---------------- Structure creation process ----------------|",replica)
+	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
@@ -610,7 +628,6 @@ def structure_create_for_multiprocessing(args):
 	structure_supercoll = {}
 	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
 	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
-
 
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
@@ -628,15 +645,17 @@ def structure_create_for_multiprocessing(args):
 	
 	#----- Mutation Execution -----#
 	output.local_message("\n---- Mutation ----",replica)
-	randnum = np.random.random()	
-	randnum2 = np.random.random()
+	rand1 = np.random.random()	
+	rand2 = np.random.random()
 	#Single Parents have to be mutated	
-	if new_struct.get_property('crossover_type') == [1,1] or new_struct.get_property('crossover_type') == [2,2] or randnum<ui.get_eval('mutation', 'mutation_probability'):
+	if (new_struct.get_property('crossover_type') == [1,1] or 
+	    new_struct.get_property('crossover_type') == [2,2] or 
+	    rand1<ui.get_eval('mutation', 'mutation_probability')):
 		new_struct = mutation_module.main(new_struct, replica)
 		if new_struct!=False and ui.all_geo():
 			output.local_message("Current structure geometry:\n" 
 			+ new_struct.get_geometry_atom_format(),replica)
-		if new_struct!=False and randnum2 < ui.get_eval('mutation', 'double_mutate_prob'):
+		if new_struct!=False and rand2 < ui.get_eval('mutation', 'double_mutate_prob'):
 			output.local_message("--Second Mutation--",replica)
 			new_struct = mutation_module.main(new_struct, replica)
 			if new_struct!=False and ui.all_geo():
@@ -666,7 +685,7 @@ def structure_create_for_multiprocessing(args):
 		new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
 		+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
 
-	output.local_message("\n---- Assign structure ID ----",replica)
+	output.local_message("---- Assign structure ID ----",replica)
 	new_struct.struct_id = misc.get_random_index()
 	output.local_message("-- ID assigned: "+new_struct.struct_id,replica)
 	return new_struct
