@@ -293,7 +293,7 @@ class RunGA():
 			raise RuntimeError("Generating structure maxed out on generation attempts.")
 		output.local_message("New trial structure generated:")
 		output.local_message("-- Number of attempts for structure generation: "+str(count))
-		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" s")
+		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" seconds")
 		
 		return struct
 
