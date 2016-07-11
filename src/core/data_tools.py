@@ -113,14 +113,13 @@ def write_energy_hierarchy(structure_coll):
 		ranked_energy_list.append([count + 1] + energy_list[count])
 	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
                                                              'Spacegroup', 'Mutation', 'Crossover', 'ParentA', 'ParentB'])
-	form = '{:<5} {:<5} {:<10} {:<23} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<11} {:<16} {:<9} {:<8} {:<8}'
+	form = '{:<5} {:<5} {:<12} {:<23} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<11} {:<16} {:<9} {:<8} {:<8}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'
     	stoic = structure_coll.get_stoic()
     	input_ref = structure_coll.get_input_ref()
     	filename = "energy_hierarchy_%s_%s.dat" % (stoic.get_string(),str(input_ref))
-    	#with FileLock(filename,tmp_dir,3600):
         f = open(os.path.join(tmp_dir,filename),"w")
         f.write(to_write)
         f.close()
