@@ -64,6 +64,16 @@ class RunGA():
 		structure_collection.update_supercollection(self.structure_supercoll)
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
 		
+		sname = "parallel_settings"
+		self.processes = 1
+		if self.ui.has_option(sname,"processes_per_replica"):
+			self.processes = self.ui.get_eval(sname,"processes_per_replica")
+			if self.ui.has_option(sname,"processes_per_node"):
+				self.processes = min(self.ui.get_eval(sname,"processes_per_node"), self.processes)
+		if self.processes > 1:
+			self.worker_pool = multiprocessing.Pool(processes=self.processes)
+
+		
 #------------------------- MAIN TASKS PERFORMED BY EVERY REPLICA -------------------------#
 	def start(self):
 		'''
@@ -246,45 +256,37 @@ class RunGA():
 
 	def generate_trial_structure(self):
 		struct = False 
-		sname = "parallel_settings"
-		processes = 1
-		if self.ui.has_option(sname,"processes_per_replica"):
-			processes = self.ui.get_eval(sname,"processes_per_replica")
-			if self.ui.has_option(sname,"processes_per_node"):
-				processes = min(self.ui.get_eval(sname,"processes_per_node"), processes)
 
 		
 		sname = "run_settings"
 		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
 		count = 0
 		begin_time = time.time()
-		self.output("Generating trial structure with %i processes" % processes)
-		if processes > 1:
-			p = multiprocessing.Pool(processes=processes)
+		self.output("Generating trial structure with %i processes" % self.processes)
 		while count<total_attempts and struct == False:
-			if processes == 1: #Serial
+			if self.processes == 1: #Serial
 				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
 			else:
-#				p = multiprocessing.Pool(processes=processes)
 				arglist=[(self.replica+"_"+str(x),self.replica_stoic)\
-				for x in range (processes)]
-				results = p.map(structure_create_for_multiprocessing,\
-						arglist)
-				for i in range (processes): #Find a success
+				for x in range (self.processes)]
+				results = self.worker_pool.map(
+				structure_create_for_multiprocessing,arglist)
+
+				for i in range (self.processes): #Find a success
 					if results[i]!=False:
 						struct = results[i]
 						break
 				if struct!=False: #Found a success
 					output.move_to_shared_output(self.replica+"_"+str(i),os.path.join(out_tmp_dir,self.replica+".out"))
 				else:
-					output.local_message("-- "+str(processes)+" attempts have failed to create a new structure")
-				for i in range (processes):
+					output.local_message("-- "+str(self.processes)+" attempts have failed to create a new structure")
+				for i in range (self.processes):
 					try:
 						os.remove(os.path.join(out_tmp_dir,self.replica+"_"+str(i)+".out"))
 					except OSError:
 						pass
 
-			count += processes
+			count += self.processes
 
 		end_time = time.time()
 		if count == total_attempts and struct==False:
