@@ -139,7 +139,7 @@ def main(input_structure):
 		if not execute_success: 
 			output.time_log("FHI-aims execution using control file %s failed to launch, hung, or failed" % (control_list[i]))
 			output.local_message("-- Job failed to launch, hung, or failed")
-			if ui.has_option(sname,"save_failed_calculations"):
+			if ui.get_boolean(sname,"save_failed_calc"):
 				path = os.path.abspath(os.path.join(fh.fail_dir,
 				misc.get_random_index()))
 				shutil.copytree(working_dir,path)
@@ -153,7 +153,7 @@ def main(input_structure):
 		if extract_result == "failed":
 			output.time_log("FHI-aims execution using control file %s failed to yield energy" % (control_list[i]))
 			output.local_message("-- Job failed to yield energy")
-			if ui.has_option(sname,"save_failed_calculations"):
+			if ui.get_boolean(sname,"save_failed_calc"):
 				path = os.path.abspath(os.path.join(fh.fail_dir,
 				misc.get_random_index()))
 				shutil.copytree(working_dir,path)
@@ -181,7 +181,7 @@ def main(input_structure):
 					input_structure.properties[prop] = \
 					FHI.result_struct.properties[prop]
 		
-		if ui.has_option(sname,"save_successful_calc"):
+		if ui.get_boolean(sname,"save_successful_calc"):
 			path = os.path.abspath(os.path.join(fh.success_dir,
 			misc.get_random_index()))
 			shutil.copytree(working_dir,path)
