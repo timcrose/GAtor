@@ -127,7 +127,7 @@ def main(input_structure):
 		FHI.execute(monitor,upi[i],upt[i])
 		end_time = time.time()
 
-		output.local_message("-- Job execution time: " + str(end_time-begin_time) + " s")
+		output.local_message("-- Job execution time: " + str(end_time-begin_time) + " seconds")
 
 		#Need to pass in update poll interval and update poll time
 		if abs_success:

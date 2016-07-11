@@ -92,7 +92,7 @@ class RunGA():
 		while True:
 			#----- Beginning of Iteration Tasks -----#
 			begin_time = self.beginning_tasks(restart_count)
-
+ 
 			#----- Check if GA finished/converged -----#
 			end = self.check_finished(convergeTF)
 			if end: return
