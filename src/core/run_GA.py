@@ -518,7 +518,7 @@ class RunGA():
 		struct.set_property('lattice_vector_c',list(c))
 		if self.ui.all_geo:
 			self.output("Current structure geometry:\n" +
-			struct.get_geometry_atom_format(),replica)
+			struct.get_geometry_atom_format(),self.replica)
 		return struct
 
 	def structure_comparison(self, struct, comparison_type):
