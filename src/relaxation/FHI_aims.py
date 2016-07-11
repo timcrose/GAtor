@@ -312,22 +312,25 @@ class FHIAimsRelaxation():
 		raise ValueError("Unknown execute command: %s; supporting mpirun, srun, runjob, and shell" % execute_command)
 
 	aimsout=os.path.join(self.working_dir,"aims.out")
+	aimserr=os.path.join(self.working_dir,"aims.err")
 	if not enable_monitor:
 		outfile = open(aimsout,"w")
+		errfile = open(aimserr,"w")
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
 		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
-		p=subprocess.Popen(arglist,stdout=outfile)
+		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
 		p.wait()
 		end_of_execution_tasks()
 		return True
 
 	for i in range (10): #Allow 10 times for the job to successfully launch
 		outfile=open(aimsout,"w")
+		outfile = open(aimserr,"w")
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
 		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
-		p=subprocess.Popen(arglist,stdout=outfile)
+		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
 		time.sleep(1)
 		try:
 			status=p.poll()
