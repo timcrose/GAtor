@@ -187,7 +187,7 @@ class RunGA():
                 if size_of_added >= self.number_of_GA_structures:
 			message = ''
 			message += header
-			message +='Number of GA additions to pool has reached user-specified number: '
+			message +='Number of GA additions to pool has at leastreached user-specified number: '
 			message += str(size_of_added) +'\n'
 			message +='Total size of pool: '
 			message += str(size_of_common) +'\n'
@@ -197,7 +197,7 @@ class RunGA():
 		if size_of_common >= self.number_of_tot_structures:
                         message = ''
 			message += header
-                        message +='Total size of pool has reached user-specified number: '
+                        message +='Total size of pool has at least reached user-specified number: '
                         message += str(size_of_common) +'\n'
                         message +='Number of GA additions to pool: '
                         message += str(size_of_added) +'\n'
@@ -216,6 +216,9 @@ class RunGA():
                         message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
 			self.output(message)
 			end = True
+		if os.path.isfile(os.path.join(tmp_dir, "kill.dat")):
+			self.output("User has killed GAtor")
+			end = True 
 		return end
 
         def check_local_convergence(self, old_prop_list):
