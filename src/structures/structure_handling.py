@@ -480,7 +480,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
-		st="-- Cell modification required for structure " 
+		st="-- Cell modification required  for structure " 
 		if struct.struct_id!=None:
 			st += str(struct.struct_id)
 		else:
