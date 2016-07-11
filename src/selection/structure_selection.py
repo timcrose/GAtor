@@ -33,8 +33,6 @@ class StructureSelection():
 	self.structure_supercoll = structure_supercoll
 	self.replica = replica
 	self.replica_stoic = replica_stoic
-	self.control_list = self.ui.get_list('control', 'control_in_filelist')
-        self.max_cascade = len(self.control_list) - 1
 	self.index = 0
 	self.percent = self.ui.get_eval('selection','percent_best_structs_to_select')
 	self.prop = self.ui.get("run_settings","property_to_optimize")
@@ -43,7 +41,6 @@ class StructureSelection():
 		raise ValueError("Unknown type of optimization style in run_settings; supporing maximize and minimize")
 
     def get_structures(self):
-	control_list = self.ui.get_list('control', 'control_in_filelist')
 	structure_coll_a = self.structure_supercoll.get((self.replica_stoic, self.index))
 	structure_coll_b = self.structure_supercoll.get((self.replica_stoic, self.index))
 	struct_a, fit_a = self.select_structure(structure_coll_a)
