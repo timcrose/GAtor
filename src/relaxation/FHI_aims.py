@@ -306,7 +306,10 @@ class FHIAimsRelaxation():
 
 	elif execute_command == "shell":
 		os.chdir(self.working_dir)
-		arglist = [os.path.abspath(self.bin)]
+		arglist = [self.bin]
+
+	else:
+		raise ValueError("Unknown execute command: %s; supporting mpirun, srun, runjob, and shell" % execute_command)
 
 	aimsout=os.path.join(self.working_dir,"aims.out")
 	if not enable_monitor:
