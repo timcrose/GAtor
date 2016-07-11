@@ -492,7 +492,7 @@ class RunGA():
 			return False
 				
 		#----- Make sure cell is lower triangular -----#
-		self.output("Ensuring cell is lower triangular...")
+		self.output("Ensuring relaxed cell is lower triangular...")
 		struct=structure_handling.cell_lower_triangular(struct,False)	
 		a=struct.get_property('lattice_vector_a')
 		b=struct.get_property('lattice_vector_b')
@@ -500,7 +500,10 @@ class RunGA():
 		struct.set_property('lattice_vector_a',list(a))
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
-		self.output("post second check geo: ")
+		if self.ui.all_geo:
+			self.output("Current structure geometry:\n" +
+			struct.get_geometry_atom_format(),replica)
+#		self.output("post second check geo: ")
 		#self.output(str(struct.get_geometry_atom_format()))
 		return struct
 
