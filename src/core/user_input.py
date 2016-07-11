@@ -79,6 +79,7 @@ class ListSafeConfigParser(SafeConfigParser):
 	
 	def get_property_to_optimize(self):
 		return self.get("run_settings","property_to_optimize")
+
 	
 	def verbose(self):
 		return self.get_boolean("run_settings","verbose")
@@ -91,6 +92,15 @@ class ListSafeConfigParser(SafeConfigParser):
 
 	def is_master_process(self):
 		return not self.get_boolean("parallel_settings","im_not_master_process")
+	def grant_permission(self,path):
+		if self.get_boolean("run_settings","group_permission"):
+			if os.path.isfile(path):
+				os.system("chmod g=u "+path)
+			elif os.path.isdir(path):
+				os.system("chmod -R g=u "+path)
+			else:
+				raise ValueError("Not a file or directory: "+path)
+
 			
 
 	def __deepcopy__(self,memo):

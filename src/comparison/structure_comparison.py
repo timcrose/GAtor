@@ -114,6 +114,7 @@ class Comparison:
 	        for pair in dup_pair:
 	            dup_output.write('\t'.join(str(s) for s in pair) + '\n')
 	        return False
+        self.ui.grant_permission(os.path.join(tmp_dir,"GA_duplicates.dat"))
 	return True
 
     def compute_pymatgen_fit(self, struct, structc, comparison_type):

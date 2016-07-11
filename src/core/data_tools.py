@@ -88,8 +88,10 @@ def write_energy_vs_addition(structure_coll):
 	if rep == 'init_pool':
             continue
 	to_write += str(Id)+'    '+str(energy)+'\n' 
-	with open(os.path.join(tmp_dir, 'energy_vs_addition.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f: 
+        file_path = os.path.join(tmp_dir, 'energy_vs_addition.' + str(structure_coll.get_input_ref()) + '.dat')
+	with open(file_path, 'w') as f: 
             f.write(to_write)
+        ui.grant_permission(file_path)
 
 def write_spe_vs_addition(structure_coll):
     energy_list = get_energy_list(structure_coll)
@@ -121,6 +123,8 @@ def write_energy_hierarchy(structure_coll):
     	#with FileLock(filename,tmp_dir,3600):
         f = open(os.path.join(tmp_dir,filename),"w")
         f.write(to_write)
+        f.close()
+        ui.grant_permission(os.path.join(tmp_dir,filename))
 
 def make_user_structure_directory(structure_coll, energy_list, n_structures=10):
     path = os.path.join(tmp_dir, 'user_structures')

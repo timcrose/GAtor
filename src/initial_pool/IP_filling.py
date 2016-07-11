@@ -66,6 +66,7 @@ def main():
 	    with open(num_IP_structures,'w') as f:
                 f.write(str(ip_count))
                 f.close()
+            ui.grant_permission(num_IP_structures)
             return  ip_count
 	else: 
 	    return 

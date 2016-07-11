@@ -8,6 +8,7 @@ import core.file_handler as fh
 from core import user_input, output
 from copy import deepcopy
 from utilities import misc
+import time
 ui = user_input.get_config()
 
 def launch_parallel():
@@ -226,6 +227,11 @@ def get_all_processes(command,hostlist=None):
 	output.time_log("Acquiring all available processes using this command: "+" ".join(map(str,arglist)))
 
 	p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
+	time.sleep(2)
+	try:
+		p.kill()
+	except:
+		pass
 	out , err = p.communicate()
 	try:
 		out = str(out,"utf-8") #Python 3
@@ -238,5 +244,4 @@ def get_all_processes(command,hostlist=None):
 
 def allocate_nodes(number_of_replicas,all_nodes,all_hosts,conf=ui):
 	nor = number_of_replicas
-	
 	
