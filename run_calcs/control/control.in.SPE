@@ -22,7 +22,7 @@
 #  sc_iter_limit      1
 #  load_balancing .true.
 #  postprocess_anyway .true.
-  check_cpu_consistency	
+#  check_cpu_consistency	
 #  Eigenvalue solution
   KS_method	     scalapack_fast
     empty_states       6
