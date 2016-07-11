@@ -110,7 +110,7 @@ class Comparison:
 		self.output("-- Structure ID in Common pool is: %s" % indexc)
 		index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
 		self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
-		dup_pair.append(("0/"+ str(index),"duplicates/"+str(indexc)))
+		dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
 	        for pair in dup_pair:
 	            dup_output.write('\t'.join(str(s) for s in pair) + '\n')
 	        return False
