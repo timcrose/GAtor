@@ -60,7 +60,7 @@ def move_to_shared_output(replica=ui.get_replica_name(),output_file=output_file)
         d_file.close()
         
         data_file = open(output_file, 'a')
-        data_file.write('Replica: ' + str(replica)+"\n" + str(contents_string) + '\n')
+        data_file.write('Replica: ' + str(replica)+" --------------------------------\n" + str(contents_string) + '\n')
         data_file.close()
 	os.system("chmod g=u "+output_file)
     reset_local(replica)
