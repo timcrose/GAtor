@@ -324,7 +324,7 @@ class RunGA():
 	def check_global_optimization(self,struct,prop_list):
 		prop = struct.get_property(self.prop)
 		glob = prop_list[0][0] #Best current property
-		self.output("-- Structure's %s: %f \n-- Previous global minimum: %f" % 
+		self.output("-- Structure's %s: %f eV \n-- Previous global minimum: %f eV" % 
 		(self.prop, prop, glob))
 		diff = abs(prop-glob)
 		message = ""

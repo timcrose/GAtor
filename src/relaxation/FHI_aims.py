@@ -121,7 +121,7 @@ def main(input_structure):
 		FHI = FHIAimsRelaxation(input_structure, working_dir, control_string,ui.get_replica_name())
 		output.time_log("Executing FHI-aims using control file: "+control_list[i])
 		output.local_message("\nFHI-aims evaluation using control file: "+control_list[i])
-		output.local_message("-- Rejection energy threshold: "+str(et))
+		output.local_message("-- Rejection energy threshold: "+str(et)+" eV")
 
 		begin_time = time.time()
 		FHI.execute(monitor,upi[i],upt[i])
@@ -165,7 +165,7 @@ def main(input_structure):
 		#Update energy
 		energy = FHI.result_struct.properties["energy"]
 		input_structure.set_property(sen[i],energy)	
-		output.local_message("-- Energy extracted: "+str(energy))
+		output.local_message("-- Energy extracted: "+str(energy)+ " eV")
 
 		#Update geometry if necessary
 		if extract_result == "relaxed": 
