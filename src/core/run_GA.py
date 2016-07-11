@@ -668,7 +668,7 @@ def structure_create_for_multiprocessing(args):
 		return False
 
 	if ui.ortho():
-		output.local_message("---- Cell Orthogonalization ----")
+		output.local_message("---- Cell Orthogonalization ----",replica)
 		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 
 	#----- Cell Check -----#
