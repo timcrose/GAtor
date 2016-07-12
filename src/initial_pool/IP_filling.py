@@ -201,8 +201,8 @@ def return_duplicate_pairs(initial_list, ui, replica):
     return dup_pairs
 
 def compute_rdf_diff(struct, structc):
-	rd = np.asarray(struct.get_property('RDF_smooth_fr'))
-	rdc = np.asarray(structc.get_property('RDF_smooth_fr'))
+	rd = np.asarray(struct.get_property('RDF_smooth'))
+	rdc = np.asarray(structc.get_property('RDF_smooth'))
 	rdf_tol = 1-(np.dot(rd,rdc))/(np.linalg.norm(rd)*np.linalg.norm(rdc))	
      	return rdf_tol
 
