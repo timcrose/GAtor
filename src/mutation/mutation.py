@@ -18,10 +18,11 @@ def main(struct, replica):
     '''
     input_struct = deepcopy(struct)
     num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
-    #output.local_message(input_struct.get_geometry_atom_format(), replica)
     mutate_obj = select_mutator(input_struct, num_mols, replica)
     mutated_struct = mutate_obj.mutate()
-    #output.local_message(mutated_struct.get_geometry_atom_format(), replica)
+    if self.ui.all_geo:
+        output.local_message("-- Mutated Child's geometry: --\n" +
+        mutated.get_geometry_atom_format(), replica)
     return mutated_struct
    
 def select_mutator(input_struct, num_mols, replica):
