@@ -218,6 +218,7 @@ class RunGA():
 			end = True
 		if os.path.isfile(os.path.join(tmp_dir, "kill.dat")):
 			self.output("User has killed GAtor")
+			os.remove(os.path.join(tmp_dir, "kill.dat"))
 			end = True 
 		return end
 
@@ -259,8 +260,6 @@ class RunGA():
 
 	def generate_trial_structure(self):
 		struct = False 
-
-		
 		sname = "run_settings"
 		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
 		count = 0
@@ -270,27 +269,26 @@ class RunGA():
 			if self.processes == 1: #Serial
 				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
 			else:
-				arglist=[(self.replica+"_"+str(x),self.replica_stoic)\
+				arglist = [(self.replica+"_"+str(x), self.replica_stoic)\
 				for x in range (self.processes)]
 				results = self.worker_pool.map(
-				structure_create_for_multiprocessing,arglist)
+				structure_create_for_multiprocessing, arglist)
 
 				for i in range (self.processes): #Find a success
 					if results[i]!=False:
 						struct = results[i]
 						break
-				if struct!=False: #Found a success
-					output.move_to_shared_output(self.replica+"_"+str(i),os.path.join(out_tmp_dir,self.replica+".out"))
+				if struct != False: #Found a success
+					output.move_to_shared_output(self.replica+"_"+str(i), os.path.join(out_tmp_dir,self.replica+".out"))
 				else:
 					output.local_message("-- "+str(self.processes)+" attempts have failed to create a new structure")
 				for i in range (self.processes):
 					try:
-						os.remove(os.path.join(out_tmp_dir,self.replica+"_"+str(i)+".out"))
+						os.remove(os.path.join(out_tmp_dir, self.replica+"_"+str(i)+".out"))
 					except OSError:
 						pass
 
 			count += self.processes
-
 		end_time = time.time()
 		if count == total_attempts and struct==False:
 			raise RuntimeError("Generating structure maxed out on generation attempts.")
@@ -520,7 +518,7 @@ class RunGA():
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
 		if self.ui.all_geo:
-			self.output("Current structure geometry:\n" +
+			self.output("Final Structure's geometry:\n" +
 			struct.get_geometry_atom_format())
 		return struct
 
@@ -641,8 +639,13 @@ def structure_create_for_multiprocessing(args):
 	if new_struct is False:
 		output.local_message("Crossover failure", replica)
 		return False
+
 	if ui.all_geo():
-		output.local_message("Current structure geometry:\n" + 
+        	output.local_message("\n-- Parent A's geometry --\n" +
+        	structures_to_cross[0].get_geometry_atom_format(), replica)
+                output.local_message("-- Parent B's geometry --\n" +
+                structures_to_cross[1].get_geometry_atom_format(), replica)
+		output.local_message("-- Child's geometry --\n" + 
 		new_struct.get_geometry_atom_format(),replica)
 	
 	#----- Mutation Execution -----#
@@ -661,7 +664,7 @@ def structure_create_for_multiprocessing(args):
 			output.local_message("--Second Mutation--",replica)
 			new_struct = mutation_module.main(new_struct, replica)
 			if new_struct!=False and ui.all_geo():
-				output.local_message("Current structure geometry:\n"
+				output.local_message("-- Mutated child's geometry --\n"
 				+ new_struct.get_geometry_atom_format(),replica) 
 
 	else:
