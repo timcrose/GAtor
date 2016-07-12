@@ -172,8 +172,8 @@ class RunGA():
 	def check_finished(self, convergeTF):
 		end = False
 		IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
-		number_of_IP = open(IP_dat).read()
-		
+		try: number_of_IP = open(IP_dat).read()
+		except: raise ValueError("Initial pool has not been filled") 
                 struct_coll = structure_collection.get_collection(self.replica_stoic, 0)
                 struct_coll.update_local()
 		size_of_common = len(struct_coll.structures)
@@ -233,9 +233,9 @@ class RunGA():
                         if prop_new in old_list_top_prop:
                                 continue
                         else:
-                                self.output("-- Top "+str(self.top_count)+" best structures have changed.")
+                                self.output("-- Top "+str(self.top_count)+" structures have changed.")
                                 self.convergence_count= 0
-                                self.output("-- Convergence counter reset.")
+                                self.output("-- Local convergence counter reset.")
                                 self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
                                 return "not_converged"
                 self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
