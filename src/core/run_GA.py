@@ -541,8 +541,10 @@ class RunGA():
                         return False  # structure not acceptable start with new selection
 
 	def success_message(self, struct, struct_index):
+		time = datetime.datetime.now()
 		message = ""
 		message += "---- Structure Successfully Added to Common Pool! ----"
+		message += "\n-- Time: %s " % (time)
 		message += "\n-- Structure's index: %s " % (struct_index)
 		message += "\n-- Added from replica: %s " % (self.replica)
 

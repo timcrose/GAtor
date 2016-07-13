@@ -20,9 +20,6 @@ def main(struct, replica):
     num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
     mutate_obj = select_mutator(input_struct, num_mols, replica)
     mutated_struct = mutate_obj.mutate()
-    if self.ui.all_geo:
-        output.local_message("-- Mutated Child's geometry: --\n" +
-        mutated.get_geometry_atom_format(), replica)
     return mutated_struct
    
 def select_mutator(input_struct, num_mols, replica):
