@@ -184,25 +184,30 @@ def return_non_duplicates(initial_list, replica):
 def return_duplicate_pairs(initial_list, ui, replica):
     dup_pairs = []
     ip_dup_output = open(os.path.join(tmp_dir, "IP_duplicates.dat"),'w')
-    for struct, structc in itertools.combinations(initial_list, 2):
-        rdf_tol = compute_rdf_diff(struct, structc)
-        if rdf_tol < ui.get_eval('initial_pool', 'RDF_diff_tol'):
-	    fit = compute_pymatgen_fit(struct, structc, ui)
-	    if fit:
-		struct_fp = struct.get_property('file_path')
-	        structc_fp = structc.get_property('file_path')
-		if ui.verbose():
-			output.local_message("Found duplicate pair", replica)
+    vector_name = ui.get_eval('initial_pool', 'vector_for_comparison') 
+    check_if_vec = initial_list[0].get_property(vector_name)
+    if check_if_vec is not None:
+        for struct, structc in itertools.combinations(initial_list, 2):
+            rdf_tol = compute_rdf_diff(struct, structc, ui)
+            if rdf_tol < ui.get_eval('initial_pool', 'vector_cosdiff_threshold'):
+	        fit = compute_pymatgen_fit(struct, structc, ui)
+	    	if fit:
+                    struct_fp = struct.get_property('file_path')
+                    structc_fp = structc.get_property('file_path')
+                    if ui.verbose():
+                        output.local_message("Found duplicate pair", replica)
 			output.local_message("-- %s" % struct_fp, replica)
 			output.local_message("-- %s" % structc_fp, replica)
-	        dup_pairs.append((struct_fp, structc_fp))
+	        	dup_pairs.append((struct_fp, structc_fp))
+    else:   dup_pairs = return_duplicate_pymat_pairs(initial_list, ui)
     for pair in dup_pairs:
         ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')
     return dup_pairs
 
-def compute_rdf_diff(struct, structc):
-	rd = np.asarray(struct.get_property('RDF_smooth'))
-	rdc = np.asarray(structc.get_property('RDF_smooth'))
+def compute_rdf_diff(struct, structc, ui):
+	vector_name = ui.get_eval('initial_pool', 'vector_for_comparison') 
+	rd = np.asarray(struct.get_property(vector_name))
+	rdc = np.asarray(structc.get_property(vector_name))
 	rdf_tol = 1-(np.dot(rd,rdc))/(np.linalg.norm(rd)*np.linalg.norm(rdc))	
      	return rdf_tol
 
@@ -242,21 +247,17 @@ def return_energy_groups(initial_list, ui):
 def return_duplicate_pymat_pairs(initial_list, ui):
         dup_pairs = []
         sm = set_IP_structure_matcher(ui)
-        ip_dup_output = open(os.path.join(tmp_dir, "IP_duplicates.dat"),'w')
-
         for struct, structc in itertools.combinations(initial_list, 2):
             structp = get_pymatgen_structure(struct.get_frac_data())
             structpc = get_pymatgen_structure(structc.get_frac_data())
             fit = sm.fit(structp, structpc)
             if fit:
-                print "Found duplicate pair:"
                 struct_fp = struct.get_property('file_path')
                 structc_fp = structc.get_property('file_path')
-		print struct_fp
-		print structc_fp
+                output.local_message("Found duplicate pair", replica)
+                output.local_message("-- %s" % struct_fp, replica)
+                output.local_message("-- %s" % structc_fp, replica)
                 dup_pairs.append((struct_fp, structc_fp))
-	for pair in dup_pairs:
-            ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')
         return dup_pairs
 
 def get_pymatgen_structure(frac_data):
