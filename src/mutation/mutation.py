@@ -249,7 +249,7 @@ class RandomStrainMutation(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'strain_rand')
+        struct.set_property('mutation_type', 'rand_strain')
         return struct
 
 class RandomSymmetryStrainMutation(object):
@@ -307,7 +307,7 @@ class RandomSymmetryStrainMutation(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'strain_sym')
+        struct.set_property('mutation_type', 'sym_strain')
         return struct
 
 class RandomStrainMutationMoveMols(object):
@@ -372,7 +372,7 @@ class RandomStrainMutationMoveMols(object):
         struct.set_property('alpha', angle(lat_B, lat_C))
         struct.set_property('beta', angle(lat_A, lat_C))
         struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'strain_rand_mol')
+        struct.set_property('mutation_type', 'rand_strain_mol')
         return struct
 
 class RandomSymmetryStrainMutationMoveMols(object):
