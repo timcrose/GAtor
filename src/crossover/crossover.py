@@ -29,7 +29,7 @@ def main(list_of_structures, replica):
             geo_opts = [1, 2, 3, 4, 3, 4, 3, 4, 3, 4]
         elif num_mols == 4 or num_mols == 8:
             geo_opts = [1, 2, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8]
-        lat_opts = [1, 2, 3, 4, 5, 6, 7]
+        lat_opts = [1, 2, 3, 4, 5, 6, 7, 7, 7, 7]
         cross_method = [random.choice(geo_opts), random.choice(lat_opts)]
         output.local_message("-- Crossover type:  " + str(cross_method), replica)
         output_parent_properties(parent_a, parent_b, replica)

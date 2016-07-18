@@ -62,7 +62,7 @@ def get_energy_list(structure_coll):
 #	if replica == 'init_pool':
 #            spe = '{:.3f}'.format(structure.get_property('energy_light_SPE'))
 #	else: spe = '{:.3f}'.format(structure.get_property('spe_energy')) 
-	vol = '{:.1f}'.format(structure.get_property('cell_vol'))
+	vol = '{:.1f}'.format(structure.get_unit_cell_volume())
 	a = '{:.2f}'.format(structure.get_property('a'))
 	b = '{:.2f}'.format(structure.get_property('b'))
 	c = '{:.2f}'.format(structure.get_property('c'))
@@ -75,7 +75,7 @@ def get_energy_list(structure_coll):
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
 	if energy is not None: 
-            energy_list.append([ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[16:], str(parent1)[16:]])
+            energy_list.append([ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[15:], str(parent1)[15:]])
     return energy_list
 
 def write_energy_vs_addition(structure_coll):

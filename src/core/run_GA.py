@@ -187,7 +187,7 @@ class RunGA():
                 if size_of_added >= self.number_of_GA_structures:
 			message = ''
 			message += header
-			message +='Number of GA additions to pool has at leastreached user-specified number: '
+			message +='Number of GA additions to pool has reached user-specified number: '
 			message += str(size_of_added) +'\n'
 			message +='Total size of pool: '
 			message += str(size_of_common) +'\n'
@@ -678,7 +678,7 @@ def structure_create_for_multiprocessing(args):
 		return False
 
 	if ui.ortho():
-		output.local_message("---- Cell Orthogonalization ----",replica)
+		output.local_message("---- Checking Cell Orthogonalization ----",replica)
 		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 
 	#----- Cell Check -----#

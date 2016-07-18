@@ -70,7 +70,7 @@ class RandomTranslationMutation(object):
         self.alpha = self.input_struct.get_property('alpha')
         self.beta = self.input_struct.get_property('beta')
         self.gamma = self.input_struct.get_property('gamma')
-        self.cell_vol = self.input_struct.get_property('cell_vol')
+        self.cell_vol = self.input_struct.get_unit_cell_volume()
         self.cross_type = self.input_struct.get_property('crossover_type')
 
     def output(self, message): output.local_message(message, self.replica)
@@ -134,7 +134,7 @@ class RandomRotationMolMutation(object):
         self.alpha = self.input_struct.get_property('alpha')
         self.beta = self.input_struct.get_property('beta')
         self.gamma = self.input_struct.get_property('gamma')
-        self.cell_vol = self.input_struct.get_property('cell_vol')
+        self.cell_vol = self.input_struct.get_unit_cell_volume()
         self.cross_type = self.input_struct.get_property('crossover_type')
 
     def output(self, message): output.local_message(message, self.replica)
