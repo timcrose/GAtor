@@ -95,9 +95,9 @@ class ListSafeConfigParser(SafeConfigParser):
 	def grant_permission(self,path):
 		if self.get_boolean("run_settings","group_permission"):
 			if os.path.isfile(path):
-				os.system("chmod g=u "+path)
+				subprocess.call("chmod","g=u",path)
 			elif os.path.isdir(path):
-				os.system("chmod -R g=u "+path)
+				subprocess.call("chmod","-R","g=u",path)
 			else:
 				raise ValueError("Not a file or directory: "+path)
 
@@ -114,7 +114,6 @@ class ListSafeConfigParser(SafeConfigParser):
 		copied = ListSafeConfigParser()
 		copied.readfp(config_string)
 		return copied
-
 
 
 

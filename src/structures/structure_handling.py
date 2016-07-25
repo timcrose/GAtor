@@ -486,9 +486,9 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 		else:
 			st += "\n"
 		
-		if all_geo: 
-			st += "Geometry after modification:\n"
-			st += print_aims(struct)
+#		if all_geo: 
+#			st += "Geometry after modification:\n"
+#			st += print_aims(struct)
 		output.local_message(st,replica)
 	if count==0 and verbose:
 		st = "-- Cell modification uncessary for structure "

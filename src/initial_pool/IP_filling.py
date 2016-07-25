@@ -35,6 +35,7 @@ def main():
     	added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
 	num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
 	files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
+	ui.grant_permission(added_user_structures)
 
         st = ' ------------------------------------------------------------------------'
 	gst = '|                       GAtor filling initial pool                       |'
@@ -98,7 +99,6 @@ def file_lock_structures(user_structures_dir, added_user_structures):
 				ffile.write(filename + '\n')
 				files_to_add.append(filename)
 		ffile.close()	
-	os.system("chmod 771 "+added_user_structures)
 	return files_to_add
 
 def convert_to_structures(files_to_add):

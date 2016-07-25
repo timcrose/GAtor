@@ -31,7 +31,7 @@ def get_pymatgen_structure(frac_data):
         return structp
 
 def return_spacegroup(structp):
- 	return SGA(structp, symprec= 0.7).get_spacegroup()
+ 	return SGA(structp, symprec= 0.1).get_spacegroup()
 
 if __name__ == "__main__":
         main()
