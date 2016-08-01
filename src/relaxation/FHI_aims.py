@@ -326,7 +326,7 @@ class FHIAimsRelaxation():
 
 	for i in range (10): #Allow 10 times for the job to successfully launch
 		outfile=open(aimsout,"w")
-		outfile = open(aimserr,"w")
+		errfile = open(aimserr,"w")
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
 		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)

@@ -69,7 +69,8 @@ def get_energy_list(structure_coll):
 	alpha = '{:.1f}'.format(structure.get_property('alpha'))
 	beta = '{:.1f}'.format(structure.get_property('beta'))
 	gamma = '{:.1f}'.format(structure.get_property('gamma'))
-	spacegroup = '{0!s}'.format(structure.get_property('space_group').replace(' ',''))
+	try:	spacegroup = '{0!s}'.format(structure.get_property('py_space_group').replace(' ',''))
+	except: spacegroup = structure.get_property('space_group')
 	mut = structure.get_property('mutation_type')
         crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
@@ -111,7 +112,7 @@ def write_energy_hierarchy(structure_coll):
 		ranked_energy_list.append([count + 1] + energy_list[count])
 	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
                                                              'Spacegroup', 'Mutation', 'Crossover', 'ParentA', 'ParentB'])
-	form = '{:<5} {:<5} {:<12} {:<12} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<9} {:<8} {:<8}'
+	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<9} {:<8} {:<8}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'

@@ -24,7 +24,8 @@ def main(list_of_structures, replica):
     if num_mols == 2:
     	geo_opts = [1, 2, 3, 4, 3, 4, 3, 4, 3, 4]
     elif num_mols == 4 or num_mols == 8:
-        geo_opts = [1, 2, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8]
+        geo_opts = [3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8]
+	geo_opts = [1, 2]
     lat_opts = [1, 2, 3, 4, 5, 6, 7, 7, 7, 7]
     cross_method = [random.choice(geo_opts), random.choice(lat_opts)]
     output.local_message("-- Crossover type:  " + str(cross_method), replica)
@@ -65,6 +66,11 @@ class Crossover(object):
         '''combines molecules of two parents based on crossmethod type'''
 
         num_atom_per_mol = int(len(geo_a)/num_mols)
+	rand = np.random.random()
+	if rand < 0.25:
+		self.output("-- Changing orientation of parent a")
+		geo_a = self.flip_parent(geo_a)
+
         mol_listA = [geo_a[x:x+num_atom_per_mol] for x in range(0, len(geo_a), num_atom_per_mol)]
         mol_listB = [geo_b[x:x+num_atom_per_mol] for x in range(0, len(geo_b), num_atom_per_mol)]
 
@@ -156,6 +162,67 @@ class Crossover(object):
 		lattice = [latA, latB, latC]
 	return lattice
 
+    def flip_parent(self, parent_geo):
+        temp_geo = parent_geo
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        atom_types = [temp_geo[i][3] for i in range(len(temp_geo))]
+        mol_list_COM = self.get_COM_mol_list(mol_list)
+        rotated_geo = self.rotate_molecules(mol_list, mol_list_COM)
+        flip_struct = Structure() 
+        for i in range(len(rotated_geo)):
+            flip_struct.build_geo_by_atom(float(rotated_geo[i][0]), float(rotated_geo[i][1]),
+                                     float(rotated_geo[i][2]), atom_types[i])
+        return flip_struct.geometry
+
+    def get_COM_mol_list(self, mol_list):
+        ''' Returns COM of each molecule as np array '''
+        COM_mol_list = []
+        for mol in mol_list:
+            N = len(mol)
+            rsum = [0, 0, 0]
+            for atom in mol:
+                rsum[0] +=atom[0]
+                rsum[1] +=atom[1]
+                rsum[2] +=atom[2]
+            COM = np.array(rsum)/N
+            COM_mol_list.append(COM)
+        return np.asarray(COM_mol_list)
+
+    def rotate_molecules(self, mol_list, mol_list_COM):
+        rot_geometry = []
+        flip_vecs = ([[180, 0, 0], [0, 180, 0], [0, 0, 180],
+                         [90, 0, 0], [0, 90, 0], [0, 0, 90],
+                         [180, 0, 0], [0, 180, 0], [0, 0, 180],
+                         [270, 0, 0], [0, 270, 0], [0, 0, 270]])
+        rand_vec = random.choice(flip_vecs)
+	self.output("-- Rotation of parent a geometry: %s" % (rand_vec))
+        for mol in mol_list:
+            i = 1
+            theta= (np.pi/180)*rand_vec[0]
+            psi = (np.pi/180)*rand_vec[1]
+            phi= (np.pi/180)*rand_vec[2]
+            mol_COM = np.array([mol_list_COM[i][0], mol_list_COM[i][1],mol_list_COM[i][2]])
+            for atom in mol:
+                atom_vec = np.array([atom[0], atom[1], atom[2]]) - mol_COM
+                rot_geometry.append(np.dot(np.asarray(self.rotation_matrix(theta, psi, phi)),atom_vec) + mol_COM)
+            i+=1
+        return rot_geometry
+
+    def rotation_matrix(self, theta, psi, phi):
+        Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
+                        (-np.cos(phi) * np.sin(psi)) + (np.sin(phi) * np.sin(theta) * np.cos(psi)),
+                        (np.sin(phi) * np.sin(psi)) + (np.cos(phi) * np.sin(theta) * np.cos(psi))),
+
+                        ((np.cos(theta) * np.sin(psi)),
+                        (np.cos(phi) * np.cos(psi)) + (np.sin(phi) * np.sin(theta) * np.sin(psi)),
+                        (-np.sin(phi) * np.cos(psi)) + (np.cos(phi) * np.sin(theta) * np.sin(psi))),
+
+                        ((-np.sin(theta)),
+                        (np.sin(phi) * np.cos(theta)),
+                        (np.cos(phi) * np.cos(theta)))])
+        return Rxyz
+
     def create_child_struct(self,cross_type, child_geometry, child_lattice):
 	child_latA = child_lattice[0]
 	child_latB = child_lattice[1]
@@ -165,7 +232,7 @@ class Crossover(object):
         beta = self.angle(child_latA, child_latC)
         gamma = self.angle(child_latA, child_latB)
         new_struct = Structure() #Create new Structure() for child
-        new_struct.build_geo_whole(child_geometry)
+	new_struct.build_geo_whole(child_geometry) 
         new_struct.set_property('lattice_vector_a', child_latA)
         new_struct.set_property('lattice_vector_b', child_latB)
         new_struct.set_property('lattice_vector_c', child_latC)

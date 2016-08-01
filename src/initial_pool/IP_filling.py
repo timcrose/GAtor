@@ -168,7 +168,7 @@ def return_non_duplicates(initial_list, replica):
             if struct_fp in remove_list:
                 continue
             struct.set_property('ID',0)
-	    struct = compute_spacegroup_pymatgen.main(struct)
+	    #struct = compute_spacegroup_pymatgen.main(struct)
 	    struct.set_property('crossover_type', '')
             struct.set_property('mutation_type', '')
             structure_collection.add_structure(struct, stoic, 0)
@@ -189,6 +189,9 @@ def return_duplicate_pairs(initial_list, ui, replica):
     if check_if_vec is not None:
         for struct, structc in itertools.combinations(initial_list, 2):
             rdf_tol = compute_rdf_diff(struct, structc, ui)
+	    #output.local_message("newpair", replica)
+	    #output.local_message(rdf_tol, replica)
+	    #output.local_message((struct.get_property('file_path'), structc.get_property('file_path')), replica)
             if rdf_tol < ui.get_eval('initial_pool', 'vector_cosdiff_threshold'):
 	        fit = compute_pymatgen_fit(struct, structc, ui)
 	    	if fit:

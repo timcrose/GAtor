@@ -15,7 +15,7 @@ def main(struct):
 	structp = get_pymatgen_structure(struct.get_frac_data())
 	SG = str(return_spacegroup(structp))[:-11]
 	#print SG
-	struct.set_property('space_group', SG)
+	struct.set_property('py_space_group', SG)
 	return struct
 
 def get_pymatgen_structure(frac_data):
