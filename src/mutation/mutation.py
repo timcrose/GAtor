@@ -344,18 +344,12 @@ class SwapMolMutation(object):
             mol_info.append([mol, mol_list_COM[mol_in]])
             mol_in +=1
 	mol_choice1 = random.choice(mol_info)
-	self.output("here")
-	self.output(mol_choice1[0])
 	while True:
             mol_choice2 = random.choice(mol_info)
             if mol_choice2[0][0][0] != mol_choice1[0][0][0]:	
                 break
-	self.output("here2")
-        self.output(mol_choice2)
         self.output("-- Swapping 2 molecules")
         for mol in mol_list:
-            self.output(mol[0][0])
-            self.output(mol_choice1[1])		
             if mol[0][0] == mol_choice1[0][0][0]:
 	        for atom in mol:
                     atom_vec = np.array([atom[0], atom[1], atom[2]]) - mol_choice1[1] + mol_choice2[1]
@@ -367,7 +361,6 @@ class SwapMolMutation(object):
             else:
                 for atom in mol:
                     swap_geometry.append(np.array([atom[0], atom[1], atom[2]]))
-	self.output(swap_geometry)
         return swap_geometry
 
     def create_swapped_struct(self, swapped_geo, atom_types):
