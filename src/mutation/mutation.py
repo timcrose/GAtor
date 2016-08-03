@@ -31,9 +31,10 @@ def select_mutator(input_struct, num_mols, replica):
     Returns: Mutation Class
     '''
     mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
-	              "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols"])
+	              "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols",
+                      "Swap_mol"])
 
-    mutation_list =(["Sym_rot_mol"])
+    #mutation_list =(["Swap_mol"])
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -47,6 +48,8 @@ def select_mutator(input_struct, num_mols, replica):
         mutator = RandomRotationMolMutation(input_struct, num_mols, replica)
     elif mut_choice == "Sym_rot_mol":
 	mutator = SymRotationMolMutation(input_struct, num_mols, replica)
+    elif mut_choice == "Swap_mol":
+	mutator = SwapMolMutation(input_struct, num_mols, replica)
     elif mut_choice == "Strain_rand_mols":
         mutator = RandomStrainMutationMoveMols(input_struct, num_mols, replica)
     elif mut_choice == "Strain_rand":
@@ -295,6 +298,96 @@ class SymRotationMolMutation(object):
         struct.set_property('beta', self.beta)
         struct.set_property('gamma', self.gamma)
         struct.set_property('mutation_type', 'sym_rot_mol')
+        return struct
+
+class SwapMolMutation(object):
+    ''' Swaps any two molecules in the unit cell'''
+
+    def __init__(self, input_struct, num_mols, replica):
+        self.input_struct = input_struct
+        self.num_mols = num_mols
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+        self.A = self.input_struct.get_property('lattice_vector_a')
+        self.B = self.input_struct.get_property('lattice_vector_b')
+        self.C = self.input_struct.get_property('lattice_vector_c')
+        self.alpha = self.input_struct.get_property('alpha')
+        self.beta = self.input_struct.get_property('beta')
+        self.gamma = self.input_struct.get_property('gamma')
+        self.cell_vol = self.input_struct.get_unit_cell_volume()
+        self.cross_type = self.input_struct.get_property('crossover_type')
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.swapped_mutation()
+
+    def swapped_mutation(self):
+        '''Calls for a random rotation to each molecule's COM and returns a Structure'''
+        temp_geo = self.geometry
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        mol_list_COM = get_COM_mol_list(mol_list)
+        atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))]
+        swapped_geometry = self.swap_molecules(mol_list, mol_list_COM)
+        swapped_struct = self.create_swapped_struct(swapped_geometry, atom_type_list)
+        return swapped_struct
+
+    def swap_molecules(self, mol_list, mol_list_COM):
+        ''' Randomly rotates each molecule within gaussian dist'''
+        mol_in = 0
+        swap_geometry = []
+        mol_info = []
+        for mol in mol_list:
+            mol_info.append([mol, mol_list_COM[mol_in]])
+            mol_in +=1
+	mol_choice1 = random.choice(mol_info)
+	self.output("here")
+	self.output(mol_choice1[0])
+	while True:
+            mol_choice2 = random.choice(mol_info)
+            if mol_choice2[0][0][0] != mol_choice1[0][0][0]:	
+                break
+	self.output("here2")
+        self.output(mol_choice2)
+        self.output("-- Swapping 2 molecules")
+        for mol in mol_list:
+            self.output(mol[0][0])
+            self.output(mol_choice1[1])		
+            if mol[0][0] == mol_choice1[0][0][0]:
+	        for atom in mol:
+                    atom_vec = np.array([atom[0], atom[1], atom[2]]) - mol_choice1[1] + mol_choice2[1]
+                    swap_geometry.append(atom_vec)
+            elif mol[0][0] == mol_choice2[0][0][0]:
+                for atom in mol:
+                    atom_vec = np.array([atom[0], atom[1], atom[2]]) - mol_choice2[1] + mol_choice1[1]
+                    swap_geometry.append(atom_vec)
+            else:
+                for atom in mol:
+                    swap_geometry.append(np.array([atom[0], atom[1], atom[2]]))
+	self.output(swap_geometry)
+        return swap_geometry
+
+    def create_swapped_struct(self, swapped_geo, atom_types):
+        ''' Creates Structure from mutated geometry'''
+        struct = Structure()
+        for i in range(len(swapped_geo)):
+            struct.build_geo_by_atom(float(swapped_geo[i][0]), float(swapped_geo[i][1]),
+                                     float(swapped_geo[i][2]), atom_types[i])
+        struct.set_property('lattice_vector_a', self.A)
+        struct.set_property('lattice_vector_b', self.B)
+        struct.set_property('lattice_vector_c', self.C)
+        struct.set_property('a', leng(self.A))
+        struct.set_property('b', leng(self.B))
+        struct.set_property('c', leng(self.C))
+        struct.set_property('cell_vol', self.cell_vol)
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha',self.alpha)
+        struct.set_property('beta', self.beta)
+        struct.set_property('gamma', self.gamma)
+        struct.set_property('mutation_type', 'swap_mol')
         return struct
 
 class RandomStrainMutation(object):
