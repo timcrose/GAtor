@@ -15,7 +15,13 @@ def main(struct):
 	structp = get_pymatgen_structure(struct.get_frac_data())
 	SG = str(return_spacegroup(structp))[:-11]
 	#print SG
-	struct.set_property('py_space_group', SG)
+	if "(" in SG: #Successful identification
+		left = SG.index("(")
+		right = SG.index(")")
+		struct.set_property("space_group",int(SG[left+1:right]))
+#	struct.set_property('py_space_group', SG)
+	else:
+		struct.set_property("space_group",SG)
 	return struct
 
 def get_pymatgen_structure(frac_data):
@@ -31,7 +37,7 @@ def get_pymatgen_structure(frac_data):
         return structp
 
 def return_spacegroup(structp):
- 	return SGA(structp, symprec= 0.1).get_spacegroup()
+ 	return SGA(structp, symprec= 1.0).get_spacegroup()
 
 if __name__ == "__main__":
         main()
