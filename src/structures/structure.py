@@ -181,22 +181,13 @@ class Structure(object):
         C = self.get_property('lattice_vector_c')
 	alpha, beta, gamma = self.get_lattice_angles()
 	a, b, c = self. get_lattice_magnitudes()
-        lat_mat = np.zeros((3,3))
-        for i in range(3):
-                lat_mat[i][0] = A[i]
-                lat_mat[i][1] = B[i]
-                lat_mat[i][2] = C[i]
-        lat_mat_f = np.linalg.inv(lat_mat)
-        xyz = [i for i in range(len(geo))]
-        fxyz = [i for i in range(len(geo))]
         atoms = [i for i in range(len(geo))]
+	lattice_vector = np.transpose([A,B,C])
+	latinv = np.linalg.inv(lattice_vector)
+	coords = []
         for i in range(len(geo)):
-                xyz[i]= [geo[i][0], geo[i][1], geo[i][2]]
                 atoms[i] = geo[i][3]
-                fxyz[i]= xyz[i][0]*lat_mat_f[0]+xyz[i][1]*lat_mat_f[1]+xyz[i][2]*lat_mat_f[2]
-        coords = []
-        for i in range(len(fxyz)):
-                coords.append([fxyz[i][0],fxyz[i][1],fxyz[i][2]])
+		coords.append(np.dot(latinv,[geo[i][0],geo[i][1],geo[i][2]]))
         return coords, atoms, a, b, c, alpha, beta, gamma
 
     def get_lattice_angles(self):
