@@ -15,7 +15,8 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
-from utilities import misc, compute_spacegroup_pymatgen
+from utilities import misc
+from utilities import space_group_utils as sgu
 from selection import structure_selection
 import copy, shutil, multiprocessing
 
@@ -124,7 +125,7 @@ class RunGA():
 				continue
 
 			#---- Compute Spacegroup of Relaxed Structure ----#
-			struct = compute_spacegroup_pymatgen.main(struct)
+			struct = sgu.identify_space_group(struct)
 			self.output("-- Structure's space group: %s" % (struct.get_property('space_group')))
 
 			#---- Check If Energy is Global Minimum -----#
