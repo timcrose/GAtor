@@ -158,7 +158,6 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 	structure_handling.cell_lower_triangular(struct,False)
 	structure_handling.move_molecule_in(struct,
 					    len(struct.geometry)/napm,
-					    napm,
 					    False)
 
 def _test_reconstruction(path):
