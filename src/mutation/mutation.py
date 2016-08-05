@@ -35,6 +35,8 @@ def main(struct, replica):
         num_mols = len(mutated_struct.geometry)/napm
         mutate_obj = select_mutator(input_struct,num_mols,replica)
         mutated_struct = mutate_obj.mutate()
+        if mutated_struct == False:
+            return False
 
         sgu.rebuild_by_symmetry(mutated_struct,napm=napm,create_duplicate=False)
         if len(mutated_struct.geometry)!=tapc:
