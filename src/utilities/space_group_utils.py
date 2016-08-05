@@ -32,7 +32,7 @@ def reduce_by_symmetry(struct,create_duplicate=True):
 	Reduce a strucutre with multiple molecules to single molecules
 	'''
 	if create_duplicate:
-		struct = copy.deepcopy(create_duplicate)
+		struct = copy.deepcopy(struct)
 	structp = struct.get_pymatgen_structure()
 	
 	sga = SGA(structp, symprec=1.0)
