@@ -675,7 +675,7 @@ def structure_create_for_multiprocessing(args):
 		new_struct.set_property('mutation_type', 'no_mutation')
 
 	if new_struct is False: 
-		output.local_message('-- Mutation failure'.replica)
+		output.local_message('-- Mutation failure',replica)
 		return False
 
 	if ui.ortho():
