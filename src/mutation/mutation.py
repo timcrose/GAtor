@@ -11,6 +11,7 @@ import itertools
 
 from core import user_input,output
 from structures.structure import Structure
+from utilities import space_group_utils as sgu
 
 def main(struct, replica):
     '''
@@ -18,9 +19,30 @@ def main(struct, replica):
     Returns: A single Structure() if mutation is successful or False if mutation fails 
     '''
     input_struct = deepcopy(struct)
-    num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
-    mutate_obj = select_mutator(input_struct, num_mols, replica)
-    mutated_struct = mutate_obj.mutate()
+    ui = user_input.get_config()
+    num_mols = ui.get_eval('unit_cell_settings', 'num_molecules')
+    napm = len(input_struct.geometry)/num_mols
+    tapc = napm*num_mols
+    if ui.get_boolean("mutation","enable_symmetry"):
+        #Will reduce the cell first before mutation
+        output.local_message("Symmetry is enabled for mutation",replica)
+        mutated_struct = sgu.reduce_by_symmetry(input_struct)
+
+        if len(mutated_struct.geometry) % napm != 0:
+            output.local_message("Structure reduction by symmetry failed", replica)
+            return False
+
+        num_mols = len(mutated_struct.geometry)/napm
+        mutate_obj = select_mutator(input_struct,num_mols,replica)
+        mutated_struct = mutate_obj.mutate()
+
+        sgu.rebuild_by_symmetry(mutated_struct,napm=napm,create_duplicate=False)
+        if len(mutated_struct.geometry)!=tapc:
+            output.local_message('Structure reconstruction by symmetry failed',replica)
+            return False
+    else:  
+        mutate_obj = select_mutator(input_struct, num_mols, replica)
+        mutated_struct = mutate_obj.mutate()
     return mutated_struct
    
 def select_mutator(input_struct, num_mols, replica):
@@ -30,9 +52,14 @@ def select_mutator(input_struct, num_mols, replica):
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
-	              "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols",
-                      "Swap_mol"])
+    if num_mols > 1:
+        mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
+                          "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols",
+                          "Swap_mol"])
+    else:
+        mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
+                          "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols"])
+ 
 
     #mutation_list =(["Swap_mol"])
     try:
