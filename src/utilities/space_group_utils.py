@@ -8,7 +8,7 @@ from pymatgen import Structure as StructureP
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer as SGA
 from pymatgen.symmetry.groups import in_array_list
 import pymatgen
-from core import structure, structure_handling
+from structure import structure, structure_handling
 import numpy as np
 import copy
 import spglib
