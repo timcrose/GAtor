@@ -21,20 +21,24 @@ def main(struct, replica):
     input_struct = deepcopy(struct)
     ui = user_input.get_config()
     num_mols = ui.get_eval('unit_cell_settings', 'num_molecules')
-    napm = len(input_struct.geometry)/num_mols
+    napm = int(len(input_struct.geometry)/num_mols)
     tapc = napm*num_mols
     if ui.get_boolean("mutation","enable_symmetry"):
         #Will reduce the cell first before mutation
         output.local_message("Symmetry is enabled for mutation",replica)
         mutated_struct = sgu.reduce_by_symmetry(input_struct)
+        symmetry_operations = mutated_struct.properties["symmetry_operations"]
 
         if len(mutated_struct.geometry) % napm != 0:
             output.local_message("Structure reduction by symmetry failed", replica)
             return False
 
-        num_mols = len(mutated_struct.geometry)/napm
-        mutate_obj = select_mutator(input_struct,num_mols,replica)
+        num_mols = int(len(mutated_struct.geometry)/napm)
+        mutate_obj = select_mutator(mutated_struct,num_mols,replica)
         mutated_struct = mutate_obj.mutate()
+        mutated_struct.properties["symmetry_operations"] = symmetry_operations
+        if mutated_struct == False:
+            return False
 
         sgu.rebuild_by_symmetry(mutated_struct,napm=napm,create_duplicate=False)
         if len(mutated_struct.geometry)!=tapc:
