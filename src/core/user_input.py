@@ -80,6 +80,9 @@ class ListSafeConfigParser(SafeConfigParser):
 	def get_property_to_optimize(self):
 		return self.get("run_settings","property_to_optimize")
 
+	def get_nmpc(self):
+		return self.get_eval("run_settings","num_molecules")
+
 	
 	def verbose(self):
 		return self.get_boolean("run_settings","verbose")
