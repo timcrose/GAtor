@@ -62,7 +62,7 @@ def select_mutator(input_struct, num_mols, replica):
                           "Swap_mol"])
     else:
         mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
-                          "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols"])
+                          "Strain_rand_mols","Strain_sym_mols"])
  
 
     #mutation_list =(["Swap_mol"])
@@ -279,6 +279,8 @@ class SymRotationMolMutation(object):
 	self.output("-- Rotation %s" % (rot))
 	mol_in = 0
         mol_info = []
+	self.output("##########For debug purposes##########")
+	self.output("#####This is self.num_mols: "+str(self.num_mols))
         mol_combos = list(itertools.combinations(range(self.num_mols), 2))
         for mol in mol_list:
 	    mol_info.append([mol, mol_list_COM[mol_in]])
