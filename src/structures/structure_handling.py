@@ -38,7 +38,9 @@ def cell_lower_triangular(struct,create_duplicate=True):
 	    abs(struct.properties["lattice_vector_b"][2])<0.001):
 		return struct
 
-	struct.properties.update(lattice_parameters(struct)) #Add in case not calculated
+	struct.properties.update(lattice_parameters(struct)) 
+	#Add in case not calculated
+
 	new_lattice=lattice_lower_triangular(struct)
 	old_lattice=struct.get_lattice_vectors()
 	rots = numpy.dot(numpy.transpose(new_lattice),numpy.linalg.inv(numpy.transpose(old_lattice)))
@@ -245,14 +247,14 @@ def mole_recognize(struct):
 		geo=file_handler.get_molecule_geo(molename)
 		for j in range (occurance):
 			com=cm_calculation(struct,range(sum,sum+napm))
-			orient=mole_get_orientation(struct,geo,range(sum,sum+napm),com,False)
+			orient=mole_get_orientation(struct,geo,range(sum,sum+napm),com,create_duplicate=False)
 			if orient==False:
 				return False
 			result.append(com+orient)
 				#if a molecule is torn apart by relaxation, mole_get_orientation will return False, thus causing error for connecting the list
 	return result
 
-def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
+def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=True):
 	'''
 	Check if the list of atoms provided in struct fit the molecule specified by mole_name
 	if yes, then the orientation of the molecule is given in a list
@@ -261,6 +263,7 @@ def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
 	'''
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
+		geo = copy.deepcopy(geo)
 	if com==None:
 		com=cm_calculation(struct,atom_list)
 	if len(atom_list)!=len(geo):
@@ -272,7 +275,7 @@ def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
 	lll=0
 	match_molecule_length_requirement=0.0001
 	match_molecule_cross_tolerance=0.001
-	match_molecule_tolerance=ui.get_eval("unit_cell_settings","recognize_tolerance")
+	match_molecule_tolerance=tol
 	result=[False,0,0,0,0,0]
 	while lll<2:
 		lll+=1
@@ -281,7 +284,7 @@ def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
 		rotation_axis=[0,0,0]
 		chosen=None
 		while (vec2==None) and (i<len(geo)):
-			diff=[struct.geometry[atom_list[i]]-geo[i][j] for j in range (3)]
+			diff=[struct.geometry[atom_list[i]][j]-geo[i][j] for j in range (3)]
 			leng=numpy.linalg.norm(diff)
 			if leng<0.0001:
 				rotation_axis=struct.geometry[atom_list[i]][:3]
@@ -301,7 +304,7 @@ def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
 			if vec2==None:
 				vec2=[0,0,0]
 			rotation_axis=numpy.cross(vec1,vec2)
-		r1=numpy.linalg.norm(rotation_axis)
+		rl=numpy.linalg.norm(rotation_axis)
 		if rl>match_molecule_cross_tolerance:
 			for j in range (3):
 				rotation_axis[j]/=rl
@@ -309,8 +312,8 @@ def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
 				chosen=0
 				while (chosen<len(geo)) and (numpy.linalg.norm(numpy.cross(rotation_axis,struct.geometry[atom_list[chosen]]))<match_molecule_cross_tolerance):
 					chosen+=1
-			v1=struct.geometry[atom_list[chosen]][:3]
-			v2=geo[chosen][:3]
+			v1=[struct.geometry[atom_list[chosen]][x] for x in range(3)]
+			v2=[geo[chosen][x] for x in range(3)]
 			m1=numpy.dot(v1,rotation_axis)
 			v1=[v1[j]-m1*rotation_axis[j] for j in range (3)]
 			m2=numpy.dot(v2,rotation_axis)
@@ -326,8 +329,14 @@ def mole_get_orientation(struct,atom_list,geo,com=None,create_duplicate=True):
 			resi=0
 			for i in range (len(geo)):
 				resi+=numpy.linalg.norm([struct.geometry[atom_list[i]][j]-geo_1[i][j] for j in range (3)])**2
+#			print struct.get_geometry_atom_format()
+			for j in range (3):
+				result[j+1]=rotation_axis[j]
+			result[4]=numpy.rad2deg(rad)
+			result[5]=resi		
+
 			if resi<match_molecule_tolerance:
-				for j in rnage (3):
+				for j in range (3):
 					result[j+1]=rotation_axis[j]
 				result[4]=numpy.rad2deg(rad)
 				result[5]=resi
@@ -384,7 +393,25 @@ def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 def angle(l1,l2):
 	return (numpy.rad2deg(numpy.arccos(numpy.dot(l1,l2)/(numpy.linalg.norm(l1)*numpy.linalg.norm(l2)))))
 
-def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=True):#Replica name is passed in for verbose output
+def cell_modification(struct,napm=None,create_duplicate=True):
+	'''
+	Cell modification using Niggli reduction
+	'''
+	if create_duplicate:
+		struct = copy.deepcopy(struct)
+	lats = struct.get_lattice_vectors()
+	from spglib import niggli_reduce
+	reduced_lats = 	niggli_reduce(lats)
+	del(struct.properties["lattice_vector_a"])
+	del(struct.properties["lattice_vector_b"])
+	del(struct.properties["lattice_vector_c"])
+	struct.set_lattice_vectors(reduced_lats)
+	nmpc = len(struct.geometry)/napm
+	cell_lower_triangular(struct,False)
+	move_molecule_in(struct,nmpc,False)
+	return struct
+
+def cell_modification_old (struct,replica=ui.get_replica_name(),create_duplicate=True):#Replica name is passed in for verbose output
 	'''
 	Method found in the 2011 Lonie paper
 	Make the skewed angle correct
@@ -480,7 +507,7 @@ def cell_modification (struct,replica=ui.get_replica_name(),create_duplicate=Tru
 	struct=cell_lower_triangular(struct,False)
 
 	if count>0 and verbose:
-		st="-- Cell modification required  for structure " 
+		st="-- Cell modification required for structure " 
 		if struct.struct_id!=None:
 			st += str(struct.struct_id)
 		else:
@@ -505,7 +532,9 @@ def cell_check(struct,replica):
 	sname = "cell_check_settings"
 #	output.local_message("--------Begin cell check--------",replica)
 	struct = copy.deepcopy(struct)
-	struct = cell_modification(struct,replica=replica,create_duplicate=False)
+	struct = cell_modification(struct,
+				   int(struct.get_n_atoms()/nmpc),
+				   create_duplicate=False)
 
 	#Volume check
 	standard_volume=ui.get_eval(sname,"target_volume")
@@ -851,4 +880,4 @@ def main():
 if __name__ == '__main__':
 	main2()
 	
-	
+
