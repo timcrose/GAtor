@@ -279,8 +279,6 @@ class SymRotationMolMutation(object):
 	self.output("-- Rotation %s" % (rot))
 	mol_in = 0
         mol_info = []
-	self.output("##########For debug purposes##########")
-	self.output("#####This is self.num_mols: "+str(self.num_mols))
         mol_combos = list(itertools.combinations(range(self.num_mols), 2))
         for mol in mol_list:
 	    mol_info.append([mol, mol_list_COM[mol_in]])
