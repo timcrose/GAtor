@@ -71,6 +71,7 @@ class RunGA():
 			self.processes = self.ui.get_eval(sname,"processes_per_replica")
 			if self.ui.has_option(sname,"processes_per_node"):
 				self.processes = min(self.ui.get_eval(sname,"processes_per_node"), self.processes)
+
 		if self.processes > 1:
 			self.worker_pool = multiprocessing.Pool(processes=self.processes)
 
@@ -405,7 +406,8 @@ class RunGA():
 
 		#-----Structure modification of angles. Checks reasonable structure is created -----#
 		self.output("\n--Cell Checks--")	
-		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
+		structure_handling.cell_modification_old(new_struct, self.replica,create_duplicate=False)
+#		structure_handling.cell_modification(new_struct,
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
 		self.set_parents(structures_to_cross, new_struct)
@@ -621,6 +623,7 @@ def structure_create_for_multiprocessing(args):
 	This is a function for structure creation reading straight from the ui.conf file
 	'''
 	ui = user_input.get_config()
+	nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 	replica, stoic = args
 	#----- Structure Selection -----#
 	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
@@ -650,7 +653,7 @@ def structure_create_for_multiprocessing(args):
                 structures_to_cross[1].get_geometry_atom_format(), replica)
 		output.local_message("-- Child's geometry --\n" + 
 		new_struct.get_geometry_atom_format(),replica)
-	
+
 	#----- Mutation Execution -----#
 	output.local_message("\n---- Mutation ----",replica)
 	rand1 = np.random.random()	
@@ -679,8 +682,15 @@ def structure_create_for_multiprocessing(args):
 		return False
 
 	if ui.ortho():
-		output.local_message("---- Checking Cell Orthogonalization ----",replica)
-		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
+		output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
+#		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
+		napm = int(new_struct.get_n_atoms()/nmpc)
+		structure_handling.cell_modification(new_struct, 
+						     napm,
+						     create_duplicate=False)
+		if ui.all_geo():
+			output.local_message(new_struct.get_geometry_atom_format(),
+					     replica)
 
 	#----- Cell Check -----#
 	output.local_message("\n---- Cell Checks ----",replica)
