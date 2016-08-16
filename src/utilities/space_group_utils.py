@@ -124,6 +124,7 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 		raise ValueError("Missing symmetry operation "+
 		"in both argument (symmops) and properties (symmetry_operations)")
 
+	lats = struct.get_lattice_vectors()
 	if symmops == None:
 		symmops = []
 		for rot, trans in struct.properties["symmetry_operations"]:
@@ -131,6 +132,11 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 			     from_rotation_and_translation(rot, trans)
 			symmops.append(op)
 		del struct.properties["symmetry_operations"]
+
+	for op in symmops:
+		if not is_compatible(lats,op.rotation_matrix):
+#			print "Rebuild symmetry operation incompatible"
+			return False
 		
 	for op in symmops:
 		for old_site in structp:
@@ -159,6 +165,45 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 	structure_handling.move_molecule_in(struct,
 					    len(struct.geometry)/napm,
 					    False)
+
+def is_transformation_matrix(mat,tol=0.01):
+	'''
+	Determine whether or not a matrix is a rotation matrix
+	'''
+	det = np.linalg.det(mat)
+	if abs(det - 1) > tol and abs(det + 1) > tol:
+		return False
+
+	n = np.dot(np.transpose(mat),mat)
+#	print n
+	for i in range(len(mat)):
+		for j in range(len(mat)):
+			if (i==j and abs(n[i][i]-1) > tol)\
+			or (i!=j and abs(n[i][j]) > tol):
+				return False
+	return True
+
+def is_compatible(lat,rot,tol=0.01):
+	'''
+	Determine whether a rotation operation is compatible with a given lattice
+	Lattice should be given as row vectors
+	'''
+	latt = np.transpose(lat)
+	return is_transformation_matrix(np.dot(latt,
+					np.dot(rot,np.linalg.inv(latt))))
+
+def are_symmops_compatible(lat,symmops,tol=0.01):
+	'''
+	Determine whether a set of symmetry operations (with rot and trans)
+	is compatible with a given lattice
+	'''
+	for op in symmops:
+		if not is_compatible(lat,op[0]):
+#			print "This is not compatible!"
+#			print lat
+#			print op
+			return False
+	return True
 
 def _test_reconstruction(path):
 	f = open(path,"r")
