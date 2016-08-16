@@ -160,7 +160,7 @@ def launch_parallel_mpirun(use_srun=False):
 
 	output.time_log("Number of parallel replicas: "+str(nor))
 	output.time_log("Nodes assigned to each replica (0 indicates that this replica is assigned a fraction of a node and is not the last replica on the node: " + " ".join(map(str,npr)))
-	output.time_log("Processes_assigned to each replica: "+" ".join(map(str,ppr)))
+	output.time_log("Processes assigned to each replica: "+" ".join(map(str,ppr)))
 
 	output.time_log("Total available nodes: %i; assigned nodes: %i" % (non,sum(npr)))
 
@@ -179,7 +179,8 @@ def launch_parallel_mpirun(use_srun=False):
 	processes = [] 
 	new_ui = deepcopy(ui)
 	new_ui.set(sname,"parallelization_method","serial")
-	new_ui.set(sname,"processes_per_node",str(ppn))
+	if not ui.has_option(sname,"processes_per_node"):
+		new_ui.set(sname,"processes_per_node",str(ppn))
 	new_ui.set(sname,"im_not_master_process","TRUE")
 	for i in range(nor):
 		new_ui.set(sname,"replica_name",misc.get_random_index())
