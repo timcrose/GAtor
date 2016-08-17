@@ -91,9 +91,9 @@ class Comparison:
         if e_tol == None: raise Exception
 
         sim_list = []
-        en = float(self.struct.get_property('energy'))
+        en = float(self.struct.get_property(self.ui.get_property_to_optimize()))
 	for index, comp_struct in self.structure_coll:
-            comp_en = float(comp_struct.get_property('energy'))	
+            comp_en = float(comp_struct.get_property(self.ui.get_property_to_optimize()))
             if en - e_tol <= comp_en <= en + e_tol:
 #		self.output("comp en: " +str(comp_en)) 
                 sim_list.append((index, comp_struct)) 
