@@ -79,6 +79,12 @@ class Symmetric_Crossover(object):
 		self.num_mol = self.ui.get_eval("unit_cell_settings","num_molecules")
 		self.napm = int(len(parent_a.geometry)/self.num_mol)
 
+
+
+	def crossover(self):
+		'''
+		Main crossover procedure
+		'''
 		self.parent_a_reduced = reduce_by_symmetry(self.parent_a,
 							   create_duplicate=True)
 		if len(self.parent_a_reduced.geometry) % self.napm != 0:
@@ -100,11 +106,6 @@ class Symmetric_Crossover(object):
 				self.parent_a_reduced.get_geometry_atom_format(),
 				 self.replica)
 
-
-	def crossover(self):
-		'''
-		Main crossover procedure
-		'''
 		#Check to avoid deadloop
 		if not self.check_probs():
 			raise ValueError("All symmetric crossover probability set to extremely small, but allow_no_crossover is not set to TRUE; exiting due to concern of deadloop")
