@@ -83,6 +83,16 @@ class ListSafeConfigParser(SafeConfigParser):
 	def get_nmpc(self):
 		return self.get_eval("unit_cell_settings","num_molecules")
 
+	def get_multiprocessing_processes(self):
+		sname = "parallel_settings"
+		processes = 1
+		if self.has_option(sname,"processes_per_replica"):
+			processes = self.get_eval(sname,"processes_per_replica")
+			if self.has_option(sname,"processes_per_node"):
+				processes = min(self.get_eval(sname,"processes_per_node"), processes)
+		return processes
+
+
 	
 	def verbose(self):
 		return self.get_boolean("run_settings","verbose")
