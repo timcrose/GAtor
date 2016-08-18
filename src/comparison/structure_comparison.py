@@ -108,11 +108,11 @@ class Comparison:
             if fit:
                 self.output("-- Structure is a duplicate of another in common pool")
 		self.output("-- Structure ID in Common pool is: %s" % indexc)
-		index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
-		self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
-		dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
-	        for pair in dup_pair:
-	            dup_output.write('\t'.join(str(s) for s in pair) + '\n')
+#		index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
+#		self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
+#		dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
+#	        for pair in dup_pair:
+#	            dup_output.write('\t'.join(str(s) for s in pair) + '\n')
 	        return False
         self.ui.grant_permission(os.path.join(tmp_dir,"GA_duplicates.dat"))
 	return True
