@@ -559,9 +559,6 @@ class Symmetric_Crossover(object):
 		'''
 		Blend s1 and s2 by applying partial of the transformation provided
 		'''
-#		print "################# Begin blend orientation ##########"
-#		print "###########Original geo#############"
-#		print s1.get_geometry_atom_format()
 		if transformation[0]:
 		#A mirror reflection is involved
 			result = structure_handling.\
@@ -571,17 +568,8 @@ class Symmetric_Crossover(object):
 			result = get_closest_orientation(result,
 							 s1,
 							 self.blend_orien_attempts)
-#			print "---------------Compare after get_closest orientation"
-#			print structure_handling.mole_get_orientation(q,range(q.get_n_atoms()),result.geometry,tol=self.blend_orien_tol,create_duplicate=True)
-			
-#			result = q
-#			print structure_handling.cm_calculation(result,range(15))
 
 			result.reset_lattice_vectors([[5,0,0],[0,5,0],[0,0,5]])
-#			print "----Compare 1-----"
-#			print result.get_geometry_atom_format()
-#			print "----Compare 2-----"
-#			print s2.get_geometry_atom_format()
 
 
 			transformation = structure_handling.\
@@ -594,10 +582,6 @@ class Symmetric_Crossover(object):
 		else:
 			result = deepcopy(s1)
 			message = "-- No mirror reflection\n"
-
-#		print "---------Second time around!!!!!!!!!!"
-#		print result.get_geometry_atom_format()
-#		print s2.get_geometry_atom_format()
 
 		b = self.get_blending_parameter(self.blend_orien_cent,
 						self.blend_orien_std,
@@ -730,10 +714,6 @@ def get_closest_orientation(s1, s2, attempts=20):
 			min_resi = resi
 			best = k
 
-#	print "$$$$$$Within get_closest_orientation$$$$$"
-#	print s1.get_geometry_atom_format()
-#	print s2.get_geometry_atom_format()
-#	print best.get_geometry_atom_format()
 	return best
 
 def output_parent_properties(parent_a, parent_b, replica):
