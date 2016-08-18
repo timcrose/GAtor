@@ -178,13 +178,14 @@ class Symmetric_Crossover(object):
 						    napm = self.napm,
 						    create_duplicate=False)
 
+				message = "-- Summary of Crossover --\n"
 				if len(operations) == 0:
-					message = "No crossover operation called"
+					message += "No crossover operation called"
 				else:
-					message = "Crossover operation(s) called: "
+					message += "Crossover operation(s) called: "
 					message += " ".join(map(str,operations))
-				if not self.verbose:
-					output.local_message(message,self.replica)
+#				if not self.verbose:
+				output.local_message(message,self.replica)
 				return self.child_struct
 
 	def reduce_by_reference(self):
