@@ -66,11 +66,7 @@ class RunGA():
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
 		
 		sname = "parallel_settings"
-		self.processes = 1
-		if self.ui.has_option(sname,"processes_per_replica"):
-			self.processes = self.ui.get_eval(sname,"processes_per_replica")
-			if self.ui.has_option(sname,"processes_per_node"):
-				self.processes = min(self.ui.get_eval(sname,"processes_per_node"), self.processes)
+		self.processes = self.ui.get_multiprocessing_processes()
 
 		if self.processes > 1:
 			self.worker_pool = multiprocessing.Pool(processes=self.processes)
