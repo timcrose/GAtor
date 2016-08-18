@@ -130,12 +130,15 @@ class Comparison:
 	is_dup = None
 
 	runs = []
-        for indexc, structc in comp_list:
-            runs.append(pool.apply_async(compute_pymatgen_fit, 
-                                         args = [struct, structc, comparison_type], 
-                                         callback = compute_pymatgen_fit_callback))
-        pool.close()
-        pool.join()
+	try:
+            for indexc, structc in comp_list:
+                runs.append(pool.apply_async(compute_pymatgen_fit, 
+                                             args = [struct, structc, comparison_type], 
+                                             callback = compute_pymatgen_fit_callback))
+            pool.close()
+            pool.join()
+        except: #Assertion error; structure has duplicate
+            return True
 
         if is_dup == None:
 	#Not a duplicate
