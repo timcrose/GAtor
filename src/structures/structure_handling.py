@@ -284,34 +284,45 @@ def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=
 		rotation_axis=[0,0,0]
 		chosen=None
 		while (vec2==None) and (i<len(geo)):
-			diff=[struct.geometry[atom_list[i]][j]-geo[i][j] for j in range (3)]
-			leng=numpy.linalg.norm(diff)
+			diff = [struct.geometry[atom_list[i]][j] - geo[i][j] 
+						for j in range (3)]
+			leng = numpy.linalg.norm(diff)
+
 			if leng<0.0001:
-				rotation_axis = [struct.geometry[atom_list[i]][x]
+				rotation_axis = [struct.geometry[atom_list[i]][x]\
 							for x in range(3)]
-				if numpy.linalg.norm(rotation_axis)>match_molecule_cross_tolerance:
+				if numpy.linalg.norm(rotation_axis) > \
+				   match_molecule_cross_tolerance:
 					break
-			if leng>match_molecule_length_requirement:
-				if vec1==None:
-					vec1=diff
-					chosen=i
-					i+=1
+
+			if leng > match_molecule_length_requirement:
+				if vec1 == None:
+					vec1 = diff
+					chosen = i
+					i += 1
 					continue
-				if numpy.linalg.norm(numpy.cross(vec1,diff))>match_molecule_cross_tolerance:
-					vec2=diff
+				
+				if numpy.linalg.norm(numpy.cross(vec1,diff)) > \
+				   match_molecule_cross_tolerance:
+					vec2 = diff
 					break
 			i+=1
-		if numpy.linalg.norm(rotation_axis)<match_molecule_cross_tolerance:
+
+		if numpy.linalg.norm(rotation_axis) < match_molecule_cross_tolerance:
 			if vec2==None:
 				vec2=[0,0,0]
 			rotation_axis=numpy.cross(vec1,vec2)
+
 		rl=numpy.linalg.norm(rotation_axis)
 		if rl>match_molecule_cross_tolerance:
 			for j in range (3):
 				rotation_axis[j]/=rl
 			if chosen==None:
 				chosen=0
-				while (chosen<len(geo)) and (numpy.linalg.norm(numpy.cross(rotation_axis,struct.geometry[atom_list[chosen]]))<match_molecule_cross_tolerance):
+				while (chosen<len(geo)) and \
+				(numpy.linalg.norm(numpy.cross(rotation_axis,\
+				[struct.geometry[atom_list[chosen]][x] \
+				for x in range(3)]))<match_molecule_cross_tolerance):
 					chosen+=1
 			v1=[struct.geometry[atom_list[chosen]][x] for x in range(3)]
 			v2=[geo[chosen][x] for x in range(3)]
