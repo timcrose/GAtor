@@ -516,7 +516,7 @@ class RunGA():
 		struct.set_property('lattice_vector_a',list(a))
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
-		if self.ui.all_geo:
+		if self.ui.all_geo():
 			self.output("Final Structure's geometry:\n" +
 			struct.get_geometry_atom_format())
 		return struct
