@@ -287,7 +287,8 @@ def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=
 			diff=[struct.geometry[atom_list[i]][j]-geo[i][j] for j in range (3)]
 			leng=numpy.linalg.norm(diff)
 			if leng<0.0001:
-				rotation_axis=struct.geometry[atom_list[i]][:3]
+				rotation_axis = [struct.geometry[atom_list[i]][x]
+							for x in range(3)]
 				if numpy.linalg.norm(rotation_axis)>match_molecule_cross_tolerance:
 					break
 			if leng>match_molecule_length_requirement:
