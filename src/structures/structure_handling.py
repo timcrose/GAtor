@@ -414,6 +414,8 @@ def cell_modification(struct,napm=None,create_duplicate=True):
 	lats = struct.get_lattice_vectors()
 	from spglib import niggli_reduce
 	reduced_lats = 	niggli_reduce(lats)
+	if reduced_lats == None:
+		return False
 	del(struct.properties["lattice_vector_a"])
 	del(struct.properties["lattice_vector_b"])
 	del(struct.properties["lattice_vector_c"])
@@ -544,9 +546,9 @@ def cell_check(struct,replica):
 	sname = "cell_check_settings"
 #	output.local_message("--------Begin cell check--------",replica)
 	struct = copy.deepcopy(struct)
-	struct = cell_modification(struct,
-				   int(struct.get_n_atoms()/nmpc),
-				   create_duplicate=False)
+	cell_modification(struct,
+			  int(struct.get_n_atoms()/nmpc),
+			  create_duplicate=False)
 
 	#Volume check
 	standard_volume=ui.get_eval(sname,"target_volume")
