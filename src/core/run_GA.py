@@ -263,6 +263,7 @@ class RunGA():
 		count = 0
 		begin_time = time.time()
 		self.output("Generating trial structure with %i processes" % self.processes)
+		
 		while count<total_attempts and struct == False:
 			if self.processes == 1: #Serial
 				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
