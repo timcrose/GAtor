@@ -411,7 +411,7 @@ class RunGA():
 
 		self.output("\n--Assign structure ID--")
 		new_struct.struct_id = misc.get_random_index()
-		self.output("ID assigned: "+new_struct.struct_id)
+		self.output("ID assigned: "+new_struct.struct_id+"\n")
 		return new_struct
 	
 	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
