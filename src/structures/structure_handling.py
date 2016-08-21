@@ -617,9 +617,11 @@ def cell_check(struct,replica):
 			output.local_message("-- Minimum distance: %f " 
 						% lowerbound,replica)
 		if COM_distance_check(struct,nmpc,lowerbound):
-			output.local_message("-- Passed COM distance check\n",replica)
+			if verbose:
+				output.local_message("-- Passed COM distance check\n",replica)
 		else:
-			output.local_message("-- Failed COM distance check\n",replica)
+			if verbose:
+				output.local_message("-- Failed COM distance check\n",replica)
 			return False
 	elif verbose:
 		output.local_message("##No COM distance check is called##")
