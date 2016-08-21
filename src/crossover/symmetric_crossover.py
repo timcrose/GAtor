@@ -25,11 +25,19 @@ def main(list_of_structures, replica):
 	child_struct = cross_obj.crossover()
 	return child_struct
 
+def fix_method():
+	ui = user_input.get_config()
+	swap_sym = ui.get_eval(sn,"swap_sym_prob")
+	crossover_methods = []
+	if random.random() < swap_sym:
+		crossover_methods.append("swap_sym")
+	return crossover_method
+
 class Symmetric_Crossover(object):
 	'''
 	Takes 2 parent structures and combines them via different crossover options.
 	'''
-	def __init__(self,parent_a,parent_b,replica):
+	def __init__(self,parent_a,parent_b, replica):
 		self.ui = user_input.get_config()
 		sn = "symmetric_crossover"
 		self.swap_sym = self.ui.get_eval(sn,"swap_sym_prob")
