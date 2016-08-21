@@ -679,11 +679,23 @@ def structure_create_for_multiprocessing(args):
 
 	if ui.ortho():
 		output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
-#		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 		napm = int(new_struct.get_n_atoms()/nmpc)
+		success = \
 		structure_handling.cell_modification(new_struct, 
 						     napm,
 						     create_duplicate=False)
+		if success == False and self.verbose:
+			message = "--Niggli reduction of lattice failed"
+			message += "\n--Lattice vectors: \n"
+			message += "\n".join(map(str,
+						 new_struct.get_lattice_vectors()))
+			message += "\n--Only setting to lower triangular"
+			output.local_message(message+"\n",replica)
+	
+		if success == False:
+			structure_handling.cell_lower_triangular(new_struct,
+								 False)
+
 		if ui.all_geo():
 			output.local_message(new_struct.get_geometry_atom_format(),
 					     replica)
