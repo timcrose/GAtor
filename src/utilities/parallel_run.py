@@ -8,6 +8,7 @@ import core.file_handler as fh
 from core import user_input, output
 from copy import deepcopy
 from utilities import misc
+from external_libs import bgqtools
 import time
 ui = user_input.get_config()
 
@@ -44,7 +45,16 @@ def launch_parallel():
 	else:
 		raise ValueError("Unknown parallelization method: "+spawn_method)
 
-		
+
+def launch_bundled():
+	sname = "bundled_run_settings"
+	spawn_method = ui.get(sname,"parallelization_method")
+	output.time_log("Parallelization method: "+spawn_method)
+
+	if spawn_method == "mira" or spawn_method == "cetus":
+		launch_bundled_bgq()
+	else:
+		raise ValueError("Unsupported bundling method: "+spawn_method)
 
 def launch_parallel_subprocess():
 	'''
@@ -52,6 +62,7 @@ def launch_parallel_subprocess():
 	'''
 	sname = "parallel_settings"
 	nor = ui.get_eval(sname,"number_of_replicas")
+	python_command = ui.get(sname,"python_command")
 
 	output.time_log("Beginning to launch new replicas using subprocessing")
 	new_ui = deepcopy(ui)
@@ -66,7 +77,7 @@ def launch_parallel_subprocess():
 		f = open(conf_path,"w")
 		new_ui.write(f)
 		f.close()
-		arglist = ["python",fh.GAtor_master_path,conf_path]
+		arglist = [python_command,fh.GAtor_master_path,conf_path]
 		output.time_log("Running subprocess: "+" ".join(map(str,arglist)))
 		p = subprocess.Popen(arglist)
 		processes.append(p)
@@ -75,7 +86,206 @@ def launch_parallel_subprocess():
 		p.wait()
 
 def launch_parallel_bgq():
-	pass
+	'''
+	Launches new replicas using subprocessing
+	with each replica assigned an appropriate block and corner
+	on ALCF's Mira and Cetus machine
+	'''
+	sname = "parallel_settings"
+	spawn_method = ui.get(sname,"parallelization_method")
+	python_command = ui.get(sname,"python_command")
+	npr = ui.get_eval(sname,"nodes_per_replica")
+	if ui.has_option(sname,"bgq_block_size"):
+		block_size = ui.get_eval(sname,"bgq_block_size")
+		if spawn_method == "mira" and block_size < 512:
+			message = "bgq_block_size specified as %i\n" % (block_size)
+			message+= "On mira, a block is at least 512 nodes!"
+			raise ValueError(message)
+	else:
+		if spawn_method == "mira":
+			block_size = 512
+		else: #Cetus
+			block_size = 128
+
+
+	partsize, partition, job_id = bgqtools.get_cobalt_info()
+	if block_size > partsize:
+		message = "block size larger than the total number of nodes; "
+		message += "modify bgq_block_size or submission script"
+		raise ValueError(message)
+	if npr > block_size:
+		message = "Number of nodes per replica (%i) " % npr
+		message += "larger than block size (%i); " % block_size
+		message += "Modify nodes_per_replica or bgq_block_size"
+		raise ValueError(message)
+
+	otl = output.time_log
+	otl("Launching parallel replicas on machines: " + spawn_method)
+	otl("Total number of nodes: " + str(partsize))
+	otl("Blocks of %i nodes are created" % block_size)
+	blocks = bgqtools.get_bootable_blocks(partition, partsize, block_size)
+	bgqtools.boot_blocks(blocks)
+	otl("All blocks are booted")
+
+	otl("Corners of %i nodes are created for each replica" % (npr))
+	corners = bgqtools.block_corner_iter(blocks, npr)
+
+	new_ui = deepcopy(ui)
+	new_ui.set(sname,"parallelization_method","serial")
+	new_ui.set(sname,"im_not_master_process","TRUE")
+
+	processes = []
+	for corner in corners:
+		new_ui.set(sname,"replica_name",misc.get_random_index())
+		new_ui.set(sname,"runjob_block", corner[0])
+		new_ui.set(sname,"runjob_corner", corner[1])
+		new_ui.set(sname,"runjob_shape",corner[2])
+
+		conf_path = os.path.join(fh.conf_tmp_dir,
+					 new_ui.get(sname,"replica_name")+".conf")
+		f = open(conf_path,"w")
+		new_ui.write(f)
+		f.close()
+	
+		arglist = [python_command,fh.GAtor_master_path,conf_path]
+		otl("Running subprocess: "+" ".join(map(str,arglist)))
+		p = subprocess.Popen(arglist)
+		processes.append(p)
+	
+	for p in processes:
+		p.wait()
+
+
+def launch_bundled_bgq():
+	'''
+	Launch multiple runs of GAtor bundled together
+	'''
+	sname = "bundled_run_settings"
+	spawn_method = ui.get(sname,"parallelization_method")
+	python_command = ui.get(sname,"python_command")
+#	npr = ui.get_eval(sname,"nodes_per_replica")
+	if ui.has_option(sname,"bgq_block_size"):
+		block_size = ui.get_eval(sname,"bgq_block_size")
+		if spawn_method == "mira" and block_size < 512:
+			message = "bgq_block_size specified as %i\n" % (block_size)
+			message+= "On mira, a block is at least 512 nodes!"
+			raise ValueError(message)
+	else:
+		if spawn_method == "mira":
+			block_size = 512
+		else: #Cetus
+			block_size = 128
+
+	partsize, partition, job_id = bgqtools.get_cobalt_info()
+	if block_size > partsize:
+		message = "block size larger than the total number of nodes; "
+		message += "modify bgq_block_size or submission script"
+		raise ValueError(message)
+#	if npr > block_size:
+#		message = "Number of nodes per replica (%i) " % npr
+#		message += "larger than block size (%i); " % block_size
+#		message += "Modify nodes_per_replica or bgq_block_size"
+#		raise ValueError(message)
+
+	otl = output.time_log
+	otl("Launching parallel replicas on machines: " + spawn_method)
+	otl("Total number of nodes: " + str(partsize))
+	otl("Blocks of %i nodes are created" % block_size)
+	blocks = bgqtools.get_bootable_blocks(partition, partsize, block_size)
+	bgqtools.boot_blocks(blocks)
+	otl("All blocks are booted")
+
+	run_names = ui.get_list(sname,"run_names")
+	run_info = ui.get_bundled_run_info()
+	sum_of_blocks = sum([int(run["number_of_blocks"]) for run in run_info])
+
+	if sum_of_blocks > len(blocks):
+		message = "Runs subscribe to %i blocks; " % sum_of_blocks
+		message += "Only %i are available" % len(blocks)
+		otl(message)
+		raise ValueError(message)
+
+	elif sum_of_blocks < len(blocks):
+		message = "Under-subscription of blocks has occured!"
+		otl(message)
+
+	blocks_used = 0
+	processes = []
+	sname = "parallel_settings"
+
+	for run in run_info:
+		new_ui = user_input.get_config_with_path(run["config_file_path"])
+		if new_ui.get_boolean("GAtor_master","fill_initial_pool"):
+			#Need to fill the initial pool for each one
+			otl("Setting up initial pool for run " + run["run_name"])
+			new_ui.remove_section("GAtor_master")
+			new_ui.add_section("GAtor_master")
+			new_ui.set_working_dir(run["working_directory"])
+			new_ui.set_true("GAtor_master","fill_initial_pool")
+			new_ui.set(sname,"replica_name",misc.get_random_index())
+
+			conf_path = os.path.join(fh.conf_tmp_dir,
+					 new_ui.get(sname,"replica_name")+".conf")
+			f = open(conf_path,"w")
+			new_ui.write(f)
+			f.close()
+	
+			arglist = [python_command,fh.GAtor_master_path,conf_path]
+			otl("Running subprocess: "+" ".join(map(str,arglist)))
+			p = subprocess.Popen(arglist)
+			processes.append(p)
+
+	for p in processes:
+		p.wait()
+
+	processes = []	
+	for run in run_info:
+		if run["nodes_per_replica"] > block_size:
+			message = "Run %s nodes_per_replica exceeds block_size"\
+					% run["run_name"]
+			otl(message)
+			raise ValueError(message)
+
+		alloted = blocks[blocks_used : blocks_used+run["number_of_blocks"]]
+		blocks_used += run["number_of_blocks"]
+
+
+		corners = bgqtools.block_corner_iter(alloted,
+						     run["nodes_per_replica"])
+			
+		new_ui = user_input.get_config_with_path(run["config_file_path"])
+		new_ui.set(sname,"parallelization_method","serial")
+		new_ui.set(sname,"im_not_master_process","TRUE")
+		new_ui.set_working_dir(run["working_directory"])	
+		new_ui.set_false("GAtor_master","bundled_ga")
+
+		otl("Run %s is allocated %i blocks" % (run["run_name"],
+						       run["number_of_blocks"]))
+		otl("Running with %i nodes per replica" % run["nodes_per_replica"])
+		otl("Working directory: " + run["working_directory"])
+		otl("Using configuration file: " + run["config_file_path"])
+
+		for corner in corners:
+			new_ui.set(sname,"replica_name",misc.get_random_index())
+			new_ui.set(sname,"runjob_block", corner[0])
+			new_ui.set(sname,"runjob_corner", corner[1])
+			new_ui.set(sname,"runjob_shape",corner[2])
+	
+			conf_path = os.path.join(fh.conf_tmp_dir,
+					 new_ui.get(sname,"replica_name")+".conf")
+			f = open(conf_path,"w")
+			new_ui.write(f)
+			f.close()
+	
+			arglist = [python_command,fh.GAtor_master_path,conf_path]
+			otl("Running subprocess: "+" ".join(map(str,arglist)))
+			p = subprocess.Popen(arglist)
+			processes.append(p)
+		
+
+	
+	for p in processes:
+		p.wait()
 
 
 def launch_parallel_mpirun(use_srun=False):
@@ -181,6 +391,8 @@ def launch_parallel_mpirun(use_srun=False):
 	new_ui.set(sname,"parallelization_method","serial")
 	if not ui.has_option(sname,"processes_per_node"):
 		new_ui.set(sname,"processes_per_node",str(ppn))
+	
+	python_command = ui.get(sname,"python_command")
 	new_ui.set(sname,"im_not_master_process","TRUE")
 	for i in range(nor):
 		new_ui.set(sname,"replica_name",misc.get_random_index())
@@ -192,22 +404,15 @@ def launch_parallel_mpirun(use_srun=False):
 		f.close()
 		#Launch 1 instance of GAtor on the first node allocated
 		if not use_srun:
-			p = subprocess.Popen(["mpirun","-n","1","-host",all_nodes[0],"python",fh.GAtor_master_path,conf_path]) 
+			p = subprocess.Popen(["mpirun","-n","1","-host",all_nodes[0],python_command,fh.GAtor_master_path,conf_path]) 
 		else:
-			p = subprocess.Popen(["srun","-n","1","-w",all_nodes[0],"python",fh.GAtor_master_path,conf_path])
+			p = subprocess.Popen(["srun","-n","1","-w",all_nodes[0],python_command,fh.GAtor_master_path,conf_path])
 		processes.append(p)
 	
 		all_nodes = all_nodes[npr[i]:]
 
 	for p in processes:
 		p.wait()
-	
-			
-
-	
-			
-	
-	
 
 
 def get_all_processes(command,hostlist=None):
