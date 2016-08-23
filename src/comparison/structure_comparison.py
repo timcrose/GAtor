@@ -18,6 +18,9 @@ from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
 from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator
 from pymatgen.analysis.structure_matcher import SpeciesComparator,FrameworkComparator
+from core import output
+
+import multiprocessing
 
 def main(struct, structure_coll, replica, comparison_type):
     '''
@@ -27,7 +30,7 @@ def main(struct, structure_coll, replica, comparison_type):
     if comparison_type == "pre_relaxation_comparison":
 	comp = Comparison(struct, structure_coll, replica, comparison_type)
 	structs_to_compare = comp.get_all_structures()
-        dup_result = comp.check_if_duplicate(struct, structs_to_compare, comparison_type)
+        dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
     elif comparison_type == "post_relaxation_comparison":
         comp = Comparison(struct, structure_coll, replica, comparison_type)
         # make sure energy is higher than the worst in the collection
@@ -35,7 +38,7 @@ def main(struct, structure_coll, replica, comparison_type):
 #        if en_result is False:
 #            return False
 	structs_to_compare = comp.get_similar_energy_structures(comparison_type)
-	dup_result = comp.check_if_duplicate(struct, structs_to_compare, comparison_type)
+	dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
     if dup_result:
         output.local_message("-- The structure compared is unique. ", replica)
     return dup_result # Boolean
@@ -91,9 +94,9 @@ class Comparison:
         if e_tol == None: raise Exception
 
         sim_list = []
-        en = float(self.struct.get_property('energy'))
+        en = float(self.struct.get_property(self.ui.get_property_to_optimize()))
 	for index, comp_struct in self.structure_coll:
-            comp_en = float(comp_struct.get_property('energy'))	
+            comp_en = float(comp_struct.get_property(self.ui.get_property_to_optimize()))
             if en - e_tol <= comp_en <= en + e_tol:
 #		self.output("comp en: " +str(comp_en)) 
                 sim_list.append((index, comp_struct)) 
@@ -117,12 +120,46 @@ class Comparison:
         self.ui.grant_permission(os.path.join(tmp_dir,"GA_duplicates.dat"))
 	return True
 
-    def compute_pymatgen_fit(self, struct, structc, comparison_type):
-            sm = self.set_comp_structure_matcher(comparison_type)
-            structp = self.get_pymatgen_structure(struct.get_frac_data())
-            structpc = self.get_pymatgen_structure(structc.get_frac_data())
-            fit = sm.fit(structp, structpc)
-            return fit
+    def check_if_duplicate_multiprocessing(self, struct, comp_list, comparison_type):
+        global pool
+	processes = self.ui.get_multiprocessing_processes()
+        pool = multiprocessing.Pool(processes)
+	self.output("-- Comparison done with %i parallel processes" % processes)
+
+        global is_dup
+	is_dup = None
+
+	runs = []
+	try:
+            for indexc, structc in comp_list:
+                runs.append(pool.apply_async(compute_pymatgen_fit, 
+                                             args = [struct, structc, comparison_type], 
+                                             callback = compute_pymatgen_fit_callback))
+            pool.close()
+            pool.join()
+        except: #Assertion error; structure has duplicate
+            return True
+
+        if is_dup == None:
+	#Not a duplicate
+            return True
+
+	dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
+        self.output("-- Structure is a duplicate of another in common pool")
+        self.output("-- Structure ID in Common pool is: %s" % is_dup)
+        index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
+	self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
+        pair = ("0/"+ str(is_dup),"duplicates/"+str(index))
+	dup_output.write('\t'.join(str(s) for s in pair) + '\n')
+	return False
+        
+
+#    def compute_pymatgen_fit(self, struct, structc, comparison_type):
+#            sm = self.set_comp_structure_matcher(comparison_type)
+#            structp = self.get_pymatgen_structure(struct.get_frac_data())
+#            structpc = self.get_pymatgen_structure(structc.get_frac_data())
+#            fit = sm.fit(structp, structpc)
+#            return fit
 
     def check_if_duplicate_2(self, comp_list, comparison_type):
         '''
@@ -178,4 +215,33 @@ class Comparison:
     
 
         
+def compute_pymatgen_fit(s1, s2, comparison_type):
+	ui = user_input.get_config()
+	L_tol =ui.get_eval(comparison_type, 'ltol')
+	S_tol = ui.get_eval(comparison_type, 'stol')
+	Angle_tol = ui.get_eval(comparison_type, 'angle_tol')
+	Scale = ui.get_boolean(comparison_type, 'scale_vol')
+	sm =  (StructureMatcher(ltol=L_tol, 
+				stol=S_tol, 
+				angle_tol=Angle_tol, 
+				primitive_cell=True,
+				scale=Scale, 
+				attempt_supercell=False, 
+				comparator=SpeciesComparator()))
 
+	sp1 = s1.get_pymatgen_structure()
+	sp2 = s2.get_pymatgen_structure()
+	fit = sm.fit(sp1, sp2)
+
+	if fit:
+		return s2.struct_id
+	return fit
+
+def compute_pymatgen_fit_callback(result):
+	global pool
+	global is_dup
+	if result != False:
+		pool.terminate()
+		#Stop further comparison from being done
+		is_dup = result
+		#Record struct_id of duplicate structure

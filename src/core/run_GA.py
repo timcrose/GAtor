@@ -66,11 +66,7 @@ class RunGA():
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
 		
 		sname = "parallel_settings"
-		self.processes = 1
-		if self.ui.has_option(sname,"processes_per_replica"):
-			self.processes = self.ui.get_eval(sname,"processes_per_replica")
-			if self.ui.has_option(sname,"processes_per_node"):
-				self.processes = min(self.ui.get_eval(sname,"processes_per_node"), self.processes)
+		self.processes = self.ui.get_multiprocessing_processes()
 
 		if self.processes > 1:
 			self.worker_pool = multiprocessing.Pool(processes=self.processes)
@@ -267,6 +263,7 @@ class RunGA():
 		count = 0
 		begin_time = time.time()
 		self.output("Generating trial structure with %i processes" % self.processes)
+		
 		while count<total_attempts and struct == False:
 			if self.processes == 1: #Serial
 				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
@@ -414,7 +411,7 @@ class RunGA():
 
 		self.output("\n--Assign structure ID--")
 		new_struct.struct_id = misc.get_random_index()
-		self.output("ID assigned: "+new_struct.struct_id)
+		self.output("ID assigned: "+new_struct.struct_id+"\n")
 		return new_struct
 	
 	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
@@ -520,7 +517,7 @@ class RunGA():
 		struct.set_property('lattice_vector_a',list(a))
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
-		if self.ui.all_geo:
+		if self.ui.all_geo():
 			self.output("Final Structure's geometry:\n" +
 			struct.get_geometry_atom_format())
 		return struct
@@ -683,11 +680,23 @@ def structure_create_for_multiprocessing(args):
 
 	if ui.ortho():
 		output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
-#		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
 		napm = int(new_struct.get_n_atoms()/nmpc)
+		success = \
 		structure_handling.cell_modification(new_struct, 
 						     napm,
 						     create_duplicate=False)
+		if success == False and ui.verbose():
+			message = "--Niggli reduction of lattice failed"
+			message += "\n--Lattice vectors: \n"
+			message += "\n".join(map(str,
+						 new_struct.get_lattice_vectors()))
+			message += "\n--Only setting to lower triangular"
+			output.local_message(message+"\n",replica)
+	
+		if success == False:
+			structure_handling.cell_lower_triangular(new_struct,
+								 False)
+
 		if ui.all_geo():
 			output.local_message(new_struct.get_geometry_atom_format(),
 					     replica)
