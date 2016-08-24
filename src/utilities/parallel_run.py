@@ -256,6 +256,7 @@ def launch_bundled_bgq():
 		new_ui = user_input.get_config_with_path(run["config_file_path"])
 		new_ui.set(sname,"parallelization_method","serial")
 		new_ui.set(sname,"im_not_master_process","TRUE")
+		new_ui.set(sname,"nodes_per_replica",str(run["nodes_per_replica"]))
 		new_ui.set_working_dir(run["working_directory"])	
 		new_ui.set_false("GAtor_master","bundled_ga")
 
