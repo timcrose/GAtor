@@ -452,9 +452,9 @@ class RandomStrainMutation(object):
 
     def rand_strain(self, lat_mat):
 
-	rand_sleep = random.random()
-	self.output("Randomly sleeping: " + str(rand_sleep))
-	time.sleep(rand_sleep)
+#	rand_sleep = random.random()
+#	self.output("Randomly sleeping: " + str(rand_sleep))
+#	time.sleep(rand_sleep)
 
         strain_list = np.random.normal(scale=self.st_dev, size=6)
 	self.output("Strain_list" +str(strain_list))
