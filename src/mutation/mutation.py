@@ -63,8 +63,6 @@ def select_mutator(input_struct, num_mols, replica):
     else:
         mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
                           "Strain_rand_mols","Strain_sym_mols"])
-
-    mutation_list =(["Strain_rand"])
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -459,13 +457,12 @@ class RandomStrainMutation(object):
 	time.sleep(rand_sleep)
 
         strain_list = np.random.normal(scale=self.st_dev, size=6)
+	self.output("Strain_list" +str(strain_list))
         strain_mat = get_strain_mat(strain_list)
         self.output("strain_mat" + str(strain_mat))
-        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
-        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
-        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
-#	strain_A, strain_B, strain_c = 
-        return strain_A, strain_B, strain_C
+        strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
+        self.output("strained_lattice" + str(strain))
+        return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C):
         struct = Structure()
@@ -520,10 +517,9 @@ class RandomSymmetryStrainMutation(object):
         strain_mat = get_strain_mat(strain_list)
         self.output("Strain parameter: " + str(strain_param).strip('[').strip(']'))
         self.output("Strain_matrix: \n" + str(strain_mat).strip('[').strip(']'))
-        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
-        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
-        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
-        return strain_A, strain_B, strain_C
+	strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
+        self.output("strained_lattice" + str(strain))
+        return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C):
         struct = Structure()
@@ -582,10 +578,8 @@ class RandomStrainMutationMoveMols(object):
         strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
         self.output("strain_mat" + str(strain_mat))
-        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
-        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
-        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
-        return strain_A, strain_B, strain_C
+        strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
+        return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):
         ''' Creates Structure from mutated geometry'''
@@ -649,10 +643,9 @@ class RandomSymmetryStrainMutationMoveMols(object):
         strain_mat = get_strain_mat(strain_list)
         self.output("Strain parameter: " + str(strain_param))
         self.output("Strain_matrix: \n" + str(strain_mat))
-        strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
-        strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
-        strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
-        return strain_A, strain_B, strain_C
+        strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
+        self.output("strained_lattice" + str(strain))
+        return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):
         ''' Creates Structure from mutated geometry'''
@@ -692,15 +685,15 @@ def rotation_matrix(theta, psi, phi):
 def get_strain_mat(strain_list):
     sl = strain_list
     s_mat = np.zeros((3,3))
-    s_mat[0][0] = 1.0 + sl[0]
+    s_mat[0][0] = sl[0]
     s_mat[0][1] = sl[5]/2.
     s_mat[0][2] = sl[4]/2.
     s_mat[1][0] = sl[5]/2.
-    s_mat[1][1] = 1.0 + sl[1]
+    s_mat[1][1] = sl[1]
     s_mat[1][2] = sl[3]/2.
     s_mat[2][0] = sl[4]/2.
     s_mat[2][1] = sl[3]/2.
-    s_mat[2][2] = 1.0 + sl[2]
+    s_mat[2][2] = sl[2]
     return s_mat
 
 def get_rand_sym_strain(lat_mat):
