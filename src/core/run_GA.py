@@ -685,7 +685,7 @@ def structure_create_for_multiprocessing(args):
 		structure_handling.cell_modification(new_struct, 
 						     napm,
 						     create_duplicate=False)
-		if success == False and self.verbose:
+		if success == False and ui.verbose:
 			message = "--Niggli reduction of lattice failed"
 			message += "\n--Lattice vectors: \n"
 			message += "\n".join(map(str,
