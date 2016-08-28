@@ -122,7 +122,7 @@ class Comparison:
 
     def check_if_duplicate_multiprocessing(self, struct, comp_list, comparison_type):
         global pool
-	processes = self.ui.get_multiprocessing_processes()
+	processes = self.ui.get_multiprocessing_processes() 
         pool = multiprocessing.Pool(processes)
 	self.output("-- Comparison done with %i parallel processes" % processes)
 
