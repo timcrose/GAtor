@@ -116,18 +116,28 @@ def main(input_structure):
 			else:
 				et = min(et,max(energies))
 
-		control_path = os.path.join(os.path.join(fh.cwd,control_dir),control_list[i])
+		control_path = os.path.join(os.path.join(fh.cwd,control_dir),
+					    control_list[i])
 		control_string = fh.read_data(control_path)
-		FHI = FHIAimsRelaxation(input_structure, working_dir, control_string,ui.get_replica_name())
-		output.time_log("Executing FHI-aims using control file: "+control_list[i])
-		output.local_message("\nFHI-aims evaluation using control file: "+control_list[i])
+
+		FHI = FHIAimsRelaxation(input_structure, 
+					working_dir, 
+					control_string,
+					ui.get_replica_name())
+
+		output.time_log("Executing FHI-aims using control file: "
+				+ control_list[i])
+
+		output.local_message("\nFHI-aims evaluation using control file: "
+					+ control_list[i])
 		output.local_message("-- Rejection energy threshold: "+str(et)+" eV")
 
 		begin_time = time.time()
 		FHI.execute(monitor,upi[i],upt[i])
 		end_time = time.time()
 
-		output.local_message("-- Job execution time: " + str(end_time-begin_time) + " seconds")
+		output.local_message("-- Job execution time: " + 
+					str(end_time-begin_time) + " seconds")
 
 		#Need to pass in update poll interval and update poll time
 		if abs_success:
