@@ -63,9 +63,8 @@ def select_mutator(input_struct, num_mols, replica):
     else:
         mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
                           "Strain_rand_mols","Strain_sym_mols"])
- 
 
-    #mutation_list =(["Swap_mol"])
+    mutation_list =(["Strain_rand"])
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -437,17 +436,35 @@ class RandomStrainMutation(object):
         lat_mat[0] = self.A
         lat_mat[1] = self.B
         lat_mat[2] = self.C
+		
+	if self.ui.verbose():
+		self.output("Original structure's lattices: ")
+		self.output(str(self.input_struct.get_lattice_vectors()))
+		self.output("This is lat_mat:")
+		self.output(str(lat_mat))	
+
         strain_A, strain_B, strain_C = self.rand_strain(lat_mat)
+	if self.ui.verbose():
+		self.output("strain_A: " +str(strain_A))
+		self.output("strain_B: " +str(strain_B))
+		self.output("strain_C: " +str(strain_C))
+
         strained_struct = self.create_strained_struct(strain_A, strain_B, strain_C)
         return strained_struct
 
     def rand_strain(self, lat_mat):
+
+	rand_sleep = random.random()
+	self.output("Randomly sleeping: " + str(rand_sleep))
+	time.sleep(rand_sleep)
+
         strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
         self.output("strain_mat" + str(strain_mat))
         strain_A = np.dot(lat_mat.transpose()[0], strain_mat)
         strain_B = np.dot(lat_mat.transpose()[1], strain_mat)
         strain_C = np.dot(lat_mat.transpose()[2], strain_mat)
+#	strain_A, strain_B, strain_c = 
         return strain_A, strain_B, strain_C
 
     def create_strained_struct(self, lat_A, lat_B, lat_C):
