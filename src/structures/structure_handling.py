@@ -742,7 +742,7 @@ def combined_distance_check(struct,replica):
 				and dist<(radius[a1_s]+radius[a2_s])*sr):
 					if verbose:
 						olm("-- Atoms %i and %i too close",\
-						replica)
+						% (a1,a2),replica)
 						olm("-- Specific radius proportion: %f" % (dist/radius[a1_s]/radius[a2_s]),replica)
 					return False
 	
