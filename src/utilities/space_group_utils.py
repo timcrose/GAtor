@@ -183,7 +183,7 @@ def is_transformation_matrix(mat,tol=0.01):
 				return False
 	return True
 
-def is_compatible(lat,rot,tol=0.01):
+def is_compatible(lat,rot,tol=0.05):
 	'''
 	Determine whether a rotation operation is compatible with a given lattice
 	Lattice should be given as row vectors
@@ -218,8 +218,23 @@ def _test_reconstruction(path):
 	print("Reconstruction success? "+ 
 		str(duplicate_check_single(original_struct,struct)))
 
+def _test_1():
+	path = ""
+	f = open(path,"r")
+	original_struct = structure.Structure()
+	original_struct.build_geo_whole_atom_format(f.read())
+	original_struct.properties["symmetry_operations"] = \
+	[[[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0.0, 0.0, 0.0]],\
+	[[[1, 0, 0], [0, -1, 0], [0, 0, -1]], [0.5, 0.0016089550825786336, 0.9995215992369104]]]
+	struct = rebuild_by_symmetry(struct,napm=15)
+	print struct.get_geometry_atom_format()
+
+	
+
 pymatgen.symmetry.groups.SpaceGroup.get_orbit = get_orbit
 
 if __name__ == "__main__":
-	_test_reconstruction("/home/xli20/2_BTM_PROD_RUN/upper_sr_new_100_fr/2_09131_cf1784bbae.json")
+#	print "Hello world!"
+#	_test_1()
+#	_test_reconstruction("/home/xli20/2_BTM_PROD_RUN/upper_sr_new_100_fr/2_09131_cf1784bbae.json")
 	pass
