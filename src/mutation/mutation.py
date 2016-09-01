@@ -26,21 +26,24 @@ def main(struct, replica):
     if ui.get_boolean("mutation","enable_symmetry"):
         #Will reduce the cell first before mutation
         output.local_message("Symmetry is enabled for mutation",replica)
-        mutated_struct = sgu.reduce_by_symmetry(input_struct)
-        symmetry_operations = mutated_struct.properties["symmetry_operations"]
+        red_mutated_struct = sgu.reduce_by_symmetry(input_struct)
+        symmetry_operations = red_mutated_struct.properties["symmetry_operations"]
 
-        if len(mutated_struct.geometry) % napm != 0:
+        if len(red_mutated_struct.geometry) % napm != 0:
             output.local_message("Structure reduction by symmetry failed", replica)
             return False
 
-        num_mols = int(len(mutated_struct.geometry)/napm)
-        mutate_obj = select_mutator(mutated_struct,num_mols,replica)
-        mutated_struct = mutate_obj.mutate()
-        mutated_struct.properties["symmetry_operations"] = symmetry_operations
-        if mutated_struct == False:
+        num_mols = int(len(red_mutated_struct.geometry)/napm)
+        mutate_obj = select_mutator(red_mutated_struct,num_mols,replica)
+        red_mutated_struct = mutate_obj.mutate()
+        red_mutated_struct.properties["symmetry_operations"] = symmetry_operations
+        if red_mutated_struct == False:
             return False
 
-        sgu.rebuild_by_symmetry(mutated_struct,napm=napm,create_duplicate=False)
+        mutated_struct = sgu.rebuild_by_symmetry(red_mutated_struct,napm=napm,create_duplicate=True)
+	if mutated_struct == False:
+            output.local_message('Structure reconstruction by symmetry failed',replica)
+	    return False
         if len(mutated_struct.geometry)!=tapc:
             output.local_message('Structure reconstruction by symmetry failed',replica)
             return False
@@ -63,6 +66,7 @@ def select_mutator(input_struct, num_mols, replica):
     else:
         mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
                           "Strain_rand_mols","Strain_sym_mols"])
+
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -507,7 +511,18 @@ class RandomSymmetryStrainMutation(object):
         lat_mat[0] = self.A
         lat_mat[1] = self.B
         lat_mat[2] = self.C
+        if self.ui.verbose():
+                self.output("Original structure's lattices: ")
+                self.output(str(self.input_struct.get_lattice_vectors()))
+                self.output("This is lat_mat:")
+                self.output(str(lat_mat))
+
         strain_A, strain_B, strain_C = self.rand_sym_strain(lat_mat)
+        if self.ui.verbose():
+                self.output("strain_A: " +str(strain_A))
+                self.output("strain_B: " +str(strain_B))
+                self.output("strain_C: " +str(strain_C))
+
         strained_struct = self.create_strained_struct(strain_A, strain_B, strain_C)
         return strained_struct
 
