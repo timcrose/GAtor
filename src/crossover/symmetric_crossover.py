@@ -184,13 +184,14 @@ class Symmetric_Crossover(object):
 					output.local_message(message,
 							     self.replica)
 
-#				rebuild_by_symmetry(self.child_struct,
-#						    napm = self.napm,
-#						    create_duplicate=False)
-#				final_struct = self.child_struct
                                 final_child_struct = rebuild_by_symmetry(self.child_struct,
                                                     napm = self.napm,
                                                     create_duplicate=True)
+				if final_child_struct == False:
+					message = "-- Reconstruction of child failed"
+					output.local_message(message,
+							     self.replica)
+					return False
 				message = "-- Summary of Crossover --\n"
 				if len(operations) == 0:
 					message += "No crossover operation called"
