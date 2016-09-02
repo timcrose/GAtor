@@ -165,6 +165,7 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 	structure_handling.move_molecule_in(struct,
 					    len(struct.geometry)/napm,
 					    False)
+	return struct
 
 def is_transformation_matrix(mat,tol=0.01):
 	'''
