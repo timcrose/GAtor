@@ -78,15 +78,18 @@ def get_energy_list(structure_coll):
         crosstype = structure.get_property('crossover_type')
 	parent0 = structure.get_property('parent_0')
 	parent1 = structure.get_property('parent_1')
+	if structure.get_property('approximate') == "TRUE":
+		ap = "approx"
+	else: ap = ""	
 	if energy is not None: 
-            energy_list.append([ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, crosstype, str(parent0)[15:], str(parent1)[15:]])
+            energy_list.append([ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, str(parent0)[15:], str(parent1)[15:], crosstype, ap])
     return energy_list
 
 def write_energy_vs_addition(structure_coll):
     energy_list = get_energy_list(structure_coll)
     to_write = ''
     energy_list.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_list:
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, ap in energy_list:
 	if rep == 'init_pool':
             continue
 	to_write += str(Id)+'    '+str(energy)+'\n' 
@@ -99,7 +102,7 @@ def write_spe_vs_addition(structure_coll):
     energy_list = get_energy_list(structure_coll)
     to_write = ''
     energy_list.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, crosst, par0, par1 in energy_list:
+    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, ap in energy_list:
         if rep == 'init_pool':
             continue
         to_write += str(Id)+'    '+str(spe)+'\n'
@@ -114,8 +117,8 @@ def write_energy_hierarchy(structure_coll):
 	for count in range(len(energy_list)):
 		ranked_energy_list.append([count + 1] + energy_list[count])
 	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
-                                                             'Spacegroup', 'Mutation', 'Crossover', 'ParentA', 'ParentB'])
-	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<9} {:<8} {:<8}'
+                                                             'Spacegroup', 'Mutation','ParentA', 'ParentB','Crossover', "Exact?"])
+	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<8}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'

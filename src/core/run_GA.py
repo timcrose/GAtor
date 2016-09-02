@@ -396,7 +396,7 @@ class RunGA():
 				new_struct = self.mutation_module.main(new_struct, self.replica) 
 		else:
 			self.output('No mutation applied.')
-			new_struct.set_property('mutation_type', 'no_mutation')
+			new_struct.set_property('mutation_type', ' ')
 		if new_struct is False: 
 			self.output('Mutation failure')
 			return False
@@ -636,47 +636,44 @@ def structure_create_for_multiprocessing(args):
 		output.local_message('Selection failure',replica)
 		return False
 
-	#----- Crossover -----#
-	output.local_message("\n---- Crossover ----", replica)
-	new_struct = crossover_module.main(structures_to_cross, replica)
-	if new_struct is False:
-		output.local_message("Crossover failure", replica)
-		return False
+	rand_cross = np.random.random()
+	cross_probability = ui.get_eval('crossover', 'crossover_probability')
+	if rand_cross < cross_probability:
+		#----- Crossover -----#
+		output.local_message("\n---- Crossover ----", replica)
+		new_struct = crossover_module.main(structures_to_cross, replica)
+		if new_struct is False:
+			output.local_message("Crossover failure", replica)
+			return False
 
-	if ui.all_geo():
-        	output.local_message("\n-- Parent A's geometry --\n" +
-        	structures_to_cross[0].get_geometry_atom_format(), replica)
-                output.local_message("-- Parent B's geometry --\n" +
-                structures_to_cross[1].get_geometry_atom_format(), replica)
-		output.local_message("-- Child's geometry --\n" + 
-		new_struct.get_geometry_atom_format(),replica)
-
-	#----- Mutation Execution -----#
-	output.local_message("\n---- Mutation ----",replica)
-	rand1 = np.random.random()	
-	rand2 = np.random.random()
-	#Single Parents have to be mutated	
-	if (new_struct.get_property('crossover_type') == [1,1] or 
-	    new_struct.get_property('crossover_type') == [2,2] or 
-	    rand1<ui.get_eval('mutation', 'mutation_probability')):
-		new_struct = mutation_module.main(new_struct, replica)
-		if new_struct!=False and ui.all_geo():
-			output.local_message("Current structure geometry:\n" 
-			+ new_struct.get_geometry_atom_format(),replica)
-		if new_struct!=False and rand2 < ui.get_eval('mutation', 'double_mutate_prob'):
-			output.local_message("--Second Mutation--",replica)
-			new_struct = mutation_module.main(new_struct, replica)
-			if new_struct!=False and ui.all_geo():
-				output.local_message("-- Mutated child's geometry --\n"
-				+ new_struct.get_geometry_atom_format(),replica) 
-
-	else:
-		output.local_message('-- No mutation applied',replica)
+		if ui.all_geo():
+        		output.local_message("\n-- Parent A's geometry --\n" +
+        		structures_to_cross[0].get_geometry_atom_format(), replica)
+                	output.local_message("-- Parent B's geometry --\n" +
+                	structures_to_cross[1].get_geometry_atom_format(), replica)
+			output.local_message("-- Child's geometry --\n" + 
+			new_struct.get_geometry_atom_format(),replica)
+                if new_struct is False:
+                        output.local_message('-- Crossover failure',replica)
+                        return False
 		new_struct.set_property('mutation_type', 'no_mutation')
-
-	if new_struct is False: 
-		output.local_message('-- Mutation failure',replica)
-		return False
+	
+	if rand_cross >= cross_probability:
+		#----- Mutation Execution -----#
+		output.local_message("\n---- Mutation ----",replica)
+		parent0_en = structures_to_cross[0].get_property('energy')
+                parent1_en = structures_to_cross[1].get_property('energy')
+		if parent0_en < parent1_en:
+			new_struct = structures_to_cross[0]
+		elif parent0_en > parent1_en:
+			new_struct = structures_to_cross[1]
+		new_struct = mutation_module.main(new_struct, replica)
+	        if new_struct!=False and ui.all_geo():
+        		output.local_message("Current structure geometry:\n" 
+                		        + new_struct.get_geometry_atom_format(),replica)
+		if new_struct is False: 
+			output.local_message('-- Mutation failure',replica)
+			return False
 
 	if ui.ortho():
 		output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
