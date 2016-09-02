@@ -47,6 +47,8 @@ def main(struct, replica):
         if len(mutated_struct.geometry)!=tapc:
             output.local_message('Structure reconstruction by symmetry failed',replica)
             return False
+	mutated_struct.set_property('mutation_type', red_mutated_struct.get_property('mutation_type'))
+	mutated_struct.set_property('crossover_type', red_mutated_struct.get_property('crossover_type'))
     else:  
         mutate_obj = select_mutator(input_struct, num_mols, replica)
         mutated_struct = mutate_obj.mutate()
