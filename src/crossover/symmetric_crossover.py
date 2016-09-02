@@ -200,6 +200,7 @@ class Symmetric_Crossover(object):
 					message += " ".join(map(str,operations))
 #				if not self.verbose:
 				output.local_message(message,self.replica)
+				final_child_struct.set_property("crossover_type", " ".join(map(str,operations)))
 				return final_child_struct
 
 	def reduce_by_reference(self):
