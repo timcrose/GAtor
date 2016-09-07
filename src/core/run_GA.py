@@ -109,17 +109,20 @@ class RunGA():
 				continue
 
 			#----- Relax Trial Structure -----#
-			mkdir_p(self.working_dir) # make relaxation directory in tmp
-			struct = self.structure_relax(struct)
-			if struct == False: #relaxation failed, start with new selection
-				rmdir_silence(self.working_dir)
-				continue
+			if self.ui.get_boolean("run_settings", "skip_energy_evaluations"): 
+				struct.set_property('energy',0.0)
+			else:
+				mkdir_p(self.working_dir) # make relaxation directory in tmp
+				struct = self.structure_relax(struct)
+				if struct == False: #relaxation failed, start with new selection
+					rmdir_silence(self.working_dir)
+					continue
 
-			#----- Compare Post-relaxed Structure to Collection -----#
-			if self.structure_comparison(struct, "post_relaxation_comparison") == False:
-				convergeTF = False
-				rmdir_silence(self.working_dir)
-				continue
+				#----- Compare Post-relaxed Structure to Collection -----#
+				if self.structure_comparison(struct, "post_relaxation_comparison") == False:
+					convergeTF = False
+					rmdir_silence(self.working_dir)
+					continue
 
 			#---- Compute Spacegroup of Relaxed Structure ----#
 			struct = sgu.identify_space_group(struct)
@@ -622,44 +625,61 @@ def structure_create_for_multiprocessing(args):
 	ui = user_input.get_config()
 	nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 	replica, stoic = args
-	#----- Structure Selection -----#
 	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
+	try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
+	except: pass
 	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
 	structure_supercoll = {}
 	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
+
+	#---- Selection ----#
 	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
 
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
-
+	#----- Crossover -----#
 	rand_cross = np.random.random()
-	cross_probability = ui.get_eval('crossover', 'crossover_probability')
-	if rand_cross < cross_probability:
-		#----- Crossover -----#
+	cross_prob = ui.get_eval('crossover', 'crossover_probability')
+	try: sym_cross_prob = ui.get_eval('crossover', 'symmetric_crossover_probability') 
+	except: sym_cross_prob = 0.0
+	mutation_probability = 1.0 - float(cross_prob) - float(sym_cross_prob)
+
+	if rand_cross <= cross_prob:
+		#----- Normal Crossover -----#
 		output.local_message("\n---- Crossover ----", replica)
 		new_struct = crossover_module.main(structures_to_cross, replica)
-		if new_struct is False:
-			output.local_message("Crossover failure", replica)
-			return False
-
-		if ui.all_geo():
-        		output.local_message("\n-- Parent A's geometry --\n" +
-        		structures_to_cross[0].get_geometry_atom_format(), replica)
-                	output.local_message("-- Parent B's geometry --\n" +
-                	structures_to_cross[1].get_geometry_atom_format(), replica)
-			output.local_message("-- Child's geometry --\n" + 
-			new_struct.get_geometry_atom_format(),replica)
                 if new_struct is False:
-                        output.local_message('-- Crossover failure',replica)
+                        output.local_message("Crossover failure", replica)
                         return False
+                if ui.all_geo():
+                        output.local_message("\n-- Parent A's geometry --\n" +
+                        structures_to_cross[0].get_geometry_atom_format(), replica)
+                        output.local_message("-- Parent B's geometry --\n" +
+                        structures_to_cross[1].get_geometry_atom_format(), replica)
+                        output.local_message("-- Child's geometry --\n" +
+                        new_struct.get_geometry_atom_format(),replica)
 		new_struct.set_property('mutation_type', 'no_mutation')
-	
-	if rand_cross >= cross_probability:
-		#----- Mutation Execution -----#
+	elif rand_cross > cross_prob and rand_cross <= cross_prob + sym_cross_prob: 
+		#----- Symmetric Crossover -----#
+                output.local_message("\n---- Symmetric Crossover ----", replica)
+                new_struct = alt_crossover_module.main(structures_to_cross, replica)
+		if new_struct is False:
+                        output.local_message("Crossover failure", replica)
+                        return False
+                if ui.all_geo():
+                        output.local_message("\n-- Parent A's geometry --\n" +
+                        structures_to_cross[0].get_geometry_atom_format(), replica)
+                        output.local_message("-- Parent B's geometry --\n" +
+                        structures_to_cross[1].get_geometry_atom_format(), replica)
+                        output.local_message("-- Child's geometry --\n" +
+                        new_struct.get_geometry_atom_format(),replica)
+			new_struct.set_property('mutation_type', 'no_mutation')
+	elif rand_cross > cross_prob + sym_cross_prob:
+		#----- Mutation on Better Parent -----#
 		output.local_message("\n---- Mutation ----",replica)
 		parent0_en = structures_to_cross[0].get_property('energy')
                 parent1_en = structures_to_cross[1].get_property('energy')
@@ -667,14 +687,17 @@ def structure_create_for_multiprocessing(args):
 			new_struct = structures_to_cross[0]
 		elif parent0_en > parent1_en:
 			new_struct = structures_to_cross[1]
+		if ui.all_geo(): 
+                        output.local_message("Single Parent geometry:\n" 
+                                        + new_struct.get_geometry_atom_format(),replica)
 		new_struct = mutation_module.main(new_struct, replica)
 	        if new_struct!=False and ui.all_geo():
-        		output.local_message("Current structure geometry:\n" 
+        		output.local_message("Mutated geometry:\n" 
                 		        + new_struct.get_geometry_atom_format(),replica)
 		if new_struct is False: 
 			output.local_message('-- Mutation failure',replica)
-			return False
-
+			return False	
+	#---- Orthogonalization ----#
 	if ui.ortho():
 		output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
 		napm = int(new_struct.get_n_atoms()/nmpc)
@@ -697,7 +720,6 @@ def structure_create_for_multiprocessing(args):
 		if ui.all_geo():
 			output.local_message(new_struct.get_geometry_atom_format(),
 					     replica)
-
 	#----- Cell Check -----#
 	output.local_message("\n---- Cell Checks ----",replica)
 	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
