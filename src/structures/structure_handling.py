@@ -624,7 +624,7 @@ def cell_check(struct,replica):
 				output.local_message("-- Failed COM distance check\n",replica)
 			return False
 	elif verbose:
-		output.local_message("##No COM distance check is called##")
+		output.local_message("##No COM distance check is called##",replica)
 
 	if verbose:
 		output.local_message("Combined interatomic distance check:",replica)
