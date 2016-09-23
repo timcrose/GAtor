@@ -6,9 +6,11 @@ Created by Patrick Kilecdi on June 26th, 2016
 import subprocess, os, math
 import core.file_handler as fh
 from core import user_input, output
+from core.activity import *
 from copy import deepcopy
 from utilities import misc
 from external_libs import bgqtools
+from external_libs.filelock import FileLock
 import time
 ui = user_input.get_config()
 
@@ -395,25 +397,57 @@ def launch_parallel_mpirun(use_srun=False):
 	
 	python_command = ui.get(sname,"python_command")
 	new_ui.set(sname,"im_not_master_process","TRUE")
+
+
 	for i in range(nor):
 		new_ui.set(sname,"replica_name",misc.get_random_index())
 		new_ui.set(sname,"processes_per_replica",str(ppr[i]))
 		new_ui.set(sname,"allocated_nodes",str(all_nodes[:max(1,npr[i])]))
 		conf_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".conf")
+		exe_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".exe")
 		f = open(conf_path,"w")
 		new_ui.write(f)
 		f.close()
 		#Launch 1 instance of GAtor on the first node allocated
 		if not use_srun:
-			p = subprocess.Popen(["mpirun","-n","1","-host",all_nodes[0],python_command,fh.GAtor_master_path,conf_path]) 
+			p = subprocess.Popen(["mpirun","-n","1","-host",all_nodes[0],python_command,fh.GAtor_master_path,conf_path])
+			processes.append(p)
 		else:
-			p = subprocess.Popen(["srun","-n","1","-w",all_nodes[0],python_command,fh.GAtor_master_path,conf_path])
-		processes.append(p)
+			arguments = ["srun","-n","1",
+				     "-w",all_nodes[0],
+				     "--mem",ui.get(sname,"srun_gator_memory"),
+				     "--gres",
+				     ui.get(sname,"srun_gres_name")+":1",
+				     python_command,
+				     fh.GAtor_master_path,
+				     conf_path]
+
+			p = subprocess.Popen(arguments)
+#			f = open(exe_path,"w")
+#			f.write(python_command + " " 
+#				+ fh.GAtor_master_path 
+#				+ " " + conf_path)
+#			f.close()
+#			os.system("chmod +x " + exe_path)
+#
+#			arguments = ["srun","-n","1",
+#				     "-w",all_nodes[0],
+#				     "sh", exe_path]
+
+#			p = subprocess.Popen(arguments)
+#			p.wait()
+			processes.append(p)
+			output.time_log("Running command: " + 
+					" ".join(map(str,arguments)))
 	
 		all_nodes = all_nodes[npr[i]:]
 
-	for p in processes:
-		p.wait()
+#	time.sleep(86400)
+	if not use_srun:
+		for p in processes:
+			p.wait()
+	else:
+		monitor_srun(processes)
 
 
 def get_all_processes(command,hostlist=None):
@@ -435,10 +469,11 @@ def get_all_processes(command,hostlist=None):
 
 	p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
 	time.sleep(2)
-	try:
-		p.kill()
-	except:
-		pass
+	p.wait()
+#	try:
+#		p.kill()
+#	except:
+#		pass
 	out , err = p.communicate()
 	try:
 		out = str(out,"utf-8") #Python 3
@@ -449,6 +484,253 @@ def get_all_processes(command,hostlist=None):
 	output.time_log("Number of processes acquired: "+str(len(hosts)))
 	return hosts
 
-def allocate_nodes(number_of_replicas,all_nodes,all_hosts,conf=ui):
-	nor = number_of_replicas
+def monitor_srun(processes):
+	'''
+	Takes all the currently running replicas
+	Monitors the srun command file that submits the srun job
+	Until all the processes exits
+	'''
+	sname = "parallel_settings"
+	cfile = ui.get(sname, "srun_command_file")
+	fname = os.path.basename(cfile)
+	fdir = os.path.dirname(cfile)
+	sfile = ui.get(sname,"srun_submitted_file")
+	ssname = os.path.basename(sfile)
+	sdir = os.path.dirname(sfile)
+	rfile = ui.get(sname,"srun_completed_file")
+	rname = os.path.basename(rfile)
+	rdir = os.path.dirname(rfile)
+	calls = []
+	runtime = ui.get_eval(sname,"srun_max_runtime")
+	otl = output.time_log
+	received_id = []
+	while True:
+		if os.path.exists(cfile):
+			with FileLock(fname,fdir):
+				f = open(cfile,"r")
+				commands = f.read()
+				f.close()
+				os.remove(cfile)
+			commands = commands.split("\n")
+			for command in commands:
+				if len(command)==0:
+					continue
+
+				k = command.split("  ")
+				arglist = eval(k[0])
+				stdout = k[1]
+				stderr = k[2]
+				replica = k[3]
+				job_id = k[4]
+				if job_id in received_id:
+				#Job already submitted
+					continue
+
+				otl("Execution with arguments: " + 
+				    " ".join(map(str,arglist)),
+				    replica)
+
+				with FileLock(ssname,sdir,timeout=60):
+				#Record that this job is received
+					f = open(sfile,"a")
+					f.write(job_id+"\n")
+					f.close()
+
+				outfile = open(stdout,"w")
+				errfile = open(stderr,"w")
+				p = subprocess.Popen(arglist,
+						     stdout=outfile,
+						     stderr=errfile)
+				calls.append([p,time.time(),job_id])
+				received_id.append(job_id)
+
+		completed = []
+		for call in calls:
+			p = call[0]
+			if p.poll()!=None: #Job completed
+				with FileLock(rname,rdir):
+					f = open(rfile,"a")
+					f.write(call[2] + " " + str(p.poll())+"\n")
+					f.close()
+				completed.append(calls.index(call))
+			
+			if (time.time()-call[1]) > runtime:
+				try:
+					p.send_signal(2)
+				except:
+					pass
+
+		calls = [call for call in calls if calls.index(call) not in completed]
+		
+
+		still_running = False
+		for process in processes:
+			if process.poll()==None:
+				still_running = True
+				break
+		if not still_running: #All replicas exited
+			break
+				
+		time.sleep(5)
+				
+
+def srun_call (arglist,stdout,stderr,replica):
+	'''
+	Submit a srun call to be picked up by monitor_srun in the master process
+	'''
+	sname = "parallel_settings"
+	cfile = ui.get(sname, "srun_command_file")
+	fname = os.path.basename(cfile)
+	fdir = os.path.dirname(cfile)
+	sfile = ui.get(sname,"srun_submitted_file")
+	ssname = os.path.basename(sfile)
+	sdir = os.path.dirname(sfile)
+	rfile = ui.get(sname,"srun_completed_file")
+	rname = os.path.basename(rfile)
+	rdir = os.path.dirname(rfile)
+
+	job_id = misc.get_random_index()
+	output.local_message("-- srun execution internal job id: " + job_id)
+	while True:
+		with FileLock(fname,fdir):
+			f = open(cfile,"a")
+			f.write("  ".join(map(str,[arglist,stdout,stderr,replica,job_id]))+"\n")
+			f.close()
+		time.sleep(10)
+		with FileLock(ssname,sdir):
+			f = open(sfile,"r")
+			received_id = f.read()
+			f.close()
+		if job_id in received_id.split("\n"):
+		#Command picked up by master process
+			break
+
 	
+	while True:
+		if os.path.exists(rfile):
+			with FileLock(rname,rdir,timeout=600):
+				f = open(rfile,"r")
+				completed = f.read()
+				f.close()
+
+			completed = completed.split("\n")
+			for i in range(len(completed)):
+				if job_id in completed[i]:
+					stat=eval(completed[i].split(" ")[1])
+					return stat
+		time.sleep(5)
+
+	return stat
+
+def launch_and_monitor(working_dir,arglist,stdout,stderr,enable_monitor=False,update_poll_interval=None,update_poll_times=None,execute_srun=False,replica=ui.get_replica_name()):
+	'''
+	Conduct a binary call with stdout and stderr for a replica
+	Originally adapted from FHI-aims binary call in the FHI-aims module
+	If enable_monitor is set to TRUE, update_poll_interval and update_poll_times cannot be None
+	update_poll_interval is the interval in seconds between polls of the process status
+	update_poll_times is the number of polls without output before determining process hung
+	execute_srun is set to True when this function is called by a master process
+
+	NOTE: THIS FUNCTION'S ADAPTATION IS NOT COMPLETE YET 
+	'''
+	if arglist[0] == "srun" and not execute_srun:
+		#Requires special implementation
+		#Call is not directly made by the replica
+		#But rather the master process that first spawned all of them
+		return srun_call(arglist,
+				 stdout,
+				 stderr,
+				 enable_monitor,
+				 update_poll_interval,
+				 update_poll_time,
+				 replica)
+
+
+	otl = output.time_log
+	if not enable_monitor:
+		outfile = open(stdout,"w")
+		errfile = open(stderr,"w")
+
+		get_execute_clearance(request_folder=working_dir)
+		otl("Job execution clearance acquired",self.replica)
+		otl("Execution without monitoring using arguments: " + 
+		    " ".join(map(str,arglist)),
+		    self.replica)
+
+		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
+		p.wait()
+		return True
+
+	for i in range (10): #Allow 10 times for the job to successfully launch
+		outfile = open(stdout,"w")
+		errfile = open(stderr,"w")
+		get_execute_clearance(request_folder=working_dir)
+		otl("Job execution clearance acquired",self.replica)
+		otl("Job (with monitoring) launch attempt " + str(i) +
+		    " with arguments: "+" ".join(map(str,arglist)),
+		    self.replica)
+
+
+		#Incomplete adaptation!!!!!!!
+		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
+		time.sleep(1)
+		try:
+			status=p.poll()
+		except: #OSError Errno 3 Process does not exist
+			otl("Nodes failure ; replica will pass out from now on")
+			time.sleep(86400)
+			os.chdir(original_dir)
+			return False
+			
+		time_limit=60
+		for j in range (time_limit): #Allow 60 seconds for aims to start outputting
+			if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
+				break
+			write_active(self.working_dir)
+			self.set_permission()
+			time.sleep(1)
+		if (os.stat(aimsout).st_size>512):
+			output.time_log("aims.out begins output", self.replica)
+			break
+		outfile.close()
+		output.time_log("aims job launch failure",self.replica)
+		try:
+			p.send_signal(2)
+		except:
+			output.time_log("Unable to kill process ; possible node failures", self.replica)
+			time.sleep(86400)
+		active_sleep(60,self.working_dir)
+		try:
+			self.set_permission()
+		except:
+			pass
+
+
+		if i==9:
+			output.time_log("WARNING: Repeated launch failure ; exiting",self.replica)
+			os.chdir(original_dir)
+			return False
+	counter=0; last=os.stat(aimsout).st_size
+	while counter<update_poll_times and p.poll()==None: #The output file needs to update at least once in every 5 minutes
+		write_active(self.working_dir)
+		self.set_permission()
+		time.sleep(update_poll_interval)
+		if os.stat(aimsout).st_size>last:
+			last=os.stat(aimsout).st_size
+			counter=0
+		else:
+			counter+=1
+	if counter==60:
+		output.time_log("aims job hung",self.replica)
+		try:
+			p.send_signal(2)
+		except:
+			output.time_log("Unable to kill process ; possible node failures", self.replica)
+			time.sleep(86400)
+		active_sleep(60,self.working_dir)
+		try:
+			self.set_permission()
+		except:
+			pass
+	 
+						
