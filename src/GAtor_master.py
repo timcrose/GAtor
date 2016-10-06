@@ -31,51 +31,33 @@ class GAtor():
 	def __init__(self):
 		sname = "GAtor_master"
 		self.ui = user_input.get_config()
+		if self.ui.has_option(sname,"working_directory"):
+			os.chdir(self.ui.get(sname,"working_directory"))
+			reload_modules()
+			
 		if self.ui.get_boolean(sname,"testing_mode"):
 			print("Testing mode starting")
 			self.testing_mode()
 			return #Under test mode, no further comamnd is read
 
-		if self.ui.get_boolean(sname,"kill_ga") and self.ui.is_master_process():
+		if self.ui.get_boolean(sname,"bundled_ga"):
+			parallel_run.launch_bundled()
+			return
+
+		if self.ui.get_boolean(sname,"kill_ga") and\
+					self.ui.is_master_process():
 			self.kill_GA()
 
-		if self.ui.get_boolean(sname,"clean_folder") and self.ui.is_master_process():
+		if self.ui.get_boolean(sname,"clean_folder") and\
+					self.ui.is_master_process():
 			self.clean_folder()
 
-		if self.ui.get_boolean(sname,"fill_initial_pool") and self.ui.is_master_process():
+		if self.ui.get_boolean(sname,"fill_initial_pool") and\
+					self.ui.is_master_process():
 			self.fill_initial_pool()
 
 		if self.ui.get_boolean(sname,"run_ga"):
-			from core import run_GA
-			if self.ui.get("parallel_settings","parallelization_method")!="serial":
-			#Launch parallelism
-				parallel_run.launch_parallel()
-			else:
-				sname = "parallel_settings"
-
-				if self.ui.get_replica_name()=="master":
-				#Need to assign new name
-					self.ui.set(sname,"replica_name",misc.get_random_index())
-					conf_path = os.path.join(fh.conf_tmp_dir,self.ui.get_replica_name()+".conf")
-					f = open(conf_path,"w")
-					self.ui.write(f)
-					f.close()
-					sys.argv.append(conf_path)
-					reload_modules()
-
-				message = "GAtor instance reporting from "+socket.gethostname()
-				if self.ui.has_option(sname,"allocated_nodes"):
-					message += "; controlling node(s): "+", ".join(map(str,self.ui.get_eval(sname,"allocated_nodes")))
-				if self.ui.has_option(sname,"processes_per_replica"):
-					message += "; controlling %i process(es)" % (self.ui.get_eval(sname,"processes_per_replica"))
-				output.time_log(message)
-
-				
-				stoic = stoic_model.determine_stoic()
-				ga = run_GA.RunGA(self.ui.get_replica_name(),stoic)
-				ga.start()
-				output.move_to_shared_output(self.ui.get_replica_name())
-				
+			self.run_ga()		
 
 	def testing_mode(self):
 		from utilities import test_and_debug
@@ -111,6 +93,51 @@ class GAtor():
 		else:
 			output.time_log("User denied cleaning or no user response is received within 30 s.",sname)
 			output.time_log("Moving on",sname)
+
+	def run_ga(self):
+		from core import run_GA
+		sname = "parallel_settings"
+		if self.ui.get(sname,"parallelization_method") != "serial":
+		#Launch parallelism
+			parallel_run.launch_parallel()
+			return
+
+		if self.ui.get_replica_name() == "master":
+			#Need to assign new name
+			self.ui.set(sname,"replica_name",misc.get_random_index())
+			conf_path = os.path.join(fh.conf_tmp_dir,
+						 self.ui.get_replica_name()+".conf")
+
+			f = open(conf_path,"w")
+			self.ui.write(f)
+			f.close()
+			sys.argv.append(conf_path)
+			reload_modules()
+
+		message = "GAtor instance reporting from " + \
+				socket.gethostname()
+		if self.ui.has_option(sname,"allocated_nodes"):
+			nodes = self.ui.get_eval(sname,"allocated_nodes")
+			message += "; controlling node(s): " + \
+					", ".join(map(str,nodes))
+
+		if self.ui.has_option(sname,"processes_per_replica"):
+			ppr = self.ui.get_eval(sname, "processes_per_replica")
+			message += "; controlling %i process(es)" % ppr
+
+		if self.ui.has_option(sname,"runjob_block"):
+			message += "; block: " + self.ui.get(sname,"runjob_block")
+
+		if self.ui.has_option(sname,"runjob_corner"):
+			message += "; corner: " + self.ui.get(sname,"runjob_corner")
+
+		output.time_log(message)
+	
+		stoic = stoic_model.determine_stoic()
+		ga = run_GA.RunGA(self.ui.get_replica_name(),stoic)
+		ga.start()
+		output.move_to_shared_output(self.ui.get_replica_name())
+	
 
 
 def reload_modules():

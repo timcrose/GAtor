@@ -66,11 +66,8 @@ class RunGA():
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
 		
 		sname = "parallel_settings"
-		self.processes = 1
-		if self.ui.has_option(sname,"processes_per_replica"):
-			self.processes = self.ui.get_eval(sname,"processes_per_replica")
-			if self.ui.has_option(sname,"processes_per_node"):
-				self.processes = min(self.ui.get_eval(sname,"processes_per_node"), self.processes)
+		self.processes = self.ui.get_multiprocessing_processes()
+
 		if self.processes > 1:
 			self.worker_pool = multiprocessing.Pool(processes=self.processes)
 
@@ -112,17 +109,20 @@ class RunGA():
 				continue
 
 			#----- Relax Trial Structure -----#
-			mkdir_p(self.working_dir) # make relaxation directory in tmp
-			struct = self.structure_relax(struct)
-			if struct == False: #relaxation failed, start with new selection
-				rmdir_silence(self.working_dir)
-				continue
+			if self.ui.get_boolean("run_settings", "skip_energy_evaluations"): 
+				struct.set_property('energy',0.0)
+			else:
+				mkdir_p(self.working_dir) # make relaxation directory in tmp
+				struct = self.structure_relax(struct)
+				if struct == False: #relaxation failed, start with new selection
+					rmdir_silence(self.working_dir)
+					continue
 
-			#----- Compare Post-relaxed Structure to Collection -----#
-			if self.structure_comparison(struct, "post_relaxation_comparison") == False:
-				convergeTF = False
-				rmdir_silence(self.working_dir)
-				continue
+				#----- Compare Post-relaxed Structure to Collection -----#
+				if self.structure_comparison(struct, "post_relaxation_comparison") == False:
+					convergeTF = False
+					rmdir_silence(self.working_dir)
+					continue
 
 			#---- Compute Spacegroup of Relaxed Structure ----#
 			struct = sgu.identify_space_group(struct)
@@ -266,6 +266,7 @@ class RunGA():
 		count = 0
 		begin_time = time.time()
 		self.output("Generating trial structure with %i processes" % self.processes)
+		
 		while count<total_attempts and struct == False:
 			if self.processes == 1: #Serial
 				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
@@ -398,21 +399,22 @@ class RunGA():
 				new_struct = self.mutation_module.main(new_struct, self.replica) 
 		else:
 			self.output('No mutation applied.')
-			new_struct.set_property('mutation_type', 'no_mutation')
+			new_struct.set_property('mutation_type', ' ')
 		if new_struct is False: 
 			self.output('Mutation failure')
 			return False
 
 		#-----Structure modification of angles. Checks reasonable structure is created -----#
 		self.output("\n--Cell Checks--")	
-		structure_handling.cell_modification(new_struct, self.replica,create_duplicate=False)
+		structure_handling.cell_modification_old(new_struct, self.replica,create_duplicate=False)
+#		structure_handling.cell_modification(new_struct,
 		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
 			return False
 		self.set_parents(structures_to_cross, new_struct)
 
 		self.output("\n--Assign structure ID--")
 		new_struct.struct_id = misc.get_random_index()
-		self.output("ID assigned: "+new_struct.struct_id)
+		self.output("ID assigned: "+new_struct.struct_id+"\n")
 		return new_struct
 	
 	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
@@ -518,7 +520,7 @@ class RunGA():
 		struct.set_property('lattice_vector_a',list(a))
 		struct.set_property('lattice_vector_b',list(b))
 		struct.set_property('lattice_vector_c',list(c))
-		if self.ui.all_geo:
+		if self.ui.all_geo():
 			self.output("Final Structure's geometry:\n" +
 			struct.get_geometry_atom_format())
 		return struct
@@ -621,67 +623,103 @@ def structure_create_for_multiprocessing(args):
 	This is a function for structure creation reading straight from the ui.conf file
 	'''
 	ui = user_input.get_config()
+	nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 	replica, stoic = args
-	#----- Structure Selection -----#
 	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
+	try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
+	except: pass
 	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
 	structure_supercoll = {}
 	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
+
+	#---- Selection ----#
 	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
 
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
-
 	#----- Crossover -----#
-	output.local_message("\n---- Crossover ----", replica)
-	new_struct = crossover_module.main(structures_to_cross, replica)
-	if new_struct is False:
-		output.local_message("Crossover failure", replica)
-		return False
+	rand_cross = np.random.random()
+	cross_prob = ui.get_eval('crossover', 'crossover_probability')
+	try: sym_cross_prob = ui.get_eval('crossover', 'symmetric_crossover_probability') 
+	except: sym_cross_prob = 0.0
+	mutation_probability = 1.0 - float(cross_prob) - float(sym_cross_prob)
 
-	if ui.all_geo():
-        	output.local_message("\n-- Parent A's geometry --\n" +
-        	structures_to_cross[0].get_geometry_atom_format(), replica)
-                output.local_message("-- Parent B's geometry --\n" +
-                structures_to_cross[1].get_geometry_atom_format(), replica)
-		output.local_message("-- Child's geometry --\n" + 
-		new_struct.get_geometry_atom_format(),replica)
-	
-	#----- Mutation Execution -----#
-	output.local_message("\n---- Mutation ----",replica)
-	rand1 = np.random.random()	
-	rand2 = np.random.random()
-	#Single Parents have to be mutated	
-	if (new_struct.get_property('crossover_type') == [1,1] or 
-	    new_struct.get_property('crossover_type') == [2,2] or 
-	    rand1<ui.get_eval('mutation', 'mutation_probability')):
-		new_struct = mutation_module.main(new_struct, replica)
-		if new_struct!=False and ui.all_geo():
-			output.local_message("Current structure geometry:\n" 
-			+ new_struct.get_geometry_atom_format(),replica)
-		if new_struct!=False and rand2 < ui.get_eval('mutation', 'double_mutate_prob'):
-			output.local_message("--Second Mutation--",replica)
-			new_struct = mutation_module.main(new_struct, replica)
-			if new_struct!=False and ui.all_geo():
-				output.local_message("-- Mutated child's geometry --\n"
-				+ new_struct.get_geometry_atom_format(),replica) 
-
-	else:
-		output.local_message('-- No mutation applied',replica)
+	if rand_cross <= cross_prob:
+		#----- Normal Crossover -----#
+		output.local_message("\n---- Crossover ----", replica)
+		new_struct = crossover_module.main(structures_to_cross, replica)
+                if new_struct is False:
+                        output.local_message("Crossover failure", replica)
+                        return False
+                if ui.all_geo():
+                        output.local_message("\n-- Parent A's geometry --\n" +
+                        structures_to_cross[0].get_geometry_atom_format(), replica)
+                        output.local_message("-- Parent B's geometry --\n" +
+                        structures_to_cross[1].get_geometry_atom_format(), replica)
+                        output.local_message("-- Child's geometry --\n" +
+                        new_struct.get_geometry_atom_format(),replica)
 		new_struct.set_property('mutation_type', 'no_mutation')
-
-	if new_struct is False: 
-		output.local_message('-- Mutation failure',replica)
-		return False
-
+	elif rand_cross > cross_prob and rand_cross <= cross_prob + sym_cross_prob: 
+		#----- Symmetric Crossover -----#
+                output.local_message("\n---- Symmetric Crossover ----", replica)
+                new_struct = alt_crossover_module.main(structures_to_cross, replica)
+		if new_struct is False:
+                        output.local_message("Crossover failure", replica)
+                        return False
+                if ui.all_geo():
+                        output.local_message("\n-- Parent A's geometry --\n" +
+                        structures_to_cross[0].get_geometry_atom_format(), replica)
+                        output.local_message("-- Parent B's geometry --\n" +
+                        structures_to_cross[1].get_geometry_atom_format(), replica)
+                        output.local_message("-- Child's geometry --\n" +
+                        new_struct.get_geometry_atom_format(),replica)
+			new_struct.set_property('mutation_type', 'no_mutation')
+	elif rand_cross > cross_prob + sym_cross_prob:
+		#----- Mutation on Better Parent -----#
+		output.local_message("\n---- Mutation ----",replica)
+		parent0_en = structures_to_cross[0].get_property('energy')
+                parent1_en = structures_to_cross[1].get_property('energy')
+		if parent0_en < parent1_en:
+			new_struct = structures_to_cross[0]
+		elif parent0_en > parent1_en:
+			new_struct = structures_to_cross[1]
+		if ui.all_geo(): 
+                        output.local_message("Single Parent geometry:\n" 
+                                        + new_struct.get_geometry_atom_format(),replica)
+		new_struct = mutation_module.main(new_struct, replica)
+	        if new_struct!=False and ui.all_geo():
+        		output.local_message("Mutated geometry:\n" 
+                		        + new_struct.get_geometry_atom_format(),replica)
+		if new_struct is False: 
+			output.local_message('-- Mutation failure',replica)
+			return False	
+	#---- Orthogonalization ----#
 	if ui.ortho():
-		output.local_message("---- Checking Cell Orthogonalization ----",replica)
-		structure_handling.cell_modification(new_struct, replica=replica, create_duplicate=False)
+		output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
+		napm = int(new_struct.get_n_atoms()/nmpc)
+		success = \
+		structure_handling.cell_modification(new_struct, 
+						     napm,
+						     create_duplicate=False)
+		if success == False and ui.verbose():
+			message = "--Niggli reduction of lattice failed"
+			message += "\n--Lattice vectors: \n"
+			message += "\n".join(map(str,
+						 new_struct.get_lattice_vectors()))
+			message += "\n--Only setting to lower triangular"
+			output.local_message(message+"\n",replica)
+	
+		if success == False:
+			structure_handling.cell_lower_triangular(new_struct,
+								 False)
 
+		if ui.all_geo():
+			output.local_message(new_struct.get_geometry_atom_format(),
+					     replica)
 	#----- Cell Check -----#
 	output.local_message("\n---- Cell Checks ----",replica)
 	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable

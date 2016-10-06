@@ -24,7 +24,9 @@ def main(structure_supercoll, replica_stoic,replica=user_input.get_config().get_
     '''
     struct_sel = StructureSelection(structure_supercoll, replica_stoic,replica)
     structure_collection.update_supercollection(structure_supercoll)
-    [struct_a, struct_b] = struct_sel.get_structures()  
+    [struct_a, struct_b] = struct_sel.get_structures()
+    output.local_message("-- Parent A ID: "+struct_a.struct_id,replica)
+    output.local_message("-- Parent B ID: "+struct_b.struct_id,replica) 
     return [struct_a, struct_b]
 
 class StructureSelection():

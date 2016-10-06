@@ -108,13 +108,20 @@ def convert_to_structures(files_to_add):
 	'''
 	#print files_to_add
 	initial_list = []
+	ui = user_input.get_config()
 	for file in files_to_add:	
 		struct = Structure()
 		struct.build_geo_from_json_file(file)
 		struct.set_property('file_path', file)
 		struct.set_property('replica', 'init_pool')
-                mod_struct = structure_handling.cell_modification(struct, "init_pool",create_duplicate=False)
-		initial_list.append(mod_struct)
+
+		if ui.ortho():
+			napm = int(struct.get_n_atoms()/ui.get_nmpc())
+			structure_handling.cell_modification(struct,
+							     napm,
+							     create_duplicate=False)
+		
+		initial_list.append(struct)
 	return initial_list
 
 def set_IP_structure_matcher(ui):

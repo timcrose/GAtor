@@ -69,16 +69,46 @@ class ListSafeConfigParser(SafeConfigParser):
 		dicti = {}
 		for key in self.options(section):
 			if eval:
-				dicti[key] = self.get_eval(section,key)
+				try:
+					dicti[key] = self.get_eval(section,key)
+				except:
+					dicti[key] = self.get(section,key)
 			else:
 				dicti[key] = self.get(section,key)
 		return dicti
+
+	def get_bundled_run_info(self):
+		sname = "bundled_run_settings"
+		run_names = self.get_list(sname,"run_names")
+		runs = []
+		for sname in run_names:
+			if not self.has_section(sname):
+				message = "Bundled run missing section for "
+				message += "run: " + sname
+				raise KeyError(message)
+			d = self.get_section_as_dict(sname,eval=True)
+			d["run_name"] = sname
+			runs.append(d)
+		return runs
 
 	def get_replica_name(self):
 		return self.get("parallel_settings","replica_name")
 	
 	def get_property_to_optimize(self):
 		return self.get("run_settings","property_to_optimize")
+
+	def get_nmpc(self):
+		return self.get_eval("unit_cell_settings","num_molecules")
+
+	def get_multiprocessing_processes(self):
+		sname = "parallel_settings"
+		processes = 1
+		if self.has_option(sname,"processes_per_replica"):
+			processes = self.get_eval(sname,"processes_per_replica")
+			if self.has_option(sname,"processes_per_node"):
+				processes = min(self.get_eval(sname,"processes_per_node"), processes)
+		return processes
+
 
 	
 	def verbose(self):
@@ -101,6 +131,15 @@ class ListSafeConfigParser(SafeConfigParser):
 			else:
 				raise ValueError("Not a file or directory: "+path)
 
+	def set_false(self,section,option):
+		if self.has_option(section,option):
+			self.remove_option(section,option)
+
+	def set_true(self,section,option):
+		self.set(section,option,"TRUE")
+
+	def set_working_dir(self,wdir):
+		self.set("GAtor_master","working_directory",wdir)
 			
 
 	def __deepcopy__(self,memo):
@@ -130,6 +169,21 @@ def get_config():
 	default_config_file.close()
 
 	local_config_file = open(ui_conf, 'r')
+	config.readfp(local_config_file)
+	local_config_file.close()
+	return config
+
+def get_config_with_path(path):
+	'''
+	Reads in default and user defined UI from the filesystem
+	'''
+	config = ListSafeConfigParser()
+
+	default_config_file = open(default_config, 'r')
+	config.readfp(default_config_file)
+	default_config_file.close()
+
+	local_config_file = open(path, 'r')
 	config.readfp(local_config_file)
 	local_config_file.close()
 	return config
