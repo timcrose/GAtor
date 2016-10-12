@@ -101,7 +101,8 @@ class RunGA():
 			if struct == False: 
 				#-----Generate Trial Structure -----#
 				struct = self.generate_trial_structure()
-			
+				if struct == False:
+					continue	
 			#----- Compare Pre-relaxed Structure to Collection -----#
 			if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
 				convergeTF = False
@@ -260,19 +261,34 @@ class RunGA():
 			return struct
 
 	def generate_trial_structure(self):
+		count = 0	
 		struct = False 
 		sname = "run_settings"
-		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
-		count = 0
 		begin_time = time.time()
+	        structure_supercoll = {}
+        	structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
+		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
 		self.output("Generating trial structure with %i processes" % self.processes)
-		
-		while count<total_attempts and struct == False:
+		selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
+
+		# Select ID's of two parents chosen for selection
+		parent_a_ID, parent_b_ID = selection_module.main(structure_supercoll, self.replica_stoic, self.replica)
+
+		# Choose probability of crossover, mutation, and symmetric crossover
+		rand_cross = np.random.random()
+        	cross_prob = self.ui.get_eval('crossover', 'crossover_probability')
+        	try: sym_cross_prob = self.ui.get_eval('crossover', 'symmetric_crossover_probability')
+        	except: sym_cross_prob = 0.0
+        	mut_prob = 1.0 - float(cross_prob) - float(sym_cross_prob)	
+
+		# Setup structure either in serial or mutliprocessing
+		while count < total_attempts and struct == False:
 			if self.processes == 1: #Serial
-				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
+				struct = structure_create_for_multiprocessing((self.replica, self.replica_stoic, \
+					 parent_a_ID, parent_b_ID, cross_prob, sym_cross_prob))
 			else:
-				arglist = [(self.replica+"_"+str(x), self.replica_stoic)\
-				for x in range (self.processes)]
+				arglist = [(self.replica+"_"+str(x), self.replica_stoic, parent_a_ID, parent_b_ID,\
+				cross_prob, sym_cross_prob) for x in range (self.processes)]
 				results = self.worker_pool.map(
 				structure_create_for_multiprocessing, arglist)
 
@@ -293,7 +309,9 @@ class RunGA():
 			count += self.processes
 		end_time = time.time()
 		if count == total_attempts and struct==False:
-			raise RuntimeError("Generating structure maxed out on generation attempts.")
+			output.local_message("-- Generating structure maxed out on generation attempts: "+ str(total_attempts))
+			output.local_message("-- Selecting new parents --")
+			return struct
 		output.local_message("New trial structure generated:")
 		output.local_message("-- Number of attempts for structure generation: "+str(count))
 		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" seconds")
@@ -624,7 +642,7 @@ def structure_create_for_multiprocessing(args):
 	'''
 	ui = user_input.get_config()
 	nmpc = ui.get_eval('unit_cell_settings','num_molecules')
-	replica, stoic = args
+	replica, stoic, parent_a_id, parent_b_id, cross_prob, sym_cross_prob = args
 	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
 	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
@@ -632,21 +650,22 @@ def structure_create_for_multiprocessing(args):
 	try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
 	except: pass
 	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
-	structure_supercoll = {}
-	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
+	struct_coll = structure_collection.get_collection(stoic, 0)
 
-	#---- Selection ----#
-	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
-
+	#---- Get structures of selected parent ID's ----#
+	parent_a = struct_coll.get_struct(parent_a_id)
+	parent_b = struct_coll.get_struct(parent_b_id)
+	structures_to_cross = [parent_a, parent_b]	
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
+
 	#----- Crossover -----#
 	rand_cross = np.random.random()
 	cross_prob = ui.get_eval('crossover', 'crossover_probability')
 	try: sym_cross_prob = ui.get_eval('crossover', 'symmetric_crossover_probability') 
 	except: sym_cross_prob = 0.0
-	mutation_probability = 1.0 - float(cross_prob) - float(sym_cross_prob)
+	mutation_prob = 1.0 - float(cross_prob) - float(sym_cross_prob)
 
 	if rand_cross <= cross_prob:
 		#----- Normal Crossover -----#
