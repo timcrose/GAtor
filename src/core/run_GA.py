@@ -285,10 +285,10 @@ class RunGA():
 		while count < total_attempts and struct == False:
 			if self.processes == 1: #Serial
 				struct = structure_create_for_multiprocessing((self.replica, self.replica_stoic, \
-					 parent_a_ID, parent_b_ID, cross_prob, sym_cross_prob))
+					 parent_a_ID, parent_b_ID, rand_cross, cross_prob, sym_cross_prob))
 			else:
 				arglist = [(self.replica+"_"+str(x), self.replica_stoic, parent_a_ID, parent_b_ID,\
-				cross_prob, sym_cross_prob) for x in range (self.processes)]
+				rand_cross, cross_prob, sym_cross_prob) for x in range (self.processes)]
 				results = self.worker_pool.map(
 				structure_create_for_multiprocessing, arglist)
 
@@ -642,10 +642,9 @@ def structure_create_for_multiprocessing(args):
 	'''
 	ui = user_input.get_config()
 	nmpc = ui.get_eval('unit_cell_settings','num_molecules')
-	replica, stoic, parent_a_id, parent_b_id, cross_prob, sym_cross_prob = args
+	replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, sym_cross_prob = args
 	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
-	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
 	try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
 	except: pass
@@ -661,12 +660,6 @@ def structure_create_for_multiprocessing(args):
 		return False
 
 	#----- Crossover -----#
-	rand_cross = np.random.random()
-	cross_prob = ui.get_eval('crossover', 'crossover_probability')
-	try: sym_cross_prob = ui.get_eval('crossover', 'symmetric_crossover_probability') 
-	except: sym_cross_prob = 0.0
-	mutation_prob = 1.0 - float(cross_prob) - float(sym_cross_prob)
-
 	if rand_cross <= cross_prob:
 		#----- Normal Crossover -----#
 		output.local_message("\n---- Crossover ----", replica)
