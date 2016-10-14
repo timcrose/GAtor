@@ -415,6 +415,7 @@ def launch_parallel_mpirun(use_srun=False):
 		else:
 			arguments = ["srun","-n","1",
 				     "-w",all_nodes[0],
+				     "-c",new_ui.get(sname,"processes_per_node"),
 				     "--mem",ui.get(sname,"srun_gator_memory"),
 				     "--gres",
 				     ui.get(sname,"srun_gres_name")+":1",
