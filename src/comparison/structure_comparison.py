@@ -110,7 +110,7 @@ class Comparison:
             fit = self.compute_pymatgen_fit(struct, structc, comparison_type)
             if fit:
                 self.output("-- Structure is a duplicate of another in common pool")
-		self.output("-- Structure ID in Common pool is: %s" % indexc)
+		self.output("-- Duplicate Structure ID in common pool is: %s" % indexc)
 		index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
 		self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
 		dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
