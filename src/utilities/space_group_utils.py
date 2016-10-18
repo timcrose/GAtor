@@ -133,10 +133,10 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 			symmops.append(op)
 		del struct.properties["symmetry_operations"]
 
-	for op in symmops:
-		if not is_compatible(lats,op.rotation_matrix):
+#	for op in symmops:
+#		if not is_compatible(lats,op.rotation_matrix):
 #			print "Rebuild symmetry operation incompatible"
-			return False
+#			return False
 		
 	for op in symmops:
 		for old_site in structp:

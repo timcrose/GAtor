@@ -15,8 +15,10 @@ from utilities import space_group_utils as sgu
 
 def main(struct, replica):
     '''
-    Args: Single Structure() to mutate, the replica name running the crossover instance.
-    Returns: A single Structure() if mutation is successful or False if mutation fails 
+    Args: Single Structure() to mutate, the replica name running the 
+    crossover instance.
+    Returns: A single Structure() if mutation is successful or False if 
+    mutation fails 
     '''
     input_struct = deepcopy(struct)
     ui = user_input.get_config()
@@ -24,56 +26,73 @@ def main(struct, replica):
     napm = int(len(input_struct.geometry)/num_mols)
     tapc = napm*num_mols
     if ui.get_boolean("mutation","enable_symmetry"):
-        #Will reduce the cell first before mutation
-        output.local_message("Symmetry is enabled for mutation",replica)
+	mutated_struct = symmetric_mutation(input_struct, ui, num_mols, napm, tapc, replica)
+    else:  
+        mutate_obj = select_mutator(input_struct, num_mols, replica, 
+                                    reduced_cell=False, pure_strain=False)
+        mutated_struct = mutate_obj.mutate()
+    return mutated_struct
+
+def symmetric_mutation(input_struct, ui, num_mols, napm, tapc, replica):
+    '''
+    Uses space group utilities to perform mutation on the input 
+    structure's asymmetric unit
+    Returns: Mutated Structure
+    '''
+    #Will reduce the cell first before mutation
+    output.local_message("Symmetry is enabled for mutation",replica)
+    if random.random() < 0.99: #50 percent chance of symmetric strain
+	output.local_message("Performing strain on whole unit cell")
+	mutated_obj = select_mutator(input_struct, num_mols, replica, 
+                                     reduced_cell=False, pure_strain=True)
+	return mutated_obj.mutate()
+    else:
         red_mutated_struct = sgu.reduce_by_symmetry(input_struct)
         symmetry_operations = red_mutated_struct.properties["symmetry_operations"]
-
         if len(red_mutated_struct.geometry) % napm != 0:
             output.local_message("Structure reduction by symmetry failed", replica)
             return False
 
         num_mols = int(len(red_mutated_struct.geometry)/napm)
-        mutate_obj = select_mutator(red_mutated_struct,num_mols,replica)
+        mutate_obj = select_mutator(red_mutated_struct, num_mols, replica, pure_strain=False)
         red_mutated_struct = mutate_obj.mutate()
         red_mutated_struct.properties["symmetry_operations"] = symmetry_operations
         if red_mutated_struct == False:
             return False
 
         mutated_struct = sgu.rebuild_by_symmetry(red_mutated_struct,napm=napm,create_duplicate=True)
-	if mutated_struct == False:
+        if mutated_struct == False:
             output.local_message('Structure reconstruction by symmetry failed',replica)
-	    return False
+            return False
         if len(mutated_struct.geometry)!=tapc:
             output.local_message('Structure reconstruction by symmetry failed',replica)
             return False
-	mutated_struct.set_property('mutation_type', red_mutated_struct.get_property('mutation_type'))
-	mutated_struct.set_property('crossover_type', red_mutated_struct.get_property('crossover_type'))
-    else:  
-        mutate_obj = select_mutator(input_struct, num_mols, replica)
-        mutated_struct = mutate_obj.mutate()
-    return mutated_struct
-   
-def select_mutator(input_struct, num_mols, replica):
+        mutated_struct.set_property('mutation_type', red_mutated_struct.get_property('mutation_type'))
+        mutated_struct.set_property('crossover_type', red_mutated_struct.get_property('crossover_type'))
+        return mutated_struct
+
+def select_mutator(input_struct, num_mols, replica, reduced_cell=True, pure_strain=True):
     '''
     In this mutation implementation, there are several classes, each performing a 
     different mutation. This method selecting which mutation to empoly
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    if num_mols > 1:
-        mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
-                          "Sym_rot_mol","Strain_rand_mols","Strain_sym_mols",
-                          "Swap_mol"])
-    else:
-        mutation_list = (["Trans_mol","Rot_mol","Strain_rand", "Strain_sym",
-                          "Strain_rand_mols","Strain_sym_mols"])
-
+    if reduced_cell and num_mols == 1 and not pure_strain:
+        mutation_list = ["Trans_mol", "Rot_mol"]
+    elif reduced_cell and num_mols > 1 and not pure_strain:
+	mutation_list = ["Trans_mol", "Rot_mol", "Sym_rot_mol", "Swap_mol"]
+    elif not reduced_cell and pure_strain:
+	mutation_list = ["Strain_sym_mols"]
+    elif not reduced_cell and not pure_strain:
+        mutation_list = (["Trans_mol","Rot_mol", "Sym_rot_mol",
+                          "Strain_rand_mols","Strain_sym_mols", "Swap_mol"])
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
         mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
-    message = "-- Mutation Choice: " +str(mut_choice)
+    message = "-- Mutation Choice: %s" % (mut_choice)
+    message += "\n-- Reduced Cell: %s" % (reduced_cell)
     output.local_message(message, replica)
 
     if mut_choice == "Trans_mol":
@@ -535,7 +554,7 @@ class RandomSymmetryStrainMutation(object):
         self.output("Strain parameter: " + str(strain_param).strip('[').strip(']'))
         self.output("Strain_matrix: \n" + str(strain_mat).strip('[').strip(']'))
 	strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
-        self.output("strained_lattice" + str(strain))
+        self.output("Strained_lattice:" + str(strain))
         return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C):
@@ -743,14 +762,8 @@ def get_rand_sym_strain(lat_mat):
     '26':[ .5, .5,-1., 0., 0., 0.],\
     '27':[ 1.,-1., 0., 0., 0., 0.],\
     '28':[ 1.,-1., 0., 0., 0., 2.],\
-    '29':[ 0., 1.,-1., 0., 0., 2.],\
-    '30':[ 1., 2., 3., 4., 5., 6.],\
-    '31':[-2., 1., 4.,-3., 6.,-5.],\
-    '32':[ 3.,-5.,-1., 6., 2.,-4.],\
-    '33':[-4.,-6., 5., 1.,-3., 2.],\
-    '34':[ 5., 4., 6.,-2.,-1.,-3.],\
-    '35':[-6., 3.,-2., 5.,-4., 1.]}
-    rand_choice = str(np.random.randint(1,35))
+    '29':[ 0., 1.,-1., 0., 0., 2.],}
+    rand_choice = str(np.random.randint(1,29))
     return np.array(strain_dict[rand_choice])
 
 def get_COM_mol_list(mol_list):
