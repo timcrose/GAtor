@@ -85,10 +85,11 @@ def select_mutator(input_struct, num_mols, replica, reduced_cell=True, pure_stra
     elif reduced_cell and num_mols > 1 and not pure_strain:
 	mutation_list = ["Trans_mol", "Rot_mol", "Sym_rot_mol", "Swap_mol"]
     elif not reduced_cell and pure_strain:
-	mutation_list = ["Strain_sym_mols"]
+	mutation_list = ["Strain_sym_mols", "Strain_vol"]
     elif not reduced_cell and not pure_strain:
-        mutation_list = (["Trans_mol","Rot_mol", "Sym_rot_mol",
-                          "Strain_rand_mols","Strain_sym_mols", "Swap_mol"])
+        mutation_list = (["Trans_mol", "Rot_mol", "Sym_rot_mol",
+                          "Strain_rand_mols","Strain_sym_mols", "Swap_mol",
+                          "Strain_vol"])
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -97,7 +98,6 @@ def select_mutator(input_struct, num_mols, replica, reduced_cell=True, pure_stra
     message += "\n-- Reduced Cell: %s" % (reduced_cell)
     output.local_message(message, replica)
 
-    mut_choice = "Strain_vol"
     if mut_choice == "Trans_mol":
         mutator = RandomTranslationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Rot_mol":
@@ -743,6 +743,8 @@ class RandomVolumeStrainMutationMoveMols(object):
 	selection = np.random.choice(['a','b','c'])
 	change = np.random.normal(scale=0.2)
 	self.output("change " +str(change))
+	scale_fac = (np.sqrt(1 + 2*np.cos(self.alpha)*np.cos(self.beta)*np.cos(self.gamma)
+                               -np.cos(self.alpha)**2-np.cos(self.beta)**2-np.cos(self.gamma)**2))
 	if selection == 'a':
 		new_a = self.a * (1 - change)
 		diff_a = new_a - self.a
@@ -750,7 +752,7 @@ class RandomVolumeStrainMutationMoveMols(object):
 		diff_b = rand * diff_a
 		diff_c = (1 - rand) * diff_a
 		new_b = self.b - diff_b
-		new_c = self.cell_vol/(new_a * new_b)
+		new_c = self.cell_vol/((new_a * new_b) * scale_fac)
         if selection == 'b':
                 new_b = self.b * (1 - change)
                 diff_b = new_b - self.b
@@ -758,7 +760,7 @@ class RandomVolumeStrainMutationMoveMols(object):
                 diff_c = rand * diff_b
                 diff_a = (1 - rand) * diff_b
                 new_c = self.c - diff_c
-                new_a = self.cell_vol/(new_b * new_c)
+                new_a = self.cell_vol/((new_b * new_c) * scale_fac)
         if selection == 'c':
                 new_c = self.c * (1 - change)
                 diff_c = new_c - self.c
@@ -766,7 +768,7 @@ class RandomVolumeStrainMutationMoveMols(object):
                 diff_a = rand * diff_c
                 diff_b = (1 - rand) * diff_c
                 new_a = self.a - diff_a
-                new_b = self.cell_vol/(new_c * new_a)
+                new_b = self.cell_vol/((new_c * new_a) * scale_fac)
 	self.output("Biggest change on lattice vector "+str(selection))
 
 	A = [new_a, 0, 0]
