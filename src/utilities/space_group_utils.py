@@ -78,7 +78,7 @@ def reduce_by_symmetry(struct,create_duplicate=True):
 	
 	return struct
 
-def get_orbit(self, p, tol=1e-5):
+def get_orbit(self, p, tol=1e-3):
 	"""
 	Used to overwrite the get_orbit function in the SpaceGroup class of Pymatgen
 	In order to not chop up the molecules

@@ -25,6 +25,8 @@ def main(struct, replica):
     num_mols = ui.get_eval('unit_cell_settings', 'num_molecules')
     napm = int(len(input_struct.geometry)/num_mols)
     tapc = napm*num_mols
+    vol = struct.get_unit_cell_volume()
+    output.local_message("Input Structure's Volume: %s" % (vol), replica)
     if ui.get_boolean("mutation","enable_symmetry"):
 	mutated_struct = symmetric_mutation(input_struct, ui, num_mols, napm, tapc, replica)
     else:  
@@ -41,7 +43,7 @@ def symmetric_mutation(input_struct, ui, num_mols, napm, tapc, replica):
     '''
     #Will reduce the cell first before mutation
     output.local_message("Symmetry is enabled for mutation",replica)
-    if random.random() < 0.99: #50 percent chance of symmetric strain
+    if random.random() < 0.5: #50 percent chance of symmetric strain
 	output.local_message("Performing strain on whole unit cell")
 	mutated_obj = select_mutator(input_struct, num_mols, replica, 
                                      reduced_cell=False, pure_strain=True)
@@ -95,6 +97,7 @@ def select_mutator(input_struct, num_mols, replica, reduced_cell=True, pure_stra
     message += "\n-- Reduced Cell: %s" % (reduced_cell)
     output.local_message(message, replica)
 
+    mut_choice = "Strain_vol"
     if mut_choice == "Trans_mol":
         mutator = RandomTranslationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Rot_mol":
@@ -111,6 +114,8 @@ def select_mutator(input_struct, num_mols, replica, reduced_cell=True, pure_stra
         mutator = RandomSymmetryStrainMutationMoveMols(input_struct, num_mols, replica)
     elif mut_choice == "Strain_sym":
         mutator = RandomSymmetryStrainMutation(input_struct, num_mols, replica)
+    elif mut_choice =="Strain_vol":
+	mutator = RandomVolumeStrainMutationMoveMols(input_struct, num_mols, replica)
     return mutator
 
 class RandomTranslationMutation(object):
@@ -663,7 +668,6 @@ class RandomSymmetryStrainMutationMoveMols(object):
         lat_mat = set_lat_mat(self.A, self.B, self.C)
         lat_mat_f = np.linalg.inv(lat_mat)
         strain_A, strain_B, strain_C = self.rand_sym_strain(lat_mat)
-        temp_geo = self.geometry
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
         mol_list_COM = get_COM_mol_list(mol_list)
         mol_list_COM_f = get_COM_mol_list_f(lat_mat_f, np.array(mol_list_COM))
@@ -703,6 +707,117 @@ class RandomSymmetryStrainMutationMoveMols(object):
         struct.set_property('mutation_type', 'sym_strain_mol')
         return struct
 
+class RandomVolumeStrainMutationMoveMols(object):
+    '''Gives a random strain to the lattice and moves the COM of the molecules'''
+    def __init__(self, input_struct, num_mols, replica):
+        self.ui = user_input.get_config()
+        self.input_struct = input_struct
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.num_mols = num_mols
+        self.A = np.asarray(deepcopy(input_struct.get_property('lattice_vector_a')))
+        self.B = np.asarray(deepcopy(input_struct.get_property('lattice_vector_b')))
+        self.C = np.asarray(deepcopy(input_struct.get_property('lattice_vector_c')))
+	self.a = input_struct.get_property('a')
+	self.b = input_struct.get_property('b')
+	self.c = input_struct.get_property('c')
+	self.alpha = np.deg2rad(input_struct.get_property('alpha'))
+	self.beta = np.deg2rad(input_struct.get_property('beta'))
+	self.gamma = np.deg2rad(input_struct.get_property('gamma'))
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_strain')
+        self.cross_type = self.input_struct.get_property('crossover_type')
+	self.cell_vol = self.input_struct.get_unit_cell_volume()
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.strain_lat_and_mols()
+
+    def strain_lat_and_mols(self):
+        temp_geo = self.geometry
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))]
+        lat_mat = set_lat_mat(self.A, self.B, self.C)
+        lat_mat_f = np.linalg.inv(lat_mat)
+
+	selection = np.random.choice(['a','b','c'])
+	change = np.random.normal(scale=0.2)
+	self.output("change " +str(change))
+	if selection == 'a':
+		new_a = self.a * (1 - change)
+		diff_a = new_a - self.a
+		rand = np.random.random()
+		diff_b = rand * diff_a
+		diff_c = (1 - rand) * diff_a
+		new_b = self.b - diff_b
+		new_c = self.cell_vol/(new_a * new_b)
+        if selection == 'b':
+                new_b = self.b * (1 - change)
+                diff_b = new_b - self.b
+                rand = np.random.random()
+                diff_c = rand * diff_b
+                diff_a = (1 - rand) * diff_b
+                new_c = self.c - diff_c
+                new_a = self.cell_vol/(new_b * new_c)
+        if selection == 'c':
+                new_c = self.c * (1 - change)
+                diff_c = new_c - self.c
+                rand = np.random.random()
+                diff_a = rand * diff_c
+                diff_b = (1 - rand) * diff_c
+                new_a = self.a - diff_a
+                new_b = self.cell_vol/(new_c * new_a)
+	self.output("Biggest change on lattice vector "+str(selection))
+
+	A = [new_a, 0, 0]
+	B = [np.cos(self.gamma) * new_b, np.sin(self.gamma) * new_b, 0]
+	cx = np.cos(self.beta)* new_c
+	cy = (new_b * new_c * np.cos(self.alpha) - B[0] * cx)/B[1]
+	cz = (new_c**2 - cx**2 - cy**2)**0.5
+	C = [cx, cy, cz]
+
+	strain_A = A
+	strain_B = B
+	strain_C = C
+
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        mol_list_COM = get_COM_mol_list(mol_list)
+        mol_list_COM_f = get_COM_mol_list_f(lat_mat_f, np.array(mol_list_COM))
+        strain_lat_mat = set_lat_mat(strain_A, strain_B, strain_C)
+        strained_geometry = strain_geometry(strain_lat_mat, mol_list, mol_list_COM, mol_list_COM_f)
+        strained_struct = (self.create_strained_struct(strain_A, strain_B, strain_C,
+                                                          strained_geometry, atom_type_list))
+        return strained_struct
+
+    def rand_sym_strain(self, lat_mat):
+        strain_param = np.random.normal(scale=self.st_dev, size=1)
+        strain_list = strain_param*get_rand_sym_strain(lat_mat)
+        strain_mat = get_strain_mat(strain_list)
+        self.output("Strain parameter: " + str(strain_param))
+        self.output("Strain_matrix: \n" + str(strain_mat))
+        strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
+        self.output("strained_lattice" + str(strain))
+        return strain[0], strain[1], strain[2]
+
+    def create_strained_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):
+        ''' Creates Structure from mutated geometry'''
+        struct = Structure()
+        for i in range(len(strained_geo)):
+            struct.build_geo_by_atom(float(strained_geo[i][0]), float(strained_geo[i][1]),
+                                     float(strained_geo[i][2]), atom_types[i])
+        struct.set_property('lattice_vector_a', lat_A)
+        struct.set_property('lattice_vector_b', lat_B)
+        struct.set_property('lattice_vector_c', lat_C)
+        struct.set_property('a', leng(lat_A))
+        struct.set_property('b', leng(lat_B))
+        struct.set_property('c', leng(lat_C))
+        struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_A, lat_C))
+        struct.set_property('gamma', angle(lat_A, lat_B))
+        struct.set_property('mutation_type', 'sym_strain_mol')
+        return struct
 #---- Functions Shared Between Several Mutation Classes ----#
 def rotation_matrix(theta, psi, phi):
     Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
