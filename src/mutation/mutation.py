@@ -86,6 +86,7 @@ def select_mutator(input_struct, num_mols, replica, reduced_cell=True, pure_stra
 	mutation_list = ["Trans_mol", "Rot_mol", "Sym_rot_mol", "Swap_mol"]
     elif not reduced_cell and pure_strain:
 	mutation_list = ["Strain_sym_mols", "Strain_vol"]
+	mutation_list = ["Strain_vol"]
     elif not reduced_cell and not pure_strain:
         mutation_list = (["Trans_mol", "Rot_mol", "Sym_rot_mol",
                           "Strain_rand_mols","Strain_sym_mols", "Swap_mol",
@@ -159,7 +160,6 @@ class RandomTranslationMutation(object):
         ''' Randomly displaces the COM of each molecule within gaussian dist'''
         for mol in mol_list:
             rand_disp = np.random.standard_normal(3) * st_dev            
-            #self.output(rand_disp)
             for atom in mol:
                 for i in range(2):
                     atom[i] = atom[i] - rand_disp[i]
@@ -225,7 +225,6 @@ class RandomRotationMolMutation(object):
 	i = 0 
         for mol in mol_list:
             rand_vec = np.random.normal(scale=st_dev,size=3)
-	    #rand_vec = [0, 0, 90]
 	    self.output("-- Random Rotation %s" % (rand_vec))
             theta= (np.pi/180)*rand_vec[0]
             psi = (np.pi/180)*rand_vec[1]
@@ -481,11 +480,6 @@ class RandomStrainMutation(object):
         return strained_struct
 
     def rand_strain(self, lat_mat):
-
-#	rand_sleep = random.random()
-#	self.output("Randomly sleeping: " + str(rand_sleep))
-#	time.sleep(rand_sleep)
-
         strain_list = np.random.normal(scale=self.st_dev, size=6)
 	self.output("Strain_list" +str(strain_list))
         strain_mat = get_strain_mat(strain_list)
@@ -741,8 +735,8 @@ class RandomVolumeStrainMutationMoveMols(object):
         lat_mat_f = np.linalg.inv(lat_mat)
 
 	selection = np.random.choice(['a','b','c'])
-	change = np.random.normal(scale=0.2)
-	self.output("change " +str(change))
+	change = np.random.normal(scale=0.3)
+	self.output("Decimal change %s" % (change))
 	scale_fac = (np.sqrt(1 + 2*np.cos(self.alpha)*np.cos(self.beta)*np.cos(self.gamma)
                                -np.cos(self.alpha)**2-np.cos(self.beta)**2-np.cos(self.gamma)**2))
 	if selection == 'a':
@@ -769,18 +763,14 @@ class RandomVolumeStrainMutationMoveMols(object):
                 diff_b = (1 - rand) * diff_c
                 new_a = self.a - diff_a
                 new_b = self.cell_vol/((new_c * new_a) * scale_fac)
-	self.output("Biggest change on lattice vector "+str(selection))
+	self.output("Biggest change on lattice vector %s" % (selection))
 
-	A = [new_a, 0, 0]
-	B = [np.cos(self.gamma) * new_b, np.sin(self.gamma) * new_b, 0]
+	strain_A = [new_a, 0, 0]
+	strain_B = [np.cos(self.gamma) * new_b, np.sin(self.gamma) * new_b, 0]
 	cx = np.cos(self.beta)* new_c
-	cy = (new_b * new_c * np.cos(self.alpha) - B[0] * cx)/B[1]
+	cy = (new_b * new_c * np.cos(self.alpha) - strain_B[0] * cx)/strain_B[1]
 	cz = (new_c**2 - cx**2 - cy**2)**0.5
-	C = [cx, cy, cz]
-
-	strain_A = A
-	strain_B = B
-	strain_C = C
+	strain_C = [cx, cy, cz]
 
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
         mol_list_COM = get_COM_mol_list(mol_list)
@@ -820,6 +810,8 @@ class RandomVolumeStrainMutationMoveMols(object):
         struct.set_property('gamma', angle(lat_A, lat_B))
         struct.set_property('mutation_type', 'sym_strain_mol')
         return struct
+
+
 #---- Functions Shared Between Several Mutation Classes ----#
 def rotation_matrix(theta, psi, phi):
     Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
@@ -850,7 +842,7 @@ def get_strain_mat(strain_list):
     return s_mat
 
 def get_rand_sym_strain(lat_mat):
-    strain_dict={                       \
+    strain_dict={                 \
     '1':[ 1., 1., 1., 0., 0., 0.],\
     '2':[ 1., 0., 0., 0., 0., 0.],\
     '3':[ 0., 1., 0., 0., 0., 0.],\
