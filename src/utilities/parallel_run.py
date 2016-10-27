@@ -444,11 +444,11 @@ def launch_parallel_mpirun(use_srun=False):
 		all_nodes = all_nodes[npr[i]:]
 
 #	time.sleep(86400)
-	if not use_srun:
-		for p in processes:
-			p.wait()
-	else:
-		monitor_srun(processes)
+#	if not use_srun:
+#		for p in processes:
+#			p.wait()
+#	else:
+	monitor_srun(processes)
 
 
 def get_all_processes(command,hostlist=None):
