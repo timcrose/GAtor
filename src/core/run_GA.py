@@ -587,6 +587,7 @@ def structure_create_for_multiprocessing(args):
 	struct_coll = structure_collection.get_collection(stoic, 0)
 
 	#---- Get structures of selected parent ID's ----#
+	struct_coll.update_local()
 	parent_a = struct_coll.get_struct(parent_a_id)
 	parent_b = struct_coll.get_struct(parent_b_id)
 	structures_to_cross = [parent_a, parent_b]	
