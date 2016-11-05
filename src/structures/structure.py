@@ -190,7 +190,7 @@ class Structure(object):
         B = self.get_property('lattice_vector_b')
         C = self.get_property('lattice_vector_c')
 	alpha, beta, gamma = self.get_lattice_angles()
-	a, b, c = self. get_lattice_magnitudes()
+	a, b, c = self.get_lattice_magnitudes()
         atoms = [i for i in range(len(geo))]
 	lattice_vector = np.transpose([A,B,C])
 	latinv = np.linalg.inv(lattice_vector)
