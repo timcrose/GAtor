@@ -593,6 +593,9 @@ def structure_create_for_multiprocessing(args):
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
+	if parent_a == None or parent_b == None:
+		output.local_message('Parent ID returned NoneType structure')
+		return False
 
 	#----- Crossover -----#
 	if rand_cross <= cross_prob:
