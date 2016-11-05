@@ -24,8 +24,8 @@ import copy, shutil, multiprocessing
 def main(replica,stoic):
 	mkdir_p(tmp_dir)	
 	mkdir_p(structure_dir)
-	ga = RunGA(replica, stoic)	
-	if not ga.ui.get_boolean('run_settings', 'recover_from_crashes'): 
+	ga = RunGA(replica, stoic)	# run genetic algorithm
+	if ga.ui.get_boolean('run_settings', 'recover_from_crashes') is not True: # catch crashes
 		ga.start()  # no exception catching
 	else:
 		while True:
@@ -39,11 +39,12 @@ def main(replica,stoic):
 class RunGA():
 	'''This class controls the main the genetic algorithm tasks each replica runs'''
 	def __init__(self, replica, stoic):
+		'''Initialization of replica class fields'''
 		self.replica = replica
 		self.ui = user_input.get_config()
 		self.replica_stoic = stoic
 		self.working_dir = os.path.join(tmp_dir, str(self.replica))
-		self.GA_module_init() 
+		self.GA_module_init() # initializes GA modules specified in .conf file
 		self.verbose = self.ui.verbose()        
 		#self.control_list = self.ui.get_list('FHI-aims', 'control_in_filelist')
 		self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
@@ -54,6 +55,7 @@ class RunGA():
                 self.number_of_tot_structures = int(self.ui.get('run_settings', 'end_GA_structures_total'))
 		self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
 		self.max_it = self.ui.get_eval('run_settings', 'max_iterations_no_change')
+		# Initialize Supercollection
 		self.replica_child_count = 0
 		self.convergence_count= 0
 		self.structure_supercoll = {}
@@ -62,11 +64,15 @@ class RunGA():
 		data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
 		structure_collection.update_supercollection(self.structure_supercoll)
 		self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
+		
 		sname = "parallel_settings"
 		self.processes = self.ui.get_multiprocessing_processes()
+
 		if self.processes > 1:
 			self.worker_pool = multiprocessing.Pool(processes=self.processes)
 
+		
+#------------------------- MAIN TASKS PERFORMED BY EVERY REPLICA -------------------------#
 	def start(self):
 		'''
 		Performs main genetic algorithm operations
@@ -95,8 +101,7 @@ class RunGA():
 			if struct == False: 
 				#-----Generate Trial Structure -----#
 				struct = self.generate_trial_structure()
-				if struct == False:
-					continue	
+			
 			#----- Compare Pre-relaxed Structure to Collection -----#
 			if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
 				convergeTF = False
@@ -139,6 +144,10 @@ class RunGA():
 			restart_count += 1 
 			convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
 
+#----------------------- END OF MAIN TASKS PERFORMED BY EVERY REPLICA ----------------------#
+
+
+#----------------------- FUNCTIONS USED WITHIN MAIN REPLICA TASKS --------------------------#
 	def GA_module_init(self):
 		'''
 		This routine reads in the modules defined in ui.conf
@@ -173,7 +182,7 @@ class RunGA():
 
 		self.output(' Total size of common pool: %i   Total number of GA-added structures: %i' 
                          % (size_of_common, size_of_added))
-		cst = '|------------------------------GA CONVERGED-------------------------------|'
+		cst = '|~*~**~*~*~*~*~*~*~*~*~*~*~*~* GA CONVERGED *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~|'
 		st =  '|-------------------------------------------------------------------------|'
 		header = '\n' + st + '\n' + cst + '\n' 
                 if size_of_added >= self.number_of_GA_structures:
@@ -251,34 +260,19 @@ class RunGA():
 			return struct
 
 	def generate_trial_structure(self):
-		count = 0	
 		struct = False 
 		sname = "run_settings"
-		begin_time = time.time()
-	        structure_supercoll = {}
-        	structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
 		total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
+		count = 0
+		begin_time = time.time()
 		self.output("Generating trial structure with %i processes" % self.processes)
-		selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
-
-		# Select ID's of two parents chosen for selection
-		parent_a_ID, parent_b_ID = selection_module.main(structure_supercoll, self.replica_stoic, self.replica)
-
-		# Choose probability of crossover, mutation, and symmetric crossover
-		rand_cross = np.random.random()
-        	cross_prob = self.ui.get_eval('crossover', 'crossover_probability')
-        	try: sym_cross_prob = self.ui.get_eval('crossover', 'symmetric_crossover_probability')
-        	except: sym_cross_prob = 0.0
-        	mut_prob = 1.0 - float(cross_prob) - float(sym_cross_prob)	
-
-		# Setup structure either in serial or mutliprocessing
-		while count < total_attempts and struct == False:
+		
+		while count<total_attempts and struct == False:
 			if self.processes == 1: #Serial
-				struct = structure_create_for_multiprocessing((self.replica, self.replica_stoic, \
-					 parent_a_ID, parent_b_ID, rand_cross, cross_prob, sym_cross_prob))
+				struct = structure_create_for_multiprocessing((self.replica,self.replica_stoic))
 			else:
-				arglist = [(self.replica+"_"+str(x), self.replica_stoic, parent_a_ID, parent_b_ID,\
-				rand_cross, cross_prob, sym_cross_prob) for x in range (self.processes)]
+				arglist = [(self.replica+"_"+str(x), self.replica_stoic)\
+				for x in range (self.processes)]
 				results = self.worker_pool.map(
 				structure_create_for_multiprocessing, arglist)
 
@@ -299,9 +293,7 @@ class RunGA():
 			count += self.processes
 		end_time = time.time()
 		if count == total_attempts and struct==False:
-			output.local_message("-- Generating structure maxed out on generation attempts: "+ str(total_attempts))
-			output.local_message("-- Selecting new parents --")
-			return struct
+			raise RuntimeError("Generating structure maxed out on generation attempts.")
 		output.local_message("New trial structure generated:")
 		output.local_message("-- Number of attempts for structure generation: "+str(count))
 		output.local_message("-- Time for structure generation: "+str(end_time-begin_time)+" seconds")
@@ -372,13 +364,64 @@ class RunGA():
                 data_tools.write_energy_hierarchy(struct_coll)
 		#data_tools.write_spe_vs_addition(struct_coll)
 		return struct_index
+
+	def structure_create_new(self):        	  
+		'''
+		This is the normal process to create a new structure through crossover and mutation
+		'''
+		#----- Structure Selection -----#
+		self.output("-------- Structure Creation --------")
+		self.output("--Structure selection--")	
+		structures_to_cross = self.selection_module.main(self.structure_supercoll, self.replica_stoic, self.replica)
+		if structures_to_cross is False: 
+			self.output('Selection failure')
+			return False
+
+		#----- Crossover -----#
+		self.output("Parents sucessfully selected")
+		self.output("\n--Crossover--")
+		new_struct = self.crossover_module.main(structures_to_cross, self.replica)
+		if new_struct is False: 
+			self.output("Crossover failure")
+			return False  
+	
+		#----- Mutation Execution -----#
+		self.output("\n--Mutation--")  
+		rand1 = np.random.random()	
+		rand2 = np.random.random()
+		#Single Parents have to be mutated	
+		if (new_struct.get_property('crossover_type') == [1,1] or 
+                    new_struct.get_property('crossover_type') == [2,2] or 
+                    rand1<self.singlemutate):
+			new_struct = self.mutation_module.main(new_struct, self.replica)
+			if new_struct!=False and rand2 < self.doublemutate:
+				self.output("--Second Mutation--")
+				new_struct = self.mutation_module.main(new_struct, self.replica) 
+		else:
+			self.output('No mutation applied.')
+			new_struct.set_property('mutation_type', ' ')
+		if new_struct is False: 
+			self.output('Mutation failure')
+			return False
+
+		#-----Structure modification of angles. Checks reasonable structure is created -----#
+		self.output("\n--Cell Checks--")	
+		structure_handling.cell_modification_old(new_struct, self.replica,create_duplicate=False)
+#		structure_handling.cell_modification(new_struct,
+		if not structure_handling.cell_check(new_struct,self.replica): #unit cell considered not acceptable
+			return False
+		self.set_parents(structures_to_cross, new_struct)
+
+		self.output("\n--Assign structure ID--")
+		new_struct.struct_id = misc.get_random_index()
+		self.output("ID assigned: "+new_struct.struct_id+"\n")
+		return new_struct
 	
 	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
 		'''
-		This routine takes a folder (directory) that should be an fhi-aims job 
-                directory and salvages a structure from it if next_step=True, 
-                geometry.in.next_step has to be present. Will attempt to read 
-                struct.json to update other properties that might be lost in restart
+		This routine takes a folder (directory) that should be an fhi-aims job directory and salvages a structure from it
+		if next_step=True, geometry.in.next_step has to be present
+		Will attempt to read struct.json to update other properties that might be lost in restart
 		if scavenge failure, returns False
 		if cleanup=True and scavenging is successful, removes the folder afterwards
 		WARNING: make sure the folder is inactive before calling this function 
@@ -484,8 +527,7 @@ class RunGA():
 
 	def structure_comparison(self, struct, comparison_type):
 		'''
-		This routine takes a structure, updates self.structure_supercoll, and 
-                does comparison on the structure
+		This routine takes a structure, updates self.structure_supercoll, and does comparison on the structure
 		'''
 		t1 = time.time()
 		if comparison_type == "pre_relaxation_comparison":
@@ -493,8 +535,7 @@ class RunGA():
 		elif comparison_type == "post_relaxation_comparison":
 			self.output("\n---- Post-relaxation Comparison ----")
 		structure_collection.update_supercollection(self.structure_supercoll)
-		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), 
-                                                                                            self.replica, comparison_type))
+		is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)), self.replica, comparison_type))
                 t2 = time.time()
                 self.output("-- Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
                 if is_acceptable is False:
@@ -509,6 +550,7 @@ class RunGA():
 		message += "\n-- Time: %s " % (time)
 		message += "\n-- Structure's index: %s " % (struct_index)
 		message += "\n-- Added from replica: %s " % (self.replica)
+
                 self.output(message)
 
 	def end_of_iteration_tasks(self, begin_time, old_list_top_en, restart_count, coll):
@@ -571,34 +613,41 @@ class RunGA():
 
 	def restart(self, message): output.restart_message(message)
 
+	#--------------------------------------- END OF FUNCTIONS USED WITHIN MAIN REPLICA TASKS ----------------------------------------#
+
+
+
+
 def structure_create_for_multiprocessing(args):        	  
 	'''
 	This is a function for structure creation reading straight from the ui.conf file
 	'''
 	ui = user_input.get_config()
 	nmpc = ui.get_eval('unit_cell_settings','num_molecules')
-	replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, sym_cross_prob = args
+	replica, stoic = args
 	output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
 	output.local_message("---- Structure selection ----", replica)
+	selection_module = my_import(ui.get('modules', 'selection_module'), package='selection')
 	crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
 	try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
 	except: pass
 	mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
-	struct_coll = structure_collection.get_collection(stoic, 0)
+	structure_supercoll = {}
+	structure_supercoll[(stoic, 0)] = structure_collection.get_collection(stoic, 0)
 
-	#---- Get structures of selected parent ID's ----#
-	struct_coll.update_local()
-	parent_a = struct_coll.get_struct(parent_a_id)
-	parent_b = struct_coll.get_struct(parent_b_id)
-	structures_to_cross = [parent_a, parent_b]	
+	#---- Selection ----#
+	structures_to_cross = selection_module.main(structure_supercoll, stoic,replica)
+
 	if structures_to_cross is False: 
 		output.local_message('Selection failure',replica)
 		return False
-	if parent_a == None or parent_b == None:
-		output.local_message('Parent ID returned NoneType structure')
-		return False
-
 	#----- Crossover -----#
+	rand_cross = np.random.random()
+	cross_prob = ui.get_eval('crossover', 'crossover_probability')
+	try: sym_cross_prob = ui.get_eval('crossover', 'symmetric_crossover_probability') 
+	except: sym_cross_prob = 0.0
+	mutation_probability = 1.0 - float(cross_prob) - float(sym_cross_prob)
+
 	if rand_cross <= cross_prob:
 		#----- Normal Crossover -----#
 		output.local_message("\n---- Crossover ----", replica)

@@ -179,17 +179,19 @@ class Symmetric_Crossover(object):
 					message = "-- Child reduced --\n"
 					message += self.child_struct.\
 					get_geometry_atom_format()
+					message += "-- Child sym operations for reconstruction\n"
+					message +="\n".join(map(str, self.child_struct.properties["symmetry_operations"]))
 					output.local_message(message,
 							     self.replica)
 
-				if not rebuild_by_symmetry(self.child_struct,
-							    napm = self.napm,
-							    create_duplicate=False):
+                                final_child_struct = rebuild_by_symmetry(self.child_struct,
+                                                    napm = self.napm,
+                                                    create_duplicate=True)
+				if final_child_struct == False:
 					message = "-- Reconstruction of child failed"
 					output.local_message(message,
 							     self.replica)
 					return False
-
 				message = "-- Summary of Crossover --\n"
 				if len(operations) == 0:
 					message += "No crossover operation called"
@@ -198,7 +200,8 @@ class Symmetric_Crossover(object):
 					message += " ".join(map(str,operations))
 #				if not self.verbose:
 				output.local_message(message,self.replica)
-				return self.child_struct
+				final_child_struct.set_property("crossover_type", " ".join(map(str,operations)))
+				return final_child_struct
 
 	def reduce_by_reference(self):
 		'''

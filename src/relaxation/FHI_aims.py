@@ -11,7 +11,7 @@ import shutil
 from core import user_input, output
 import core.file_handler as fh
 from core.activity import *
-from utilities import misc
+from utilities import misc, parallel_run
 
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, get_collection
@@ -277,6 +277,7 @@ class FHIAimsRelaxation():
 
 #	output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
 #	output.local_message("Binary location is"+bin,self.replica)
+	sname = "parallel_settings"
 
 	original_dir = os.getcwd()
 	if execute_command == "mpirun":
@@ -294,10 +295,17 @@ class FHIAimsRelaxation():
 		arglist = ["srun","-D",self.working_dir]
 		if ui.has_option("parallel_settings","allocated_nodes"):
 			arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
+			arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
 		if ui.has_option("parallel_settings","processes_per_replica"):
-			arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
-		if ui.has_option("parallel_settings","additional_arguments"):
-			arglist += ui.get_eval("parallel_settings","additional_arguments")
+			np = ui.get("parallel_settings","processes_per_replica")
+			arglist += ["-n",np]
+			mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
+			arglist += ["--mem",str(mem)]
+
+		arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
+			
+		if ui.has_option(sname,"additional_arguments"):
+			arglist += ui.get_eval(sname,"additional_arguments")
 		arglist += [self.bin]
 
 
@@ -323,6 +331,16 @@ class FHIAimsRelaxation():
 
 	aimsout=os.path.join(self.working_dir,"aims.out")
 	aimserr=os.path.join(self.working_dir,"aims.err")
+
+	if execute_command == "srun":
+		#Requires special implementation
+		stat = parallel_run.srun_call(arglist,aimsout,aimserr,self.replica)
+		output.local_message("-- aims job exit status: "
+					+ str(stat),self.replica)
+		output.time_log("aims job exited with status "
+				+ str(stat),self.replica)
+		return stat
+
 	if not enable_monitor:
 		outfile = open(aimsout,"w")
 		errfile = open(aimserr,"w")

@@ -24,7 +24,11 @@ def identify_space_group(struct,key="space_group"):
 	return struct
 
 def return_spacegroup(structp):
- 	return SGA(structp, symprec= 1.0).get_spacegroup_number()
+	try: #newer pymatgen
+		spacegroup = SGA(structp, symprec= 1.0).get_space_group_number()
+	except: #older pymatgen
+		spacegroup = SGA(structp, symprec= 1.0).get_spacegroup_number()
+ 	return spacegroup
 
 
 def reduce_by_symmetry(struct,create_duplicate=True):
@@ -78,7 +82,7 @@ def reduce_by_symmetry(struct,create_duplicate=True):
 	
 	return struct
 
-def get_orbit(self, p, tol=1e-5):
+def get_orbit(self, p, tol=1e-3):
 	"""
 	Used to overwrite the get_orbit function in the SpaceGroup class of Pymatgen
 	In order to not chop up the molecules
@@ -115,7 +119,7 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 	if create_duplicate:
 		struct = copy.deepcopy(struct)
 	structp = struct.get_pymatgen_structure()
-	nstruc = structure.Structure()
+	nstruct = structure.Structure()
 
 	if napm == None and not "NAPM" in struct.properties:
 		raise ValueError("Missing napm in both argument "+
@@ -133,10 +137,10 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 			symmops.append(op)
 		del struct.properties["symmetry_operations"]
 
-	for op in symmops:
-		if not is_compatible(lats,op.rotation_matrix):
+#	for op in symmops:
+#		if not is_compatible(lats,op.rotation_matrix):
 #			print "Rebuild symmetry operation incompatible"
-			return False
+#			return False
 		
 	for op in symmops:
 		for old_site in structp:
@@ -147,7 +151,7 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 				op.operate(old_site.frac_coords),old_site.lattice))
 
 			#Build new geo from pymatgen site
-			nstruc.build_geo_by_atom(site.coords[0],
+			nstruct.build_geo_by_atom(site.coords[0],
 						 site.coords[1],
 						 site.coords[2],
 						 site.specie,
@@ -156,16 +160,16 @@ def rebuild_by_symmetry(struct,symmops=None,napm=None,create_duplicate=True):
 						 struct.geometry[k]["fixed"])
 
 	#Update geometry
-	struct.geometry = copy.deepcopy(nstruc.geometry)
+	#struct.geometry = copy.deepcopy(nstruc.geometry)
 	new_lat = structp[0].lattice.matrix
-	struct.properties["lattice_vector_a"] = new_lat[0]
-	struct.properties["lattice_vector_b"] = new_lat[1]
-	struct.properties["lattice_vector_c"] = new_lat[2]
-	structure_handling.cell_lower_triangular(struct,False)
-	structure_handling.move_molecule_in(struct,
-					    len(struct.geometry)/napm,
+	nstruct.properties["lattice_vector_a"] = new_lat[0]
+	nstruct.properties["lattice_vector_b"] = new_lat[1]
+	nstruct.properties["lattice_vector_c"] = new_lat[2]
+	structure_handling.cell_lower_triangular(nstruct,False)
+	structure_handling.move_molecule_in(nstruct,
+					    len(nstruct.geometry)/napm,
 					    False)
-	return struct
+	return nstruct
 
 def is_transformation_matrix(mat,tol=0.01):
 	'''
@@ -230,7 +234,6 @@ def _test_1():
 	struct = rebuild_by_symmetry(struct,napm=15)
 	print struct.get_geometry_atom_format()
 
-	
 
 pymatgen.symmetry.groups.SpaceGroup.get_orbit = get_orbit
 
