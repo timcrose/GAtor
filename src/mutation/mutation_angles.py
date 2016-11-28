@@ -45,13 +45,11 @@ def select_mutator(input_struct, num_mols, replica):
                       "Rot_mol", "Pair_rot_mol",
                       "Strain_rand_mols","Strain_sym_mols", 
                       "Swap_mol", "Strain_vol"])
-#    mutation_list = ["Rot_mol_frame"]
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
         mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
     message = "-- Mutation Choice: %s" % (mut_choice)
-    #message += "\n-- Reduced Cell: %s" % (reduced_cell)
     output.local_message(message, replica)
 
     if mut_choice == "Trans_mol_frame":
@@ -756,9 +754,9 @@ class RandomStrainMutationMoveMols(object):
         struct.set_property('c', leng(lat_C))
         struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
         struct.set_property('crossover_type', self.cross_type)
-        struct.set_property('alpha', angle(lat_B, lat_C))
-        struct.set_property('beta', angle(lat_A, lat_C))
-        struct.set_property('gamma', angle(lat_A, lat_B))
+        struct.set_property('alpha', angle(lat_A, lat_B))
+        struct.set_property('beta', angle(lat_B, lat_C))
+        struct.set_property('gamma', angle(lat_C, lat_A))
         struct.set_property('mutation_type', 'rand_strain_mol')
         return struct
 
@@ -821,9 +819,9 @@ class RandomSymmetryStrainMutationMoveMols(object):
         struct.set_property('c', leng(lat_C))
         struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
         struct.set_property('crossover_type', self.cross_type)
-        struct.set_property('alpha', angle(lat_B, lat_C))
-        struct.set_property('beta', angle(lat_A, lat_C))
-        struct.set_property('gamma', angle(lat_A, lat_B))
+        struct.set_property('alpha', angle(lat_A, lat_B))
+        struct.set_property('beta', angle(lat_B, lat_C))
+        struct.set_property('gamma', angle(lat_C, lat_A))
         struct.set_property('mutation_type', 'sym_strain_mol')
         return struct
 
@@ -861,7 +859,7 @@ class RandomVolumeStrainMutationMoveMols(object):
         lat_mat_f = np.linalg.inv(lat_mat)
 
     	selection = np.random.choice(['a','b','c'])
-        change = np.random.normal(scale=0.3)
+        change = np.random.normal(scale=0.15)
         self.output("Decimal change %s" % (change))
         scale_fac = (np.sqrt(1 + 2*np.cos(self.alpha)*np.cos(self.beta)*np.cos(self.gamma)
                                -np.cos(self.alpha)**2-np.cos(self.beta)**2-np.cos(self.gamma)**2))
@@ -928,10 +926,10 @@ class RandomVolumeStrainMutationMoveMols(object):
         struct.set_property('c', leng(lat_C))
         struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
         struct.set_property('crossover_type', self.cross_type)
-        struct.set_property('alpha', angle(lat_B, lat_C))
-        struct.set_property('beta', angle(lat_A, lat_C))
-        struct.set_property('gamma', angle(lat_A, lat_B))
-        struct.set_property('mutation_type', 'sym_strain_mol')
+        struct.set_property('alpha', angle(lat_A, lat_B))
+        struct.set_property('beta', angle(lat_B, lat_C))
+        struct.set_property('gamma', angle(lat_C, lat_A))
+        struct.set_property('mutation_type', 'vol_strain')
         return struct
 
 
