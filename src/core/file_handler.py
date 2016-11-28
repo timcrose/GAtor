@@ -30,7 +30,7 @@ def argument_opt():
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 GAtor_master_path = os.path.join(src_dir,"GAtor_master.py")
 GA_dir = os.path.abspath(os.path.join(src_dir, os.pardir))
-res_dir = os.path.join(GA_dir, 'res')
+res_dir = os.path.join(src_dir, 'res')
 
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
@@ -53,7 +53,7 @@ db_file = os.path.join(cwd, 'structures.sqlite')  # TODO: change par_dir to cwd
 
 # useful files
 progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
-default_config = os.path.join(GA_dir, 'res', 'default.conf')
+default_config = os.path.join(res_dir, 'default.conf')
 (options,argv)=argument_opt() #Retrieve the user_input from command line
 #ui_conf = os.path.join(cwd, options.user_input)
 ui_conf = os.path.abspath(sys.argv[-1])
