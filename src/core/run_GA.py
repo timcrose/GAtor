@@ -634,12 +634,9 @@ def structure_create_for_multiprocessing(args):
 	elif rand_cross > cross_prob + sym_cross_prob:
 		#----- Mutation on Better Parent -----#
 		output.local_message("\n---- Mutation ----",replica)
-		parent0_en = structures_to_cross[0].get_property('energy')
-                parent1_en = structures_to_cross[1].get_property('energy')
-		if parent0_en < parent1_en:
-			new_struct = structures_to_cross[0]
-		elif parent0_en > parent1_en:
-			new_struct = structures_to_cross[1]
+		#parent0_en = structures_to_cross[0].get_property('energy')
+        #parent1_en = structures_to_cross[1].get_property('energy')
+        new_struct = random.choice([structures_to_cross[0], structures_to_cross[1]])
 		if ui.all_geo(): 
                         output.local_message("Single Parent geometry:\n" 
                                         + new_struct.get_geometry_atom_format(),replica)

@@ -41,10 +41,11 @@ def select_mutator(input_struct, num_mols, replica):
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    mutation_list = (["Trans_mol_frame", "Rot_mol_frame",
-                      "Rot_mol", "Pair_rot_mol",
+    mutation_list = (["Frame_trans_mol", "Pair_trans_mol" 
+                      "Frame_rot_mol", "Pair_rot_mol", "Rot_mol"
                       "Strain_rand_mols","Strain_sym_mols", 
                       "Swap_mol", "Strain_vol"])
+    mutation_list = ["Pair_trans_mol"]
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -52,12 +53,14 @@ def select_mutator(input_struct, num_mols, replica):
     message = "-- Mutation Choice: %s" % (mut_choice)
     output.local_message(message, replica)
 
-    if mut_choice == "Trans_mol_frame":
+    if mut_choice == "Frame_trans_mol":
         mutator = RandomTranslationFrameMutation(input_struct, num_mols, replica)
-    elif mut_choice == "Rot_mol_frame":
+    elif mut_choice == "Frame_rot_mol":
         mutator = RandomRotationFrameMutation(input_struct, num_mols, replica)
     elif mut_choice == "Rot_mol":
         mutator = RandomRotationMolMutation(input_struct, num_mols, replica)
+    elif mut_choice == "Pair_trans_mol":
+        mutator = PairTranslationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Pair_rot_mol":
         mutator = PairRotationMolMutation(input_struct, num_mols, replica)
     elif mut_choice == "Swap_mol":
@@ -502,6 +505,119 @@ class RandomRotationMolMutation(object):
         struct.set_property('mutation_type', 'rot_mol')
         return struct
 
+class PairTranslationMutation(object):
+    ''' 
+    Gives a translation to the COM of pairs of molecules in the unit cell.
+    For example, for Z=4 it may rotate molecules 1 & 2 the same amount, leaving
+    3 & 4 alone
+    '''
+
+    def __init__(self, input_struct, num_mols, replica):
+        self.input_struct = input_struct
+        self.num_mols = num_mols
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+        self.A = self.input_struct.get_property('lattice_vector_a')
+        self.B = self.input_struct.get_property('lattice_vector_b')
+        self.C = self.input_struct.get_property('lattice_vector_c')
+        self.alpha = self.input_struct.get_property('alpha')
+        self.beta = self.input_struct.get_property('beta')
+        self.gamma = self.input_struct.get_property('gamma')
+        self.cell_vol = self.input_struct.get_unit_cell_volume()
+        self.cross_type = self.input_struct.get_property('crossover_type')
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.pair_translation()
+
+    def pair_translation(self):
+        '''Calls for a random rotation to each molecule's COM and returns a Structure'''
+        temp_geo = self.geometry
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))]
+        mol_list_COM = get_COM_mol_list(mol_list)
+        translated_geometry = self.translate_molecules_pair(mol_list, mol_list_COM, self.st_dev)
+        translated_struct = self.create_translated_struct(translated_geometry, atom_type_list)
+        return translated_struct
+
+    def translate_molecules_pair(self, mol_list, mol_list_COM, st_dev):
+        ''' Randomly rotates each molecule within gaussian dist'''
+        #Generate Translation 
+        trans_geometry = []
+        disp = np.random.normal(scale=st_dev)
+        transs = ([disp, 0, 0],
+                [0, disp, 0],
+                [0, 0, disp],
+                [disp/np.sqrt(2), disp/np.sqrt(2), 0],
+                [0, disp/np.sqrt(2), disp/np.sqrt(2)],
+                [disp/np.sqrt(2), 0 , disp/np.sqrt(2)],
+                [disp/np.sqrt(3), disp/np.sqrt(3), disp/np.sqrt(3)])
+        trans = np.array(random.choice(transs))
+        if np.random.random() < 0.5:
+            direction_lat = random.choice([self.A, self.B, self.C])
+            self.output("-- Translation along lattice vector %s " %(direction_lat))
+            direction = direction_lat/np.linalg.norm(direction_lat)  
+            trans = np.multiply(direction, trans)
+        self.output("-- Translation is %s" % (trans))
+
+        # Select molecule pairs to translate
+        mol_in = 0
+        mol_info = []
+        mol_combos = list(itertools.combinations(range(self.num_mols), 2))
+        for mol in mol_list:
+            mol_info.append([mol, mol_list_COM[mol_in]])
+            mol_in +=1
+        mol_combo = random.choice(mol_combos)
+        self.output("-- On molecules: ")
+        self.output(mol_combo)
+
+        # Translate those pairs
+        i = 0
+        for mol in mol_list:
+            self.output(str(mol_combo[0]))
+            self.output(str(mol_combo[1]))
+            if mol_combo[0] == i:
+                for atom in mol:
+                    coord = np.array([atom[0], atom[1], atom[2]])
+                    trans_geometry.append(coord + trans)
+            elif mol_combo[1] == i:
+                if np.random.random() < 0.5:
+                    trans = -trans
+                    self.output("Opposite translation b/t molecules")
+                for atom in mol:
+                    coord = np.array([atom[0], atom[1], atom[2]]) 
+                    trans_geometry.append(coord + trans)
+            else:
+                for atom in mol:
+                    coord = np.array([atom[0], atom[1], atom[2]])
+                    trans_geometry.append(np.array(coord))
+            i+=1
+        self.output(str(trans_geometry))
+        return trans_geometry
+
+    def create_translated_struct(self, trans_geo, atom_types):
+        ''' Creates Structure from mutated geometry'''
+        struct = Structure()
+        for i in range(len(trans_geo)):
+            struct.build_geo_by_atom(float(trans_geo[i][0]), float(trans_geo[i][1]),
+                                     float(trans_geo[i][2]), atom_types[i])
+        struct.set_property('lattice_vector_a', self.A)
+        struct.set_property('lattice_vector_b', self.B)
+        struct.set_property('lattice_vector_c', self.C)
+        struct.set_property('a', leng(self.A))
+        struct.set_property('b', leng(self.B))
+        struct.set_property('c', leng(self.C))
+        struct.set_property('cell_vol', self.cell_vol)
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha',self.alpha)
+        struct.set_property('beta', self.beta)
+        struct.set_property('gamma', self.gamma)
+        struct.set_property('mutation_type', 'pair_trans_mol')
+        return struct
 class PairRotationMolMutation(object):
     ''' 
     Gives a rotation to the COM of the pairs of molecules in the unit cell.
