@@ -28,7 +28,7 @@ def main(struct, replica):
     vol = struct.get_unit_cell_volume()
     output.local_message("Input Structure's Volume: %s" % (vol), replica)
     if ui.get_boolean("mutation","enable_symmetry"):
-	mutated_struct = symmetric_mutation(input_struct, ui, num_mols, napm, tapc, replica)
+    mutated_struct = symmetric_mutation(input_struct, ui, num_mols, napm, tapc, replica)
     else:  
         mutate_obj = select_mutator(input_struct, num_mols, replica, 
                                     reduced_cell=False, pure_strain=False)

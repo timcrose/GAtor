@@ -235,20 +235,22 @@ class RunGA():
                 if self.convergence_count== self.max_it:
                         return "converged"
 
-	def restart_scheme(self,restart_replica):	
-			structures_to_add = {}	
-			struct = False
-			if os.path.isdir(self.working_dir): 
-				#First check if there is a risk of overwriting a name_sake replica's leftover folder
-				struct = self.structure_scavenge_old(self.working_dir)
-			if struct == False and restart_replica:
-				folder_to_scavenge = activity.request_folder_to_check()
-				while struct == False and folder_to_scavenge!= False:
-					struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
-					if struct == False:
-						folder_to_scavenge = activity.request_folder_to_check()
+	def restart_scheme(self,restart_replica):
+		self.output("-- Restart of replicas has been requested")
+		self.output(str(restart_replica))	
+		structures_to_add = {}	
+		struct = False
+	#	if os.path.isdir(self.working_dir): 
+			#First check if there is a risk of overwriting a name_sake replica's leftover folder
+	#		struct = self.structure_scavenge_old(self.working_dir)
+		if struct == False and restart_replica:
+			folder_to_scavenge = activity.request_folder_to_check()
+			while struct == False and folder_to_scavenge!= False:
+				struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+				if struct == False:
+					folder_to_scavenge = activity.request_folder_to_check()
 
-			return struct
+		return struct
 
 	def generate_trial_structure(self):
 		count = 0	
