@@ -217,8 +217,6 @@ class RandomTranslationFrameMutation(object):
         beta = self.angle(child_B, child_C)*180./np.pi
         gamma = self.angle(child_C, child_A)*180./np.pi
         struct = Structure()
-        self.output("child geo %s length %s" %(child_geometry, len(child_geometry)))
-        self.output("atom types %s" %(atom_types))
         for i in range(len(child_geometry)):
             struct.build_geo_by_atom(float(child_geometry[i][0]), float(child_geometry[i][1]),
                                      float(child_geometry[i][2]), atom_types[i])
@@ -273,7 +271,6 @@ class RandomRotationFrameMutation(object):
         for mol in mol_list:
             COM = self.get_COM_frac(mol, [self.A, self.B, self.C])
             centered_mol, types = self.get_centered_molecule(mol)
-            self.output("types %s" %(types))
             rot, aligned_mol = self.get_orientation_info(centered_mol, mol_index, types)
             self.orientation_info.append([rot, COM, aligned_mol])
         lattice, child_coords = self.rotate_in_frame(self.orientation_info)
@@ -287,7 +284,6 @@ class RandomRotationFrameMutation(object):
         for atom in mol:
             atoms.append([float(atom[0]), float(atom[1]), float(atom[2])])
             types.append(atom[3])
-        self.output("types %s, atoms %s" %(types, atoms))
         molp = Molecule(types, atoms)
         COM = molp.center_of_mass #cartesian
         latinv = np.linalg.inv(lattice_vectors)
@@ -325,7 +321,6 @@ class RandomRotationFrameMutation(object):
             for coord in mol_coords:
                 new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
                 child_coordinates.append(new_coords)
-        self.output("child coords %s" %(child_coordinates))
         return lattice, np.array(child_coordinates)
 
 
@@ -408,8 +403,6 @@ class RandomRotationFrameMutation(object):
         beta = self.angle(child_B, child_C)*180./np.pi
         gamma = self.angle(child_C, child_A)*180./np.pi
         struct = Structure()
-        self.output("child geo %s" %(child_geometry))
-        self.output("typs %s" %(atom_types))
         for i in range(len(child_geometry)):
             struct.build_geo_by_atom(float(child_geometry[i][0]), float(child_geometry[i][1]),
                                      float(child_geometry[i][2]), atom_types[i])
@@ -470,13 +463,8 @@ class RandomRotationMolMutation(object):
         theta= (np.pi/180)*rand_vec[0]
         psi = (np.pi/180)*rand_vec[1]
         phi= (np.pi/180)*rand_vec[2] 
-        self.output(str(mol_list))
         for mol in mol_list:
-            self.output("lenth of mol list %s" %(len(mol_list)))
             rot_mat = rotation_matrix(theta, psi, phi)
-            self.output("-- Random Rotation %s %s %s" % (theta, psi, phi))
-            self.output("mol list COM %s" %(mol_list_COM))
-            self.output(" %s" %(mol_list_COM[i]))
             mol_COM = np.array([mol_list_COM[i][0], mol_list_COM[i][1],mol_list_COM[i][2]])
             for atom in mol:
                 atom_vec = np.array([atom[0], atom[1], atom[2]]) - mol_COM
@@ -577,8 +565,6 @@ class PairTranslationMutation(object):
         # Translate those pairs
         i = 0
         for mol in mol_list:
-            self.output(str(mol_combo[0]))
-            self.output(str(mol_combo[1]))
             if mol_combo[0] == i:
                 for atom in mol:
                     coord = np.array([atom[0], atom[1], atom[2]])
@@ -595,7 +581,6 @@ class PairTranslationMutation(object):
                     coord = np.array([atom[0], atom[1], atom[2]])
                     trans_geometry.append(np.array(coord))
             i+=1
-        self.output(str(trans_geometry))
         return trans_geometry
 
     def create_translated_struct(self, trans_geo, atom_types):
