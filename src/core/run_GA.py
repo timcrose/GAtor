@@ -294,9 +294,99 @@ class RunGA():
         if struct == False and restart_replica:
             folder_to_scavenge = activity.request_folder_to_check()
             while struct == False and folder_to_scavenge!= False:
-                struct = self.structure_scavenge_old(os.path.join(tmp_dir,folder_to_scavenge))
+                struct = self.structure_scavenge(os.path.join(tmp_dir,folder_to_scavenge))
                 if struct == False:
                     folder_to_scavenge = activity.request_folder_to_check()
+        return struct
+
+    def structure_scavenge(self,folder,next_step=False,cleanup=True):
+        '''
+		This routine takes a folder (directory) that should be an fhi-aims job
+        directory and salvages a structure from it if next_step=True, 
+        geometry.in.next_step has to be present. Will attempt to read
+        struct.json to update other properties that might be lost in restart
+        if scavenge failure, returns False
+		if cleanup=True and scavenging is successful, removes the folder afterwards
+		WARNING: make sure the folder is inactive before calling this function 
+        '''
+        geometry = os.path.join(folder,"geometry.in")
+        geometry_step = os.path.join(folder,"geometry.in.next_step")
+        json_dat = os.path.join(folder,"struct.json")
+
+        #Check for geometry.in.next_step
+        self.output("--Scavenging folder %s--" % folder)
+        if next_step and not os.path.isfile(geometry_step):
+            self.output("next_step=True, but no geometry.in.next_step found")
+            return False
+        if os.path.isfile(geometry_step):
+            geostring = read_data(folder,"geometry.in.next_step")
+        elif os.path.isfile(geometry):
+            geostring = read_data(folder,"geometry.in")
+        else:
+            message = "Neither geometry.in.next_step nor "
+            message +="geometry.in is found in the folder"
+            self.output(message)
+            return False
+
+        #Build Structure() from found geometry
+        struct = Structure()
+        try:
+            struct.build_geo_whole_atom_format(geostring)
+        except:
+            message = "Attempt to build_geo_from_atom_file failed."
+            self.output(message)
+            return False
+
+        #Check for json property file
+        if os.path.isfile(json_dat):
+            infostring = read_data(folder,"struct.json")
+            struct_info = Structure()
+            success = False
+            try:
+                struct_info.loads(infostring)
+                success = True
+            except:
+                message = "struct.json found but can't be read"
+                message += "Continuing scavenging..."
+                self.output(message)
+            if success:
+                if len(struct_info.geometry)!=len(struct_info.geometry):
+                    message = "struct.json found but the number of "
+                    message +="atoms is different from geometry.in\n"
+                    self.output(message)
+                    self.output("Recommend manually removing folder %s" % folder)
+                    return False
+                else:
+                    for key in struct_info.properties:
+                        if (not key in struct.properties) or (struct.properties[key]==None):
+                            struct.properties[key]=struct_info.properties[key]
+                    self.output("struct.json found and information extracted")
+                self.output("Scavenge folder success!")
+                fdir = os.path.abspath(os.path.join(folder,os.pardir))
+
+        #Backup scavenged folder
+        if activity.bk_folder(fdir,folder[len(fdir)+1:],scavenge_dir,"random"):
+            self.output("Successfully backed up scavenged folder")
+        else:
+            self.output("Failed to back up scavenged folder")
+
+        #Clean scavenged folder
+        if cleanup:
+            try:
+                shutil.rmtree(folder)
+                self.output("Folder %s removed" % folder)
+            except:
+                self.output("Scavenged folder %s clean-up failure" % folder)
+                #Probably due to file permission issue
+                if os.path.exists(os.path.join(folder,"active.info")):
+                    try:
+                        os.remove(os.path.join(folder,"active.info"))
+                        self.output("Removing active.info instead")
+                    except:
+                        self.output("active.info remains there!")
+                        output.time_log("Folder %s unable to clean-up" % folder,self.replica)
+                else:
+                    self.output("active.info already removed")
         return struct
 
     def generate_trial_structure(self):
@@ -382,85 +472,7 @@ class RunGA():
             self.output('-- Structure is not acceptable')
             return False  # structure not acceptable start with new selection
 
-
-	
-	def structure_scavenge_old(self,folder,next_step=False,cleanup=True):
-		'''
-		This routine takes a folder (directory) that should be an fhi-aims job 
-                directory and salvages a structure from it if next_step=True, 
-                geometry.in.next_step has to be present. Will attempt to read 
-                struct.json to update other properties that might be lost in restart
-		if scavenge failure, returns False
-		if cleanup=True and scavenging is successful, removes the folder afterwards
-		WARNING: make sure the folder is inactive before calling this function 
-		'''
-		self.output("--Scavenging folder %s--" % folder)
-		if next_step and not os.path.isfile(os.path.join(folder,"geometry.in.next_step")):
-			self.output("next_step=True, but no geometry.in.next_step found")
-			return False
-
-		if os.path.isfile(os.path.join(folder,"geometry.in.next_step")):
-			geostring = read_data(folder,"geometry.in.next_step")
-		elif os.path.isfile(os.path.join(folder,"geometry.in")):
-			geostring = read_data(folder,"geometry.in")
-		else:
-			self.output("Neither geometry.in.next_step nor geometry.in is found in the folder")
-			return False
-		struct = Structure()
-		try:
-			struct.build_geo_whole_atom_format(geostring)
-		except:
-			self.output("Attempt to build_geo_from_atom_file failed. File possibly corrupted")
-			return False
-
-		if os.path.isfile(os.path.join(folder,"struct.json")):
-			infostring = read_data(folder,"struct.json")
-			struct_info = Structure()
-			success = False
-			try:
-				struct_info.loads(infostring)
-				success = True
-			except:
-				self.output("struct.json found but corrupted ; moving on with scavenging")
-			if success:
-				if len(struct_info.geometry)!=len(struct_info.geometry):
-					self.output("struct.json found but the length of its geometry is not the same as from geometry.in")
-					self.output("File possibly corrupted")
-					self.output("Recommend manually removing folder %s" % folder)
-					return False
-				else:
-					for key in struct_info.properties:
-						if (not key in struct.properties) or (struct.properties[key]==None):
-							struct.properties[key]=struct_info.properties[key]
-					self.output("struct.json found and information extracted")
-		
-				self.output("Scavenge folder success!")
-				fdir = os.path.abspath(os.path.join(folder,os.pardir))
-		if activity.bk_folder(fdir,folder[len(fdir)+1:],scavenge_dir,"random"):
-			self.output("Successfully backed up scavenged folder")
-		else:
-			self.output("Failed to back up scavenged folder")
-		
-		if cleanup:
-			try:
-				shutil.rmtree(folder)
-				self.output("Folder %s removed" % folder)
-			except:
-				self.output("Scavenged folder %s clean-up failure" % folder) 
-                                #Probably due to file permission issue
-				if os.path.exists(os.path.join(folder,"active.info")):
-					try:
-						os.remove(os.path.join(folder,"active.info"))
-						self.output("Removing active.info instead")
-					except:
-						self.output("active.info remains there!")
-						output.time_log("WARNING! Folder %s unable to clean-up" % folder,self.replica)
-				else:
-					self.output("active.info already gone")		
-		
-		return struct	
-			
-	def structure_relax(self,struct):
+    def structure_relax(self,struct):
 		'''
 		This routines takes a structure and relaxes it
 		Returns False if doesn't meet SPE criteria or relaxation fails
@@ -478,9 +490,9 @@ class RunGA():
 			self.add_structure(struct,"evaluation_rejected")
 		if stat=="failed" or stat=="rejected":
 			return False
-				
-		#----- Make sure cell is lower triangular -----#
-		#self.output("-- Ensuring cell is lower triangular")
+
+        #----- Make sure cell is lower triangular -----#
+		self.output("-- Ensuring cell is lower triangular")
 		struct=structure_handling.cell_lower_triangular(struct,False)	
 		a=struct.get_property('lattice_vector_a')
 		b=struct.get_property('lattice_vector_b')
@@ -492,7 +504,7 @@ class RunGA():
 			self.output("Final Structure's geometry:\n" +
 			struct.get_geometry_atom_format())
 		return struct
-
+	
     def success_message(self, struct, struct_index):
         time = datetime.datetime.now()
         message = ""
