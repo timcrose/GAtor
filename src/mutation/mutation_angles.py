@@ -45,7 +45,6 @@ def select_mutator(input_struct, num_mols, replica):
                       "Frame_rot_mol", "Pair_rot_mol", "Rot_mol",
                       "Strain_rand_mols","Strain_sym_mols", 
                       "Swap_mol", "Permute_mol","Strain_vol"])
-    mutation_list = ["Permute_mol"]
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
