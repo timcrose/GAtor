@@ -44,7 +44,8 @@ def select_mutator(input_struct, num_mols, replica):
     mutation_list = (["Frame_trans_mol", "Pair_trans_mol", 
                       "Frame_rot_mol", "Pair_rot_mol", "Rot_mol",
                       "Strain_rand_mols","Strain_sym_mols", 
-                      "Swap_mol", "Strain_vol"])
+                      "Swap_mol", "Permute_mol","Strain_vol"])
+    mutation_list = ["Permute_mol"]
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -64,6 +65,8 @@ def select_mutator(input_struct, num_mols, replica):
         mutator = PairRotationMolMutation(input_struct, num_mols, replica)
     elif mut_choice == "Swap_mol":
 	    mutator = SwapMolMutation(input_struct, num_mols, replica)
+    elif mut_choice =="Permute_mol":
+        mutator = PermutationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Strain_rand_mols":
         mutator = RandomStrainMutationMoveMols(input_struct, num_mols, replica)
     elif mut_choice == "Strain_sym_mols":
@@ -797,6 +800,80 @@ class SwapMolMutation(object):
         struct.set_property('mutation_type', 'swap_mol')
         return struct
 
+class PermutationMutation(object):
+    ''' Swaps any two molecules in the unit cell'''
+
+    def __init__(self, input_struct, num_mols, replica):
+        self.input_struct = input_struct
+        self.num_mols = num_mols
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+        self.A = self.input_struct.get_property('lattice_vector_a')
+        self.B = self.input_struct.get_property('lattice_vector_b')
+        self.C = self.input_struct.get_property('lattice_vector_c')
+        self.alpha = self.input_struct.get_property('alpha')
+        self.beta = self.input_struct.get_property('beta')
+        self.gamma = self.input_struct.get_property('gamma')
+        self.cell_vol = self.input_struct.get_unit_cell_volume()
+        self.cross_type = self.input_struct.get_property('crossover_type')
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.permutation_mutation()
+
+    def permutation_mutation(self):
+        '''Permutes the location of each molecule eg. mol 1234 -> 4123'''
+        temp_geo = self.geometry
+        num_atom_per_mol = int(len(temp_geo)/self.num_mols)
+        mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
+        mol_list_COM = get_COM_mol_list(mol_list)
+        atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))]
+        permuted_geometry = self.permute_molecules(mol_list, mol_list_COM)
+        permutated_struct = self.create_permutated_struct(permuted_geometry, atom_type_list)
+        return permutated_struct
+
+    def permute_molecules(self, mol_list, mol_list_COM):
+        ''' Randomly permutes the location of each molecule'''
+
+        self.output("Permuting COM of molecules")
+        permuted_geometry = []
+        permute = [i for i in range(1, len(mol_list)-1)]
+        choice = random.choice(permute)    
+
+        for i in range(len(mol_list)):
+            mol = mol_list[i]
+            for atom in mol:
+                xyz = [atom[0], atom[1], atom[2]]
+                geo = xyz - mol_list_COM[i] + mol_list_COM[choice]
+                permuted_geometry.append(np.array(geo))
+            choice +=1
+            if choice % len(mol_list) == 0:
+                choice = 0
+
+        return permuted_geometry
+
+    def create_permutated_struct(self, swapped_geo, atom_types):
+        ''' Creates Structure from mutated geometry'''
+        struct = Structure()
+        for i in range(len(swapped_geo)):
+            struct.build_geo_by_atom(float(swapped_geo[i][0]), float(swapped_geo[i][1]),
+                                     float(swapped_geo[i][2]), atom_types[i])
+        struct.set_property('lattice_vector_a', self.A)
+        struct.set_property('lattice_vector_b', self.B)
+        struct.set_property('lattice_vector_c', self.C)
+        struct.set_property('a', leng(self.A))
+        struct.set_property('b', leng(self.B))
+        struct.set_property('c', leng(self.C))
+        struct.set_property('cell_vol', self.cell_vol)
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha',self.alpha)
+        struct.set_property('beta', self.beta)
+        struct.set_property('gamma', self.gamma)
+        struct.set_property('mutation_type', 'permute_mol')
+        return struct
 class RandomStrainMutationMoveMols(object):
     '''Gives a random strain to the lattice and moves the COM of the molecules'''
     def __init__(self, input_struct, num_mols, replica):
