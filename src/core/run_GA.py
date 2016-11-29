@@ -534,7 +534,6 @@ class RunGA():
         elif converged is "converged":
             return True	
 
-
 	def avg_fitness(self, min_e, max_e, structure_coll):
 		fitness = {}
 		for index, struct in structure_coll:
@@ -557,22 +556,12 @@ class RunGA():
 			total = t_fitness + total
 		return normalized_fit
 
-
-	def set_parents(self, structures_to_cross, struct):
-		for i in range(len(structures_to_cross)): 
-			par_st = structures_to_cross[i]
-			struct.set_property('parent_' + str(i), par_st.get_stoic_str() + '/' \
-			+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
-
-	def output(self, message): output.local_message(message, self.replica)
-
 	def add_structure(self,struct,input_ref):
 		structure_collection.add_struture(struct,struct.self.replica_stoic(),"pre-evaluation")
 		self.output("--Added-- structure %s to input_ref %s"
 		% (struct.struct_id,str(input_ref)))
-	
 
-	def restart(self, message): output.restart_message(message)
+    def restart(self, message): output.restart_message(message)
 
 def structure_create_for_multiprocessing(args):
     '''
@@ -599,9 +588,9 @@ def structure_create_for_multiprocessing(args):
     if parent_a == None or parent_b == None:
         output.local_message('Parent ID returned NoneType structure',replica)
         return False
+
     #----- Crossover -----#
     if rand_cross <= cross_prob:
-		#----- Normal Crossover -----#
         output.local_message("\n---- Crossover ----", replica)
         new_struct = crossover_module.main(structures_to_cross, replica)
         if new_struct is False:
@@ -615,8 +604,13 @@ def structure_create_for_multiprocessing(args):
             output.local_message("-- Child's geometry --\n" +
             new_struct.get_geometry_atom_format(),replica)
         new_struct.set_property('mutation_type', 'no_mutation')
+        for i in range(len(structures_to_cross)):
+            par_st = structures_to_cross[i]
+            new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
+            + str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
+
+    #----- Symmetric Crossover -----#
     elif rand_cross > cross_prob and rand_cross <= cross_prob + sym_cross_prob:
-        #----- Symmetric Crossover -----#
         output.local_message("\n---- Symmetric Crossover ----", replica)
         new_struct = alt_crossover_module.main(structures_to_cross, replica)
         if new_struct is False:
@@ -630,20 +624,28 @@ def structure_create_for_multiprocessing(args):
             output.local_message("-- Child's geometry --\n" +
             new_struct.get_geometry_atom_format(),replica)
         new_struct.set_property('mutation_type', 'no_mutation')
+        for i in range(len(structures_to_cross)):
+            par_st = structures_to_cross[i]
+            new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
+                + str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
+
+    #----- Mutation  -----#
     elif rand_cross > cross_prob + sym_cross_prob:
-        #----- Mutation on Better Parent -----#
         output.local_message("\n---- Mutation ----",replica)
-        new_struct = random.choice([structures_to_cross[0], structures_to_cross[1]])
+        choice_struct = random.choice([structures_to_cross[0], structures_to_cross[1]])
         if ui.all_geo():
             output.local_message("Single Parent geometry:\n"
-            + new_struct.get_geometry_atom_format(),replica)
-        new_struct = mutation_module.main(new_struct, replica)
+            + choice_struct.get_geometry_atom_format(),replica)
+        new_struct = mutation_module.main(choice_struct, replica)
         if new_struct!=False and ui.all_geo():
             output.local_message("Mutated geometry:\n"
             + new_struct.get_geometry_atom_format(),replica)
         if new_struct is False:
             output.local_message('-- Mutation failure',replica)
             return False
+        new_struct.set_property('parent_1', choice_struct.get_stoic_str() + '/'
+            + str(choice_struct.get_input_ref()) + '/' + str(choice_struct.get_struct_id()))
+
     #---- Orthogonalization ----#
     if ui.ortho():
         output.local_message("\n---- Checking Cell Orthogonalization ----",replica)
@@ -665,17 +667,13 @@ def structure_create_for_multiprocessing(args):
         if ui.all_geo():
             output.local_message(new_struct.get_geometry_atom_format(),
 					     replica)
+
 	#----- Cell Check -----#
 	output.local_message("\n---- Cell Checks ----",replica)
 	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
 		return False
 
-	#----- Set parents ------#
-	for i in range(len(structures_to_cross)):  
-		par_st = structures_to_cross[i]
-		new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
-		+ str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
-
+    #----- Assign ID -----#
 	output.local_message("---- Assign structure ID ----",replica)
 	new_struct.struct_id = misc.get_random_index()
 	output.local_message("-- ID assigned: "+new_struct.struct_id,replica)
