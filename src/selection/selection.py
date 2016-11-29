@@ -73,9 +73,9 @@ class StructureSelection():
                 if not struct_a in banned:
                     if not struct_a == struct_b: break  # remove this to allow double-selection    
         else:
-            struct_a, fit_a = self.select_structure(structure_coll_a)
+            struct_a, fit_a = self.select_structure(structure_coll)
             while True: 
-                struct_b, fit_b = self.select_structure(structure_coll_b)
+                struct_b, fit_b = self.select_structure(structure_coll)
                 if not struct_a == struct_b: break  # remove this to allow double-selection
         return [struct_a, struct_b]
 
