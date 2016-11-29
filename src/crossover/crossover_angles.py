@@ -170,15 +170,25 @@ class Crossover(object):
     def combine_orientation_info(self, orientation_info_a, orientation_info_b): 
         '''Returns child orientation info in the form
                             info = [z, y, x, COM, centered_mol]'''
-        orientation_info_child = []
         self.output("Parent A orientation info: "+ str(orientation_info_a[0][:3]))
         self.output("Parent B orientation info: "+ str(orientation_info_b[0][:3]))
+
+        orientation_info_child = []
         rand_cut = random.uniform(0.1,0.9)
+        COM_choice = random.random()
+        if COM_choice < 0.5:
+            parent_a_COM = True
+        else: 
+            parent_a_COM = False
         for i in range(len(orientation_info_a)):
             child_z, child_y, child_x  = ( 
                 np.array(orientation_info_a[i][:3])*rand_cut + 
-                np.array(orientation_info_b[i][:3])*(1-rand_cut)) 
-            COM = orientation_info_a[i][3]
+                np.array(orientation_info_b[i][:3])*(1-rand_cut))
+            if parent_a_COM: 
+                COM = orientation_info_a[i][3]
+            else:
+                COM = orientation_info_b[i][3]
+          
             centered_mol = orientation_info_a[i][4]
             orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])    
         self.output("Child orientation info: " + str(orientation_info_child[0][:3]))

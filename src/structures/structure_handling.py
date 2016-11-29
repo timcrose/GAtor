@@ -431,7 +431,7 @@ def cell_modification_test(struct,napm=None,create_duplicate=True):
     move_molecule_in(struct,nmpc,False)
     return struct
 
-def cell_modification(struct,napm=None,create_duplicate=True):
+def cell_modification_test(struct,napm=None,create_duplicate=True):
     '''
     Cell modification using Niggli reduction
     '''

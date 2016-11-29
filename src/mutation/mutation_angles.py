@@ -41,8 +41,8 @@ def select_mutator(input_struct, num_mols, replica):
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    mutation_list = (["Frame_trans_mol", "Pair_trans_mol" 
-                      "Frame_rot_mol", "Pair_rot_mol", "Rot_mol"
+    mutation_list = (["Frame_trans_mol", "Pair_trans_mol", 
+                      "Frame_rot_mol", "Pair_rot_mol", "Rot_mol",
                       "Strain_rand_mols","Strain_sym_mols", 
                       "Swap_mol", "Strain_vol"])
     try:
