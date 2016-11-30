@@ -59,9 +59,13 @@ class StructureSelection():
                 if os.stat(path).st_size == 0:
                     pass
                 else:
+                    added_list = []
                     banned_struct_info = np.loadtxt(path, delimiter = ' ', dtype='str')
-                    for i in range(len(banned_struct_info)):
-                        banned.append(banned_struct_info[i][0])
+                    added_list.append(banned_struct_info)
+
+                    for i in range(len(added_list)):
+                        banned.append(added_list[i][0])
+
                     banned = banned[-num:]
                     output.local_message("-- Banned ID's %s" %(banned), self.replica)
             while True:
