@@ -164,7 +164,8 @@ class Crossover(object):
                 new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
-                new_info = rand_vec[i] * lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i]
+                rand_scale = random.uniform(0.97, 1.03)
+                new_info = rand_scale *(rand_vec[i] * lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
                     self.output("--Setting angle close to 90 degrees")
                     new_info = 90.0

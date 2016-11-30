@@ -64,8 +64,7 @@ class StructureSelection():
                     added_list.append(banned_struct_info)
 
                     for i in range(len(added_list)):
-                        banned.append(added_list[i][0])
-
+                        banned.append(added_list[i][0][0])
                     banned = banned[-num:]
                     output.local_message("-- Banned ID's %s" %(banned), self.replica)
             while True:
