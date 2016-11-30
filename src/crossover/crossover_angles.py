@@ -135,7 +135,7 @@ class Crossover(object):
         sort_eig = sorted(eigen_sys)
 
         #Construct rotation matrix and its inverse
-        rot = np.column_stack((sort_eig[2][1], -sort_eig[1][1], sort_eig[0][1]))
+        rot = np.column_stack((sort_eig[2][1], sort_eig[1][1], sort_eig[0][1]))
         rot_trans = np.transpose(np.array(rot))
 
         #Aligned geometry
@@ -156,6 +156,8 @@ class Crossover(object):
         child_lattice_info = []
         rand_vec = [random.uniform(0.25,0.75) for i in range(6)]
         rand_scale = random.uniform(0.85,1.15)
+
+        self.output(str(lattice_info_a))
         for i in range(6):
             if i < 3:
                 rand_scale = random.uniform(0.85,1.15)
@@ -163,7 +165,11 @@ class Crossover(object):
                 child_lattice_info.append(new_info)
             elif i >= 3:
                 new_info = rand_vec[i] * lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i]
+                if 88.5 <= new_info <= 91.5:
+                    self.output("--Setting angle close to 90 degrees")
+                    new_info = 90.0
                 child_lattice_info.append(new_info)
+
         return child_lattice_info
 
 
@@ -175,11 +181,14 @@ class Crossover(object):
 
         orientation_info_child = []
         rand_cut = random.uniform(0.1,0.9)
+
         COM_choice = random.random()
         if COM_choice < 0.5:
             parent_a_COM = True
         else: 
             parent_a_COM = False
+
+        parent_a_COM = True
         for i in range(len(orientation_info_a)):
             child_z, child_y, child_x  = ( 
                 np.array(orientation_info_a[i][:3])*rand_cut + 
@@ -205,12 +214,12 @@ class Crossover(object):
         for mol_info in child_orientation_info:
             mol_coords = []
             z, y, x, COM, centered_mol = mol_info
-            rot_from_euler = self.euler2mat(z, y, x)
+            rot_from_euler = self.euler2mat(z, y, -x)
             COM_xyz = np.dot(lattice, COM)
             for atom in centered_mol:
                 mol_coords.append(np.dot(rot_from_euler, np.array(atom).reshape((3,1))).tolist())
             for coord in mol_coords:
-                new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
+                new_coords = [coord[0][0] + COM_xyz[0], -coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
                 child_coordinates.append(new_coords)
         if random.random() < 0.1:
             self.output("Balanced alignment")
@@ -233,9 +242,9 @@ class Crossover(object):
         ''' Creates a Structure() for the child to be added to the collection'''
         child_A, child_B, child_C = child_lattice 
         temp_vol = np.dot(np.cross(child_A, child_B), child_C)
-        alpha = self.angle(child_A, child_B)*180./np.pi
-        beta = self.angle(child_B, child_C)*180./np.pi
-        gamma = self.angle(child_C, child_A)*180./np.pi
+        alpha = self.angle(child_B, child_C)*180./np.pi
+        beta = self.angle(child_C, child_A)*180./np.pi
+        gamma = self.angle(child_A, child_B)*180./np.pi
         new_struct = Structure() 
         for i in range(len(child_geometry)):
             new_struct.build_geo_by_atom(float(child_geometry[i][0]), float(child_geometry[i][1]),
@@ -263,9 +272,9 @@ class Crossover(object):
         a = np.linalg.norm(A)
         b = np.linalg.norm(B)
         c = np.linalg.norm(C)
-        alpha = self.angle(C,A)
-        beta = self.angle(A,B)
-        gamma = self.angle(B, C)
+        alpha = self.angle(B, C)
+        beta = self.angle(C,A)
+        gamma = self.angle(A, B)
         lattice[0][0] = a
         lattice[0][1] = 0; lattice[0][2] = 0
         lattice[1][0] = np.cos(gamma)*b
@@ -281,9 +290,9 @@ class Crossover(object):
         a = np.linalg.norm(A)
         b = np.linalg.norm(B)
         c = np.linalg.norm(C)
-        alpha_r = angle(A,B)
-        beta_r = angle(B,C)
-        gamma_r = angle(C, A)
+        alpha_r = angle(B, C)
+        beta_r = angle(C, A)
+        gamma_r = angle(A, B)
         val = (np.cos(alpha_r) * np.cos(beta_r) - np.cos(gamma_r))\
             / (np.sin(alpha_r) * np.sin(beta_r))
         # Sometimes rounding errors result in values slightly > 1.

@@ -492,9 +492,9 @@ def lattice_standard_form(lattice):
     a = np.linalg.norm(A)
     b = np.linalg.norm(B)
     c = np.linalg.norm(C)
-    alpha_r = angle(A,B)
-    beta_r = angle(B,C)
-    gamma_r = angle(C, A)
+    alpha_r = angle(B,C)
+    beta_r = angle(C,A)
+    gamma_r = angle(A, B)
     print alpha_r
     val = (np.cos(alpha_r) * np.cos(beta_r) - np.cos(gamma_r))\
             / (np.sin(alpha_r) * np.sin(beta_r))

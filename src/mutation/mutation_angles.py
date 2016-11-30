@@ -215,9 +215,9 @@ class RandomTranslationFrameMutation(object):
         ''' Creates a Structure() for the child to be added to the collection'''
         child_A, child_B, child_C = child_lattice
         temp_vol = np.dot(np.cross(child_A, child_B), child_C)
-        alpha = self.angle(child_A, child_B)*180./np.pi
-        beta = self.angle(child_B, child_C)*180./np.pi
-        gamma = self.angle(child_C, child_A)*180./np.pi
+        alpha = self.angle(child_B, child_C)*180./np.pi
+        beta = self.angle(child_C, child_A)*180./np.pi
+        gamma = self.angle(child_A, child_B)*180./np.pi
         struct = Structure()
         for i in range(len(child_geometry)):
             struct.build_geo_by_atom(float(child_geometry[i][0]), float(child_geometry[i][1]),
@@ -401,9 +401,9 @@ class RandomRotationFrameMutation(object):
         ''' Creates a Structure() for the child to be added to the collection'''
         child_A, child_B, child_C = child_lattice
         temp_vol = np.dot(np.cross(child_A, child_B), child_C)
-        alpha = self.angle(child_A, child_B)*180./np.pi
-        beta = self.angle(child_B, child_C)*180./np.pi
-        gamma = self.angle(child_C, child_A)*180./np.pi
+        alpha = self.angle(child_B, child_C)*180./np.pi
+        beta = self.angle(child_C, child_A)*180./np.pi
+        gamma = self.angle(child_A, child_B)*180./np.pi
         struct = Structure()
         for i in range(len(child_geometry)):
             struct.build_geo_by_atom(float(child_geometry[i][0]), float(child_geometry[i][1]),
@@ -930,9 +930,9 @@ class RandomStrainMutationMoveMols(object):
         struct.set_property('c', leng(lat_C))
         struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
         struct.set_property('crossover_type', self.cross_type)
-        struct.set_property('alpha', angle(lat_A, lat_B))
-        struct.set_property('beta', angle(lat_B, lat_C))
-        struct.set_property('gamma', angle(lat_C, lat_A))
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_C, lat_A))
+        struct.set_property('gamma', angle(lat_A, lat_B))
         struct.set_property('mutation_type', 'rand_strain_mol')
         return struct
 
@@ -995,9 +995,9 @@ class RandomSymmetryStrainMutationMoveMols(object):
         struct.set_property('c', leng(lat_C))
         struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
         struct.set_property('crossover_type', self.cross_type)
-        struct.set_property('alpha', angle(lat_A, lat_B))
-        struct.set_property('beta', angle(lat_B, lat_C))
-        struct.set_property('gamma', angle(lat_C, lat_A))
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_C, lat_A))
+        struct.set_property('gamma', angle(lat_A, lat_B))
         struct.set_property('mutation_type', 'sym_strain_mol')
         return struct
 
@@ -1102,9 +1102,9 @@ class RandomVolumeStrainMutationMoveMols(object):
         struct.set_property('c', leng(lat_C))
         struct.set_property('cell_vol', np.dot(lat_A, np.cross(lat_B, lat_C)))
         struct.set_property('crossover_type', self.cross_type)
-        struct.set_property('alpha', angle(lat_A, lat_B))
-        struct.set_property('beta', angle(lat_B, lat_C))
-        struct.set_property('gamma', angle(lat_C, lat_A))
+        struct.set_property('alpha', angle(lat_B, lat_C))
+        struct.set_property('beta', angle(lat_C, lat_A))
+        struct.set_property('gamma', angle(lat_A, lat_B))
         struct.set_property('mutation_type', 'vol_strain')
         return struct
 

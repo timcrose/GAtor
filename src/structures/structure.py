@@ -238,9 +238,9 @@ class Structure(object):
         A = self.get_property('lattice_vector_a')
         B = self.get_property('lattice_vector_b')
         C = self.get_property('lattice_vector_c')
-        alpha = self.angle(A, B)
-        beta = self.angle(B, C)
-        gamma = self.angle(C, A)
+        alpha = self.angle(B, C)
+        beta = self.angle(C, A)
+        gamma = self.angle(A, B)
     	return alpha, beta, gamma
 
     def get_lattice_magnitudes(self):
