@@ -11,9 +11,11 @@ import sys # for debuging!
 sys.path.append("/lustre/project/nmarom/gator_shared_duplicate/gator/src/") #for debuging!
 
 import numpy as np
+import math
 from structures import structure
 from core import output
 import copy
+from copy import deepcopy
 import exceptions
 from core import file_handler
 from core import user_input
@@ -28,6 +30,89 @@ all_geo = ui.all_geo()
 nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 olm = output.local_message
 
+
+def compute_RDF_vector(original_struct):
+    atomic_pairs = [['C', 'N'],['S', 'N']]
+    dist = [2., 3., 4., 5., 6., 7., 8.]
+    smoothing_parameter = 1 
+    a = smoothing_parameter
+    n_factor = [4*np.pi*(0.25*(np.pi/a**3)**0.5+\
+                0.5*r**2*(np.pi/a)**0.5+3*r/a*np.exp(-a*r**2)+\
+                (0.25*(np.pi/a**3)**0.5+0.5*r**2*(np.pi/a)**0.5)*\
+                math.erf(r*a**0.5)) \
+                for r in dist]
+    struct = deepcopy(original_struct)
+    A = struct.properties["lattice_vector_a"]
+    B = struct.properties["lattice_vector_b"]
+    C = struct.properties["lattice_vector_c"]
+ 
+    #First figure out the cell extension needed
+    cell_modification(struct,struct.get_n_atoms(), False)
+    cell_lower_triangular(struct, False)
+    a_ext = int(math.ceil(max(dist)/A[0]))
+    b_ext = int(math.ceil(max(dist)/B[1]))
+    c_ext = int(math.ceil(max(dist)/C[2]))
+    structure_extension = [[x,y,z] for x in range (-a_ext-1,a_ext+2)\
+                           for y in range (-b_ext-1,b_ext+2)\
+                           for z in range (-c_ext-1,c_ext+2)]
+    cell_extension_input(struct, extension=structure_extension, create_duplicate=False)
+
+    # Compute interatomic distances and build g vector
+    vector_all = [struct.struct_id]
+    for pair in atomic_pairs:
+        ref_atom_type = pair[0]
+        target_atom_type = pair[1]
+        a1_range = [i for i in range (original_struct.get_n_atoms())
+                   if original_struct.geometry[i]["element"] == ref_atom_type]
+        rs = all_interatomic_distances(struct, ref_atom_type, target_atom_type, a1_range)
+        distances = [i[2] for i in rs]
+        smoothing_parameter = 1 ###might need to modify
+        g = [sum([np.exp(-smoothing_parameter*(r-r_ij)**2) 
+            for r_ij in distances])/len(a1_range) for r in dist]
+        g = [g[i]/n_factor[i] for i in range (len(dist))]
+        vector_all += g[:]
+    #struct.properties["RDF_smooth"] += vector_all[1:]
+    print vector_all[1:]
+    print "\n"
+    print struct.get_property('RDF_smooth') 
+    print struct.get_property('RDF_vector_description')
+    return struct
+
+def all_interatomic_distances (struct, a1, a2, a1_range=None, a2_range=None):
+    '''
+    Returns a list of interatomic distances 
+    a1, a2 specifies the species of the two atoms
+    Returns [[a1_index_1, a2_index_1, distance_1], [a1_index_2, a2_index_2, distance_2] . . .]
+    Requires a1_index/napm to be different from a2_index/napm
+    '''
+    result = []
+    geo = struct.geometry
+    napm=int(len(geo)/nmpc)
+    if a1_range == None:
+        a1_range = range(len(geo))
+    if a2_range == None:
+        a2_range = range(len(geo))
+    if a1 == a2: #Need to avoid double counting
+        for i in a1_range:
+            for j in a2_range:
+                if (i//napm!=j//napm) and not ((i in a2_range) and (j in a1_range) and (i>j))\
+                and (a1=="X" or geo[i]["element"] == a1) \
+                and (a2=="X" or geo[j]["element"] == a2):
+                    result.append([i,j,np.linalg.norm([\
+                    geo[i]["x"] - geo[j]["x"],\
+                    geo[i]["y"] - geo[j]["y"],\
+                    geo[i]["z"] - geo[j]["z"]])])
+    if a1 != a2:
+        for i in a1_range:
+            for j in a2_range:
+                if i//napm!=j//napm\
+                and (a1=="X" or geo[i]["element"] == a1) \
+                and (a2=="X" or geo[j]["element"] == a2):
+                    result.append([i,j,np.linalg.norm([\
+                    geo[i]["x"] - geo[j]["x"],\
+                    geo[i]["y"] - geo[j]["y"],\
+                    geo[i]["z"] - geo[j]["z"]])])
+    return result
 def cell_lower_triangular(struct,create_duplicate=True):
     '''
     Sets the cell back to lower triangular form
@@ -153,7 +238,7 @@ def cell_transform_mat(struct,mat,origin=[0,0,0],create_duplicate=True):
 	return struct
 
 
-def cell_extension(struct,create_duplicate=True):
+def cell_extension(struct, create_duplicate=True):
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
 	napm=int(len(struct.geometry)/nmpc)
@@ -167,6 +252,18 @@ def cell_extension(struct,create_duplicate=True):
 			mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
 	return struct
 
+def cell_extension_input(struct, extension, create_duplicate=True):
+    if create_duplicate:
+        struct=copy.deepcopy(struct)
+    napm=int(len(struct.geometry)/nmpc)
+    struct.geometry=np.concatenate((struct.geometry, struct.geometry,
+                                       struct.geometry, struct.geometry,
+                                       struct.geometry, struct.geometry,
+                                       struct.geometry,struct.geometry))
+    for i in range (1,8):
+        for j in range (nmpc):
+            mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
+    return struct
 def cell_populate_molecules(struct,mole_info_list):
 	'''
 	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; 
