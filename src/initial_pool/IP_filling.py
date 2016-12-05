@@ -209,7 +209,9 @@ def return_duplicate_pairs(initial_list, ui, replica):
 			output.local_message("-- %s" % struct_fp, replica)
 			output.local_message("-- %s" % structc_fp, replica)
 	        	dup_pairs.append((struct_fp, structc_fp))
-    else:   dup_pairs = return_duplicate_pymat_pairs(initial_list, ui)
+    else: dup_pairs = return_duplicate_pymat_pairs(initial_list, ui)
+#    dup_pairs = return_duplicate_pymat_pairs(initial_list, ui)
+
     for pair in dup_pairs:
         ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')
     return dup_pairs
@@ -257,6 +259,7 @@ def return_energy_groups(initial_list, ui):
 def return_duplicate_pymat_pairs(initial_list, ui):
         dup_pairs = []
         sm = set_IP_structure_matcher(ui)
+        replica = ui.get_replica_name() 
         for struct, structc in itertools.combinations(initial_list, 2):
             structp = get_pymatgen_structure(struct.get_frac_data())
             structpc = get_pymatgen_structure(structc.get_frac_data())
@@ -264,7 +267,7 @@ def return_duplicate_pymat_pairs(initial_list, ui):
             if fit:
                 struct_fp = struct.get_property('file_path')
                 structc_fp = structc.get_property('file_path')
-                output.local_message("Found duplicate pair", replica)
+                output.local_message("Found duplicate pair", replica) 
                 output.local_message("-- %s" % struct_fp, replica)
                 output.local_message("-- %s" % structc_fp, replica)
                 dup_pairs.append((struct_fp, structc_fp))
