@@ -56,32 +56,27 @@ def write_avg_fitness(Ig, fit_avg, structure_coll):
 def get_energy_list(structure_coll):
     energy_list = []
     for index, structure in structure_coll:
-	ID = structure.get_property('ID')
-	replica = structure.get_property('replica')
+        ID = structure.get_property('ID')
+        replica = structure.get_property('replica')
         energy = '{:.3f}'.format(structure.get_property(ui.get_property_to_optimize()))
-#	if replica == 'init_pool':
-#            spe = '{:.3f}'.format(structure.get_property('energy_light_SPE'))
-#	else: spe = '{:.3f}'.format(structure.get_property('spe_energy')) 
-	vol = '{:.1f}'.format(structure.get_unit_cell_volume())
-	A, B, C = structure.get_lattice_magnitudes()
-	a = '{:.2f}'.format(A)
-	b = '{:.2f}'.format(B)
-	c = '{:.2f}'.format(C)
-	Alpha, Beta, Gamma = structure.get_lattice_angles()
-	alpha = '{:.1f}'.format(Alpha)
-	beta = '{:.1f}'.format(Beta)
-	gamma = '{:.1f}'.format(Gamma)
-#	try:	spacegroup = '{0!s}'.format(structure.get_property('py_space_group').replace(' ',''))
-#	except: spacegroup = structure.get_property('space_group')
-	spacegroup = structure.get_property("space_group")
-	mut = structure.get_property('mutation_type')
+        vol = '{:.1f}'.format(structure.get_unit_cell_volume())
+        A, B, C = structure.get_lattice_magnitudes()
+        a = '{:.2f}'.format(A)
+        b = '{:.2f}'.format(B)
+        c = '{:.2f}'.format(C)
+        Alpha, Beta, Gamma = structure.get_lattice_angles()
+        alpha = '{:.1f}'.format(Alpha)
+        beta = '{:.1f}'.format(Beta)
+        gamma = '{:.1f}'.format(Gamma)
+        spacegroup = structure.get_property("space_group")
+        mut = structure.get_property('mutation_type')
         crosstype = structure.get_property('crossover_type')
-	parent0 = structure.get_property('parent_0')
-	parent1 = structure.get_property('parent_1')
-	if structure.get_property('approximate') == "TRUE":
-		ap = "approx"
-	else: ap = ""	
-	if energy is not None: 
+        parent0 = structure.get_property('parent_0')
+        parent1 = structure.get_property('parent_1')
+        if structure.get_property('approximate') == "TRUE":
+            ap = "approx"
+        else: ap = ""
+        if energy is not None:
             energy_list.append([ID, replica, index, energy,  vol, a, b, c, alpha, beta, gamma, spacegroup, mut, str(parent0)[15:], str(parent1)[15:], crosstype, ap])
     return energy_list
 
@@ -90,13 +85,13 @@ def write_energy_vs_addition(structure_coll):
     to_write = ''
     energy_list.sort(key=lambda x: x[0])
     for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, ap in energy_list:
-	if rep == 'init_pool':
+        if rep == 'init_pool':
             continue
-	to_write += str(Id)+'    '+str(energy)+'\n' 
+        to_write += str(index)+"    "+str(Id)+"    "+str(energy)+'\n' 
         file_path = os.path.join(tmp_dir, 'energy_vs_addition.' + str(structure_coll.get_input_ref()) + '.dat')
-	with open(file_path, 'w') as f: 
+        with open(file_path, 'w') as f:
             f.write(to_write)
-        ui.grant_permission(file_path)
+            ui.grant_permission(file_path)
 
 def write_spe_vs_addition(structure_coll):
     energy_list = get_energy_list(structure_coll)

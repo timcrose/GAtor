@@ -52,6 +52,23 @@ class Structure(object):
         # test for non-assigned charge with math.isnan(a[i]['charge'])
         self.geometry[size]['fixed'] = fixed 
 
+    def build_geo_by_atom_array(self, x, y, z, element, spin=None, charge=None, fixed=False):
+        # increase the size of the array
+        size = self.geometry.size
+        self.geometry.resize(size + 1)
+
+        # assign values
+        self.geometry[size]['x'] = x
+        self.geometry[size]['y'] = y
+        self.geometry[size]['z'] = z
+        self.geometry[size]['element'] = element
+        self.geometry[size]['spin'] = spin
+        # test for non-assigned spin with math.isnan(a[i]['spin'])
+        self.geometry[size]['charge'] = charge
+        # test for non-assigned charge with math.isnan(a[i]['charge'])
+        self.geometry[size]['fixed'] = fixed
+
+
     def build_geo_by_whole_atom(self, atom):
         # increase the size of the array
         size = self.geometry.size
@@ -73,12 +90,27 @@ class Structure(object):
         if vectors is None or vectors is False: return False
         for vector in vectors: 
             self.add_lattice_vector(vector)
+
+    def set_lattice_angles(self):
+        print "set lattice angles"
+        print self.get_lattice_vectors()
+        alpha, beta, gamma = self.get_lattice_angles() 
+        print alpha
+        self.set_property("alpha", alpha)
+        self.set_property("beta", beta)
+        self.set_property("gamma", gamma)
+
     def add_lattice_vector(self, vector):
         lattice_vector_name = 'lattice_vector_a'
         if 'lattice_vector_a' in self.properties: lattice_vector_name = 'lattice_vector_b'
         if 'lattice_vector_b' in self.properties: lattice_vector_name = 'lattice_vector_c'
         if 'lattice_vector_c' in self.properties: raise Exception  # lattice vectors are full, 
         self.set_property(lattice_vector_name, vector)
+
+
+
+
+
         
     def build_geo_whole(self, geometry): self.geometry = geometry
     def build_geo_from_atom_file(self, filepath): self.build_geo_whole_atom_format(read_data(filepath))
@@ -173,8 +205,8 @@ class Structure(object):
         Inputs: A np.ndarry structure with standard "geometry" format
         Outputs: A pymatgen core structure object with basic geometric properties
         '''
-	frac_data = self.get_frac_data()
-	coords = frac_data[0] # frac coordinates
+        frac_data = self.get_frac_data()
+        coords = frac_data[0] # frac coordinates
         atoms = frac_data[1] # site labels
         lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
         structp = StructureP(lattice, atoms, coords)
@@ -182,35 +214,34 @@ class Structure(object):
 
     def get_frac_data(self):
         '''
-	Inputs: A np.ndarry structure with standard "geometry" format
-	Outputs:  Fractional coordinate data in the form of positions (list), atom_types (list), lattice vector a magnitude, lattice vector b magnitude, lattice vector c magnitude, alpha beta, gamma.
+        Inputs: A np.ndarry structure with standard "geometry" format
+        Outputs:  Fractional coordinate data in the form of positions (list), 
+        atom_types (list), lattice vector a magnitude, lattice vector b magnitude, 
+        lattice vector c magnitude, alpha beta, gamma.
         '''
         geo = self.geometry
-	A = self.get_property('lattice_vector_a')
+        A = self.get_property('lattice_vector_a')
         B = self.get_property('lattice_vector_b')
         C = self.get_property('lattice_vector_c')
-	alpha, beta, gamma = self.get_lattice_angles()
-	a, b, c = self.get_lattice_magnitudes()
+        alpha, beta, gamma = self.get_lattice_angles()
+        a, b, c = self.get_lattice_magnitudes()
         atoms = [i for i in range(len(geo))]
-	lattice_vector = np.transpose([A,B,C])
-	latinv = np.linalg.inv(lattice_vector)
-	coords = []
+        lattice_vector = np.transpose([A,B,C])
+        latinv = np.linalg.inv(lattice_vector)
+        coords = []
         for i in range(len(geo)):
-                atoms[i] = geo[i][3]
-		coords.append(np.dot(latinv,[geo[i][0],geo[i][1],geo[i][2]]))
+            atoms[i] = geo[i][3]
+            coords.append(np.dot(latinv,[geo[i][0],geo[i][1],geo[i][2]]))
         return coords, atoms, a, b, c, alpha, beta, gamma
 
     def get_lattice_angles(self):
-	A = self.get_property('lattice_vector_a')
+        A = self.get_property('lattice_vector_a')
         B = self.get_property('lattice_vector_b')
         C = self.get_property('lattice_vector_c')
-#        a = np.linalg.norm(A)
-#        b = np.linalg.norm(B)
-#        c = np.linalg.norm(C)
-        alpha = self.angle(B,C)
-        beta = self.angle(A,C)
-        gamma = self.angle(A,B)
-	return alpha, beta, gamma
+        alpha = self.angle(B, C)
+        beta = self.angle(C, A)
+        gamma = self.angle(A, B)
+    	return alpha, beta, gamma
 
     def get_lattice_magnitudes(self):
         A = self.get_property('lattice_vector_a')
@@ -219,7 +250,7 @@ class Structure(object):
         a = np.linalg.norm(A)
         b = np.linalg.norm(B)
         c = np.linalg.norm(C)
-	return a, b, c
+        return a, b, c
 
     def get_unit_cell_volume(self):
         if "cell_vol" in self.properties:
@@ -242,11 +273,12 @@ class Structure(object):
         angledeg = anglerad*180/np.pi
         return angledeg
 
+
     # json data handling packing
     def dumps(self):
-	self.properties["lattice_vector_a"]=list(self.properties["lattice_vector_a"])
-	self.properties["lattice_vector_b"]=list(self.properties["lattice_vector_b"])
-	self.properties["lattice_vector_c"]=list(self.properties["lattice_vector_c"])
+        self.properties["lattice_vector_a"]=list(self.properties["lattice_vector_a"])
+        self.properties["lattice_vector_b"]=list(self.properties["lattice_vector_b"])
+        self.properties["lattice_vector_c"]=list(self.properties["lattice_vector_c"])
         data_dictionary = {}
         data_dictionary['properties'] = self.properties
         data_dictionary['struct_id'] = self.struct_id
@@ -257,12 +289,10 @@ class Structure(object):
     def loads(self, json_string):
         data_dictionary = json.loads(json_string)
         self.properties = data_dictionary['properties']
-        try:
-		self.struct_id = data_dictionary['struct_id']
-	except: pass
-	try:
-        	self.input_ref = data_dictionary['input_ref']
-	except: pass # if input reference from initial pool then skip this part
+        try: self.struct_id = data_dictionary['struct_id']
+        except: pass
+        try: self.input_ref = data_dictionary['input_ref']
+        except: pass # if input reference from initial pool then skip this part
         self.build_geo_whole(convert_array(data_dictionary['geometry']))
         
     def update_local_data(self):

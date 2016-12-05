@@ -10,13 +10,18 @@ Funtions that read in a struct() and necessary arguments, and return a struct()
 import sys # for debuging!
 sys.path.append("/lustre/project/nmarom/gator_shared_duplicate/gator/src/") #for debuging!
 
-import numpy
+import numpy as np
+import math
 from structures import structure
 from core import output
 import copy
+from copy import deepcopy
 import exceptions
 from core import file_handler
 from core import user_input
+from structures.structure import Structure
+from spglib import niggli_reduce
+from pymatgen import Lattice
 
 lat_interp = {0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
 ui = user_input.get_config()
@@ -25,27 +30,111 @@ all_geo = ui.all_geo()
 nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 olm = output.local_message
 
-def cell_lower_triangular(struct,create_duplicate=True):
-	'''
-	Sets the cell back to lower triangular form
-	Returns a boolean to indicate whether or not the reset was required
-	'''
-	if create_duplicate:
-		struct=copy.deepcopy(struct)
 
-	if (abs(struct.properties["lattice_vector_a"][1])<0.001 and 
+def compute_RDF_vector(original_struct):
+    atomic_pairs = [['C', 'N'],['S', 'N']]
+    dist = [2., 3., 4., 5., 6., 7., 8.]
+    smoothing_parameter = 1 
+    a = smoothing_parameter
+    n_factor = [4*np.pi*(0.25*(np.pi/a**3)**0.5+\
+                0.5*r**2*(np.pi/a)**0.5+3*r/a*np.exp(-a*r**2)+\
+                (0.25*(np.pi/a**3)**0.5+0.5*r**2*(np.pi/a)**0.5)*\
+                math.erf(r*a**0.5)) \
+                for r in dist]
+    struct = deepcopy(original_struct)
+    A = struct.properties["lattice_vector_a"]
+    B = struct.properties["lattice_vector_b"]
+    C = struct.properties["lattice_vector_c"]
+ 
+    #First figure out the cell extension needed
+    cell_modification(struct,struct.get_n_atoms(), False)
+    cell_lower_triangular(struct, False)
+    a_ext = int(math.ceil(max(dist)/A[0]))
+    b_ext = int(math.ceil(max(dist)/B[1]))
+    c_ext = int(math.ceil(max(dist)/C[2]))
+    structure_extension = [[x,y,z] for x in range (-a_ext-1,a_ext+2)\
+                           for y in range (-b_ext-1,b_ext+2)\
+                           for z in range (-c_ext-1,c_ext+2)]
+    cell_extension_input(struct, extension=structure_extension, create_duplicate=False)
+
+    # Compute interatomic distances and build g vector
+    vector_all = [struct.struct_id]
+    for pair in atomic_pairs:
+        ref_atom_type = pair[0]
+        target_atom_type = pair[1]
+        a1_range = [i for i in range (original_struct.get_n_atoms())
+                   if original_struct.geometry[i]["element"] == ref_atom_type]
+        rs = all_interatomic_distances(struct, ref_atom_type, target_atom_type, a1_range)
+        distances = [i[2] for i in rs]
+        smoothing_parameter = 1 ###might need to modify
+        g = [sum([np.exp(-smoothing_parameter*(r-r_ij)**2) 
+            for r_ij in distances])/len(a1_range) for r in dist]
+        g = [g[i]/n_factor[i] for i in range (len(dist))]
+        vector_all += g[:]
+    #struct.properties["RDF_smooth"] += vector_all[1:]
+    print vector_all[1:]
+    print "\n"
+    print struct.get_property('RDF_smooth') 
+    print struct.get_property('RDF_vector_description')
+    return struct
+
+def all_interatomic_distances (struct, a1, a2, a1_range=None, a2_range=None):
+    '''
+    Returns a list of interatomic distances 
+    a1, a2 specifies the species of the two atoms
+    Returns [[a1_index_1, a2_index_1, distance_1], [a1_index_2, a2_index_2, distance_2] . . .]
+    Requires a1_index/napm to be different from a2_index/napm
+    '''
+    result = []
+    geo = struct.geometry
+    napm=int(len(geo)/nmpc)
+    if a1_range == None:
+        a1_range = range(len(geo))
+    if a2_range == None:
+        a2_range = range(len(geo))
+    if a1 == a2: #Need to avoid double counting
+        for i in a1_range:
+            for j in a2_range:
+                if (i//napm!=j//napm) and not ((i in a2_range) and (j in a1_range) and (i>j))\
+                and (a1=="X" or geo[i]["element"] == a1) \
+                and (a2=="X" or geo[j]["element"] == a2):
+                    result.append([i,j,np.linalg.norm([\
+                    geo[i]["x"] - geo[j]["x"],\
+                    geo[i]["y"] - geo[j]["y"],\
+                    geo[i]["z"] - geo[j]["z"]])])
+    if a1 != a2:
+        for i in a1_range:
+            for j in a2_range:
+                if i//napm!=j//napm\
+                and (a1=="X" or geo[i]["element"] == a1) \
+                and (a2=="X" or geo[j]["element"] == a2):
+                    result.append([i,j,np.linalg.norm([\
+                    geo[i]["x"] - geo[j]["x"],\
+                    geo[i]["y"] - geo[j]["y"],\
+                    geo[i]["z"] - geo[j]["z"]])])
+    return result
+def cell_lower_triangular(struct,create_duplicate=True):
+    '''
+    Sets the cell back to lower triangular form
+    Returns a boolean to indicate whether or not the reset was required
+    '''
+    if create_duplicate:
+        struct=copy.deepcopy(struct)
+
+    if (abs(struct.properties["lattice_vector_a"][1])<0.001 and 
             abs(struct.properties["lattice_vector_a"][2])<0.001 and 
 	    abs(struct.properties["lattice_vector_b"][2])<0.001):
-		return struct
+        return struct
 
-	struct.properties.update(lattice_parameters(struct)) 
+    struct.properties.update(lattice_parameters(struct)) 
 	#Add in case not calculated
 
-	new_lattice=lattice_lower_triangular(struct)
-	old_lattice=struct.get_lattice_vectors()
-	rots = numpy.dot(numpy.transpose(new_lattice),numpy.linalg.inv(numpy.transpose(old_lattice)))
-	struct=cell_transform_mat(struct,rots,create_duplicate=False)
-	return struct
+    new_lattice=lattice_lower_triangular(struct)
+    old_lattice=struct.get_lattice_vectors()
+    rots = np.dot(np.transpose(new_lattice),np.linalg.inv(np.transpose(old_lattice)))
+    cell_transform_mat(struct,rots,create_duplicate=False)
+    struct.reset_lattice_vectors(new_lattice)
+    return struct
 
 def cell_translation(struct,trans_vec,create_duplicate=True):
 	'''
@@ -93,18 +182,18 @@ def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi
 	if (vec==None) and (((theta_deg==None) and (theta_rad==None)) or ((phi_deg==None) and (phi_rad==None))):
 		return False
 	if rad==None:
-		rad=numpy.deg2rad(deg)
+		rad=np.deg2rad(deg)
 	if (theta_rad==None) and (theta_deg!=None):
-		theta_rad=numpy.deg2rad(theta_deg)
+		theta_rad=np.deg2rad(theta_deg)
 	if (phi_rad==None) and (phi_deg!=None):
-		phi_rad=numpy.deg2rad(phi_deg)
+		phi_rad=np.deg2rad(phi_deg)
 	if vec==None:
-		vec=[numpy.sin(phi_rad)*numpy.cos(theta_rad),numpy.sin(phi_rad)*numpy.sin(theta_rad),numpy.cos(phi_rad)]
+		vec=[np.sin(phi_rad)*np.cos(theta_rad),np.sin(phi_rad)*np.sin(theta_rad),np.cos(phi_rad)]
 	else:
 		l=(vec[0]**2+vec[1]**2+vec[2]**2)**0.5
 		for j in range (3):
 			vec[j]/=l
-	c=numpy.cos(rad); s=numpy.sin(rad)
+	c=np.cos(rad); s=np.sin(rad)
 	x,y,z=vec
 	mat=[[x*x*(1-c)+c,x*y*(1-c)-z*s,x*z*(1-c)+y*s],
 		 [x*y*(1-c)+z*s,y*y*(1-c)+c,y*z*(1-c)-x*s],
@@ -115,12 +204,12 @@ def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi
 		oldpos=[0,0,0]
 		for j in range (3):
 			oldpos[j]=struct.geometry[i][j]
-		newpos=numpy.dot(mat,oldpos)
+		newpos=np.dot(mat,oldpos)
 		for j in range(3):
 			struct.geometry[i][j]=newpos[j]
-	struct.properties["lattice_vector_a"]=numpy.dot(mat,struct.properties["lattice_vector_a"])
-	struct.properties["lattice_vector_b"]=numpy.dot(mat,struct.properties["lattice_vector_b"])
-	struct.properties["lattice_vector_c"]=numpy.dot(mat,struct.properties["lattice_vector_c"])
+	struct.properties["lattice_vector_a"]=np.dot(mat,struct.properties["lattice_vector_a"])
+	struct.properties["lattice_vector_b"]=np.dot(mat,struct.properties["lattice_vector_b"])
+	struct.properties["lattice_vector_c"]=np.dot(mat,struct.properties["lattice_vector_c"])
 	if origin!=[0,0,0]:
 		cell_translation(struct,origin,create_duplicate=False)
 	return struct
@@ -138,28 +227,43 @@ def cell_transform_mat(struct,mat,origin=[0,0,0],create_duplicate=True):
 		oldpos=[0,0,0]
 		for j in range (3):
 			oldpos[j]=struct.geometry[i][j]
-		newpos=numpy.dot(mat,oldpos)
+		newpos=np.dot(mat,oldpos)
 		for j in range(3):
 			 struct.geometry[i][j]=newpos[j]
-	struct.properties["lattice_vector_a"]=numpy.dot(mat,struct.properties["lattice_vector_a"])
-	struct.properties["lattice_vector_b"]=numpy.dot(mat,struct.properties["lattice_vector_b"])
-	struct.properties["lattice_vector_c"]=numpy.dot(mat,struct.properties["lattice_vector_c"])
+	struct.properties["lattice_vector_a"]=np.dot(mat,struct.properties["lattice_vector_a"])
+	struct.properties["lattice_vector_b"]=np.dot(mat,struct.properties["lattice_vector_b"])
+	struct.properties["lattice_vector_c"]=np.dot(mat,struct.properties["lattice_vector_c"])
 	if origin!=[0,0,0]:
 		cell_translation(struct,origin,create_duplicate=False)
 	return struct
 
 
-def cell_extension(struct,create_duplicate=True):
+def cell_extension(struct, create_duplicate=True):
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
 	napm=int(len(struct.geometry)/nmpc)
-	struct.geometry=numpy.concatenate((struct.geometry,struct.geometry,struct.geometry,struct.geometry,struct.geometry,struct.geometry,struct.geometry,struct.geometry))
+	struct.geometry=np.concatenate((struct.geometry, struct.geometry,
+                                       struct.geometry, struct.geometry,
+                                       struct.geometry, struct.geometry,
+                                       struct.geometry,struct.geometry))
 	extension=[[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]]
 	for i in range (1,8):
 		for j in range (nmpc):
 			mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
 	return struct
 
+def cell_extension_input(struct, extension, create_duplicate=True):
+    if create_duplicate:
+        struct=copy.deepcopy(struct)
+    napm=int(len(struct.geometry)/nmpc)
+    struct.geometry=np.concatenate((struct.geometry, struct.geometry,
+                                       struct.geometry, struct.geometry,
+                                       struct.geometry, struct.geometry,
+                                       struct.geometry,struct.geometry))
+    for i in range (1,8):
+        for j in range (nmpc):
+            mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
+    return struct
 def cell_populate_molecules(struct,mole_info_list):
 	'''
 	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; 
@@ -189,16 +293,16 @@ def lattice_lower_triangular(struct):
 	'''
 	lattice=[[0 for i in range (3)] for j in range (3)]
 	a=struct.properties["a"]; b=struct.properties["b"]; c=struct.properties["c"]
-	alpha=numpy.deg2rad(struct.properties["alpha"])
-	beta=numpy.deg2rad(struct.properties["beta"])
-	gamma=numpy.deg2rad(struct.properties["gamma"])
+	alpha=np.deg2rad(struct.properties["alpha"])
+	beta=np.deg2rad(struct.properties["beta"])
+	gamma=np.deg2rad(struct.properties["gamma"])
 	lattice[0][0] = a
 	lattice[0][1] = 0; lattice[0][2] = 0
-	lattice[1][0] = numpy.cos(gamma)*b
-	lattice[1][1] = numpy.sin(gamma)*b
+	lattice[1][0] = np.cos(gamma)*b
+	lattice[1][1] = np.sin(gamma)*b
 	lattice[1][2] = 0
-	lattice[2][0] = numpy.cos(beta)*c
-	lattice[2][1] = (b*c*numpy.cos(alpha) - lattice[1][0]*lattice[2][0])/lattice[1][1]
+	lattice[2][0] = np.cos(beta)*c
+	lattice[2][1] = (b*c*np.cos(alpha) - lattice[1][0]*lattice[2][0])/lattice[1][1]
 	lattice[2][2] = (c**2 - lattice[2][0]**2 - lattice[2][1]**2)**0.5
 	return lattice
 
@@ -207,12 +311,12 @@ def lattice_parameters(struct):
 	Returns a dictionary of the lattice parameters a, b, c, alpha, beta, gamma
 	'''
 	parameters={}
-	parameters["a"] = numpy.linalg.norm(struct.properties["lattice_vector_a"])
-	parameters["b"] = numpy.linalg.norm(struct.properties["lattice_vector_b"])
-	parameters["c"] = numpy.linalg.norm(struct.properties["lattice_vector_c"])
-	parameters["alpha"] = numpy.rad2deg(numpy.arccos(numpy.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/parameters["b"]/parameters["c"]))
-	parameters["beta"] = numpy.rad2deg(numpy.arccos(numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/parameters["a"]/parameters["c"]))
-	parameters["gamma"] = numpy.rad2deg(numpy.arccos(numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/parameters["a"]/parameters["b"]))
+	parameters["a"] = np.linalg.norm(struct.properties["lattice_vector_a"])
+	parameters["b"] = np.linalg.norm(struct.properties["lattice_vector_b"])
+	parameters["c"] = np.linalg.norm(struct.properties["lattice_vector_c"])
+	parameters["alpha"] = np.rad2deg(np.arccos(np.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/parameters["b"]/parameters["c"]))
+	parameters["beta"] = np.rad2deg(np.arccos(np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/parameters["a"]/parameters["c"]))
+	parameters["gamma"] = np.rad2deg(np.arccos(np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/parameters["a"]/parameters["b"]))
 	return parameters
 			
 
@@ -286,12 +390,12 @@ def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=
 		while (vec2==None) and (i<len(geo)):
 			diff = [struct.geometry[atom_list[i]][j] - geo[i][j] 
 						for j in range (3)]
-			leng = numpy.linalg.norm(diff)
+			leng = np.linalg.norm(diff)
 
 			if leng<0.0001:
 				rotation_axis = [struct.geometry[atom_list[i]][x]\
 							for x in range(3)]
-				if numpy.linalg.norm(rotation_axis) > \
+				if np.linalg.norm(rotation_axis) > \
 				   match_molecule_cross_tolerance:
 					break
 
@@ -302,55 +406,55 @@ def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=
 					i += 1
 					continue
 				
-				if numpy.linalg.norm(numpy.cross(vec1,diff)) > \
+				if np.linalg.norm(np.cross(vec1,diff)) > \
 				   match_molecule_cross_tolerance:
 					vec2 = diff
 					break
 			i+=1
 
-		if numpy.linalg.norm(rotation_axis) < match_molecule_cross_tolerance:
+		if np.linalg.norm(rotation_axis) < match_molecule_cross_tolerance:
 			if vec2==None:
 				vec2=[0,0,0]
-			rotation_axis=numpy.cross(vec1,vec2)
+			rotation_axis=np.cross(vec1,vec2)
 
-		rl=numpy.linalg.norm(rotation_axis)
+		rl=np.linalg.norm(rotation_axis)
 		if rl>match_molecule_cross_tolerance:
 			for j in range (3):
 				rotation_axis[j]/=rl
 			if chosen==None:
 				chosen=0
 				while (chosen<len(geo)) and \
-				(numpy.linalg.norm(numpy.cross(rotation_axis,\
+				(np.linalg.norm(np.cross(rotation_axis,\
 				[struct.geometry[atom_list[chosen]][x] \
 				for x in range(3)]))<match_molecule_cross_tolerance):
 					chosen+=1
 			v1=[struct.geometry[atom_list[chosen]][x] for x in range(3)]
 			v2=[geo[chosen][x] for x in range(3)]
-			m1=numpy.dot(v1,rotation_axis)
+			m1=np.dot(v1,rotation_axis)
 			v1=[v1[j]-m1*rotation_axis[j] for j in range (3)]
-			m2=numpy.dot(v2,rotation_axis)
+			m2=np.dot(v2,rotation_axis)
 			v2=[v2[j]-m2*rotation_axis[j] for j in range (3)]
-			l1=numpy.linalg.norm(v1); l2=numpy.linalg.norm(v2)
-			direction=numpy.cross(v1,v2)
-			rad=numpy.arcsin(numpy.linalg.norm(direction)/(l1*l2))
-			if numpy.sign(numpy.dot(v1,v2))==-1:
-				rad=numpy.pi-rad
-			if numpy.linalg.norm(direction)>match_molecule_cross_tolerance:
-				rad*=numpy.sign(numpy.dot(direction,rotation_axis))
+			l1=np.linalg.norm(v1); l2=np.linalg.norm(v2)
+			direction=np.cross(v1,v2)
+			rad=np.arcsin(np.linalg.norm(direction)/(l1*l2))
+			if np.sign(np.dot(v1,v2))==-1:
+				rad=np.pi-rad
+			if np.linalg.norm(direction)>match_molecule_cross_tolerance:
+				rad*=np.sign(np.dot(direction,rotation_axis))
 			geo_1=list_rotation(geo,vec=rotation_axis,rad=-rad,create_duplicate=True)
 			resi=0
 			for i in range (len(geo)):
-				resi+=numpy.linalg.norm([struct.geometry[atom_list[i]][j]-geo_1[i][j] for j in range (3)])**2
+				resi+=np.linalg.norm([struct.geometry[atom_list[i]][j]-geo_1[i][j] for j in range (3)])**2
 #			print struct.get_geometry_atom_format()
 			for j in range (3):
 				result[j+1]=rotation_axis[j]
-			result[4]=numpy.rad2deg(rad)
+			result[4]=np.rad2deg(rad)
 			result[5]=resi		
 
 			if resi<match_molecule_tolerance:
 				for j in range (3):
 					result[j+1]=rotation_axis[j]
-				result[4]=numpy.rad2deg(rad)
+				result[4]=np.rad2deg(rad)
 				result[5]=resi
 				return result
 		list_reflection_z(geo,False)
@@ -382,11 +486,11 @@ def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 		struct=copy.deepcopy(struct)
 	napm=int(len(struct.geometry)/nmpc)
 	lattice=[struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"]]
-	lattice=numpy.transpose(lattice)
-	latinv=numpy.linalg.inv(lattice)    
+	lattice=np.transpose(lattice)
+	latinv=np.linalg.inv(lattice)    
 	for i in range (nmpc):
 		cm=cm_calculation(struct,range(i*napm,i*napm+napm))
-		frac=numpy.dot(latinv,cm)
+		frac=np.dot(latinv,cm)
 		for j in range (0,3):
 			lat=lat_interp[j]
 			vec=struct.properties[lat]
@@ -403,27 +507,124 @@ def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 	return struct
 
 def angle(l1,l2):
-	return (numpy.rad2deg(numpy.arccos(numpy.dot(l1,l2)/(numpy.linalg.norm(l1)*numpy.linalg.norm(l2)))))
+	return (np.rad2deg(np.arccos(np.dot(l1,l2)/(np.linalg.norm(l1)*np.linalg.norm(l2)))))
+
+def cell_modification_test(struct,napm=None,create_duplicate=True):
+    '''
+    Cell modification using Niggli reduction
+    '''
+    types = []
+    for atom in struct.geometry:
+        types.append(atom[3])
+    lattice = struct.get_lattice_vectors()
+    from spglib import niggli_reduce
+    lattice =  niggli_reduce(lattice)
+    new_lattice = lattice_standard_form(lattice)
+    struct.reset_lattice_vectors(new_lattice) 
+    rots = np.dot(np.transpose(new_lattice),
+                     np.linalg.inv(np.transpose(lattice)))
+    struct=cell_transform_mat(struct,rots,create_duplicate=False)
+    struct.reset_lattice_vectors(new_lattice)
+    move_molecule_in(struct,nmpc,False)
+    return struct
+
+def cell_modification_test(struct,napm=None,create_duplicate=True):
+    '''
+    Cell modification using Niggli reduction
+    '''
+
+    if create_duplicate:
+        struct = copy.deepcopy(struct)
+    lats = struct.get_lattice_vectors()
+    from spglib import niggli_reduce
+    reduced_lats =  niggli_reduce(lats)
+    if reduced_lats == None:
+        return False
+    del(struct.properties["lattice_vector_a"])
+    del(struct.properties["lattice_vector_b"])
+    del(struct.properties["lattice_vector_c"])
+    del(struct.properties["alpha"])
+    del(struct.properties["beta"])
+    del(struct.properties["gamma"])
+    print "reduced lats"
+    print reduced_lats
+
+    struct.set_lattice_vectors(reduced_lats)
+    struct.set_lattice_angles()
+    print "cell_mod"
+    print struct.get_property("alpha")
+    nmpc = len(struct.geometry)/napm
+
+    rots = np.dot(np.transpose(reduced_lats),np.linalg.inv(np.transpose(lats)))
+    cell_transform_mat(struct,rots,create_duplicate=False)
+    cell_lower_triangular(struct,False)
+    move_molecule_in(struct,nmpc,False)
+    print struct.get_geometry_atom_format()
+    return struct
 
 def cell_modification(struct,napm=None,create_duplicate=True):
-	'''
-	Cell modification using Niggli reduction
-	'''
-	if create_duplicate:
-		struct = copy.deepcopy(struct)
-	lats = struct.get_lattice_vectors()
-	from spglib import niggli_reduce
-	reduced_lats = 	niggli_reduce(lats)
-	if reduced_lats == None:
-		return False
-	del(struct.properties["lattice_vector_a"])
-	del(struct.properties["lattice_vector_b"])
-	del(struct.properties["lattice_vector_c"])
-	struct.set_lattice_vectors(reduced_lats)
-	nmpc = len(struct.geometry)/napm
-	cell_lower_triangular(struct,False)
-	move_molecule_in(struct,nmpc,False)
-	return struct
+    '''
+    Cell modification using Niggli reduction
+    '''
+    if create_duplicate:
+        struct = copy.deepcopy(struct)
+    lats = struct.get_lattice_vectors()
+    from spglib import niggli_reduce
+    reduced_lats =  niggli_reduce(lats)
+    if reduced_lats == None:
+        return False
+    del(struct.properties["lattice_vector_a"])
+    del(struct.properties["lattice_vector_b"])
+    del(struct.properties["lattice_vector_c"])
+    struct.set_lattice_vectors(reduced_lats)
+    nmpc = len(struct.geometry)/napm
+    cell_lower_triangular(struct,False)
+    move_molecule_in(struct,nmpc,False)
+    #struct.set_lattice_angles()
+    return struct
+
+def lattice_standard_form(lattice):
+    A, B, C = lattice
+    print A
+    a = np.linalg.norm(A)
+    b = np.linalg.norm(B)
+    c = np.linalg.norm(C)
+    alpha_r = angle(B,C)
+    beta_r = angle(C,A)
+    gamma_r = angle(A, B)
+    print alpha_r
+    val = (np.cos(alpha_r) * np.cos(beta_r) - np.cos(gamma_r))\
+            / (np.sin(alpha_r) * np.sin(beta_r))
+        # Sometimes rounding errors result in values slightly > 1.
+    val = max(min(val, 1), -1)
+    gamma_star = np.arccos(val)
+    vector_a = [a * np.sin(beta_r), 0.0, a * np.cos(beta_r)]
+    vector_b = [-b * np.sin(alpha_r) * np.cos(gamma_star),
+                    b * np.sin(alpha_r) * np.sin(gamma_star),
+                    b * np.cos(alpha_r)]
+    vector_c = [0.0, 0.0, float(c)]
+    return [vector_a, vector_b, vector_c]
+
+def angle(v1, v2):
+    #v1 = np.array(v1)   
+    #v2 = np.array(v2)
+    numdot = np.dot(v1,v2)
+    anglerad = np.arccos(numdot/(np.linalg.norm(v1)*np.linalg.norm(v2)))
+        #angledeg = anglerad*180/np.pi
+    return anglerad
+
+def lattice_from_info_2(lattice_info):
+    a, b, c, alpha, beta, gamma = lattice_info
+
+    lattice = Lattice.from_parameters(a,
+                                      b,
+                                      c,
+                                      alpha,
+                                      beta,
+                                      gamma)
+    a, b, c = lattice._lengths
+    alpha, beta, gamma = lattice._angles
+    return lattice.matrix
 
 def cell_modification_old (struct,replica=ui.get_replica_name(),create_duplicate=True):#Replica name is passed in for verbose output
 	'''
@@ -451,19 +652,19 @@ def cell_modification_old (struct,replica=ui.get_replica_name(),create_duplicate
 #			before=print_aims(struct)
 			test=True
 			if struct.properties['a']>=struct.properties['b']:
-				frac=numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(numpy.linalg.norm(struct.properties["lattice_vector_b"])**2)
-				#c=numpy.ceil(abs(frac))*numpy.sign(frac)
-				c=numpy.round(frac)
+				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(np.linalg.norm(struct.properties["lattice_vector_b"])**2)
+				#c=np.ceil(abs(frac))*np.sign(frac)
+				c=np.round(frac)
 				for j in range (3):
 					struct.properties["lattice_vector_a"][j]-=c*struct.properties["lattice_vector_b"][j]
-				struct.properties['a']=numpy.linalg.norm(struct.properties['lattice_vector_a'])
+				struct.properties['a']=np.linalg.norm(struct.properties['lattice_vector_a'])
 			else:
-				frac=numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(numpy.linalg.norm(struct.properties["lattice_vector_a"])**2)
-				#c=numpy.ceil(abs(frac))*numpy.sign(frac)
-				c=numpy.round(frac)
+				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(np.linalg.norm(struct.properties["lattice_vector_a"])**2)
+				#c=np.ceil(abs(frac))*np.sign(frac)
+				c=np.round(frac)
 				for j in range (3):
 					struct.properties["lattice_vector_b"][j]-=c*struct.properties["lattice_vector_a"][j]
-				struct.properties['b']=numpy.linalg.norm(struct.properties['lattice_vector_b'])
+				struct.properties['b']=np.linalg.norm(struct.properties['lattice_vector_b'])
 			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
 			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
 			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
@@ -475,19 +676,19 @@ def cell_modification_old (struct,replica=ui.get_replica_name(),create_duplicate
 #			before=print_aims(struct)
 			test=True
 			if struct.properties['a']>=struct.properties['c']:
-				frac=numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(numpy.linalg.norm(struct.properties["lattice_vector_c"])**2)
-				#c=numpy.ceil(abs(frac))*numpy.sign(frac)
-				c=numpy.round(frac)
+				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_c"])**2)
+				#c=np.ceil(abs(frac))*np.sign(frac)
+				c=np.round(frac)
 				for j in range (3):
 					struct.properties["lattice_vector_a"][j]-=c*struct.properties["lattice_vector_c"][j]
-				struct.properties['a']=numpy.linalg.norm(struct.properties['lattice_vector_a'])
+				struct.properties['a']=np.linalg.norm(struct.properties['lattice_vector_a'])
 			else:
-				frac=numpy.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(numpy.linalg.norm(struct.properties["lattice_vector_a"])**2)
-				#c=numpy.ceil(abs(frac))*numpy.sign(frac)
-				c=numpy.round(frac)
+				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_a"])**2)
+				#c=np.ceil(abs(frac))*np.sign(frac)
+				c=np.round(frac)
 				for j in range (3):
 					struct.properties["lattice_vector_c"][j]-=c*struct.properties["lattice_vector_a"][j]
-				struct.properties['c']=numpy.linalg.norm(struct.properties['lattice_vector_c'])
+				struct.properties['c']=np.linalg.norm(struct.properties['lattice_vector_c'])
 			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
 			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
 			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
@@ -500,19 +701,19 @@ def cell_modification_old (struct,replica=ui.get_replica_name(),create_duplicate
 			test=True
 			#d=struct.properties
 			if struct.properties['b']>=struct.properties['c']:
-				frac=numpy.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/(numpy.linalg.norm(struct.properties["lattice_vector_c"])**2)
-				c=numpy.round(frac)                
-				#c=numpy.ceil(abs(frac))*numpy.sign(frac)
+				frac=np.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_c"])**2)
+				c=np.round(frac)                
+				#c=np.ceil(abs(frac))*np.sign(frac)
 				for j in range (3):
 					struct.properties["lattice_vector_b"][j]-=c*struct.properties["lattice_vector_c"][j]
-				struct.properties['b']=numpy.linalg.norm(struct.properties['lattice_vector_b'])
+				struct.properties['b']=np.linalg.norm(struct.properties['lattice_vector_b'])
 			else:
-				frac=numpy.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/(numpy.linalg.norm(struct.properties["lattice_vector_b"])**2)
-				#c=numpy.round(frac)                
-				c=numpy.ceil(abs(frac))*numpy.sign(frac)
+				frac=np.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_b"])**2)
+				#c=np.round(frac)                
+				c=np.ceil(abs(frac))*np.sign(frac)
 				for j in range (3):
 					struct.properties["lattice_vector_c"][j]-=c*struct.properties["lattice_vector_b"][j]
-				struct.properties['c']=numpy.linalg.norm(struct.properties['lattice_vector_c'])
+				struct.properties['c']=np.linalg.norm(struct.properties['lattice_vector_c'])
 			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
 			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
 			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
@@ -655,7 +856,7 @@ def COM_distance_check(struct,nmpc=None,lowerbound=None):
 		[-1,-1,0],[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],
 		[-1,1,-1],[-1,-1,1],[-1,-1,-1]]) 
 	#Each molecule will have to be compared with the 27 equivalent of the other one in order to conduct the distance check
-	min_dist = min([numpy.linalg.norm(struct.properties["lattice_vector_a"]),numpy.linalg.norm(struct.properties["lattice_vector_b"]),numpy.linalg.norm(struct.properties["lattice_vector_c"])])
+	min_dist = min([np.linalg.norm(struct.properties["lattice_vector_a"]),np.linalg.norm(struct.properties["lattice_vector_b"]),np.linalg.norm(struct.properties["lattice_vector_c"])])
 	if min_dist<lowerbound:
 		return False
 
@@ -665,8 +866,8 @@ def COM_distance_check(struct,nmpc=None,lowerbound=None):
 			for tr_choice in range (27):
 				new_cm=[cmlist[m2][j]+struct.properties["lattice_vector_a"][j]*tr[tr_choice][0]+struct.properties["lattice_vector_b"][j]*tr[tr_choice][1]+struct.properties["lattice_vector_c"][j]*tr[tr_choice][2] for j in range (3)] #Move the molecule by the fractional vector specified by tr[tr_choice]
 				diff=[cmlist[m1][j]-new_cm[j] for j in range (3)]
-				if min_dist==None or numpy.linalg.norm(diff)<min_dist:
-					min_dist=numpy.linalg.norm(diff)
+				if min_dist==None or np.linalg.norm(diff)<min_dist:
+					min_dist=np.linalg.norm(diff)
 				if lowerbound!=None and min_dist<lowerbound:
 					return False
 	if lowerbound==None:
@@ -727,7 +928,7 @@ def combined_distance_check(struct,replica):
 			new_apos = [struct.geometry[a1][j]+struct.properties["lattice_vector_a"][j]*tr_choice[0]+struct.properties["lattice_vector_b"][j]*tr_choice[1]+struct.properties["lattice_vector_c"][j]*tr_choice[2] for j in range (3)]
 			for a2 in range (a1-a1%napm,a1-a1%napm+napm):
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
-				dist = numpy.linalg.norm(diff)
+				dist = np.linalg.norm(diff)
 				if dist < min_dist and verbose:
 					olm("-- Atoms %i and %i too close"
 					% (a1,a2), replica)
@@ -761,7 +962,7 @@ def combined_distance_check(struct,replica):
 			for a2 in range (start,total_atoms): 
 			#Atoms should not be compared to those from the same molecule
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
-				dist = numpy.linalg.norm(diff)
+				dist = np.linalg.norm(diff)
 
 				if dist < min_dist and verbose:
 					olm("-- Atoms %i and %i too close"
@@ -796,18 +997,18 @@ def list_rotation(llist,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_
 	if (vec==None) and (((theta_deg==None) and (theta_rad==None)) or ((phi_deg==None) and (phi_rad==None))):
 		return False
 	if rad==None:
-		rad=numpy.deg2rad(deg)
+		rad=np.deg2rad(deg)
 	if (theta_rad==None) and (theta_deg!=None):
-		theta_rad=numpy.deg2rad(theta_deg)
+		theta_rad=np.deg2rad(theta_deg)
 	if (phi_rad==None) and (phi_deg!=None):
-		phi_rad=numpy.deg2rad(phi_deg)
+		phi_rad=np.deg2rad(phi_deg)
 	if vec==None:
-		vec=[numpy.sin(phi_rad)*numpy.cos(theta_rad),numpy.sin(phi_rad)*numpy.sin(theta_rad),numpy.cos(phi_rad)]
+		vec=[np.sin(phi_rad)*np.cos(theta_rad),np.sin(phi_rad)*np.sin(theta_rad),np.cos(phi_rad)]
 	else:
 		l=(vec[0]**2+vec[1]**2+vec[2]**2)**0.5
 		for j in range (3):
 			vec[j]/=l
-	c=numpy.cos(rad); s=numpy.sin(rad)
+	c=np.cos(rad); s=np.sin(rad)
 	x,y,z=vec
 	mat=[[x*x*(1-c)+c,x*y*(1-c)-z*s,x*z*(1-c)+y*s],
 		 [x*y*(1-c)+z*s,y*y*(1-c)+c,y*z*(1-c)-x*s],
@@ -818,7 +1019,7 @@ def list_rotation(llist,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_
 		oldpos=[0,0,0]
 		for j in range (3):
 			oldpos[j]=llist[i][j]
-		newpos=numpy.dot(mat,oldpos)
+		newpos=np.dot(mat,oldpos)
 		for j in range(3):
 			llist[i][j]=newpos[j]
 	if origin!=[0,0,0]:
@@ -895,5 +1096,4 @@ def main():
 
 if __name__ == '__main__':
 	main2()
-	
 

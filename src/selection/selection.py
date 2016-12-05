@@ -9,8 +9,9 @@ import numpy as np
 from random import choice
 import random
 import time
+import os
 from core import user_input, output
-from core.file_handler import INITIAL_POOL_REFID
+from core.file_handler import INITIAL_POOL_REFID, tmp_dir
 from structures import structure_collection
 from structures.structure import StoicDict
 
@@ -36,28 +37,54 @@ def main(structure_supercoll, replica_stoic,replica=user_input.get_config().get_
 class StructureSelection():
     def __init__(self, structure_supercoll, replica_stoic,replica):
         self.ui = user_input.get_config()
-	self.structure_supercoll = structure_supercoll
-	self.replica = replica
-	self.replica_stoic = replica_stoic
-	self.index = 0
-	self.percent = self.ui.get_eval('selection','percent_best_structs_to_select')
-	self.prop = self.ui.get("run_settings","property_to_optimize")
-	self.op_style = self.ui.get("run_settings","optimization_style")
-	if self.op_style!="maximize" and self.op_style!="minimize":
-		raise ValueError("Unknown type of optimization style in run_settings; supporing maximize and minimize")
+        self.structure_supercoll = structure_supercoll
+        self.replica = replica
+        self.replica_stoic = replica_stoic
+        self.index = 0
+        self.percent = self.ui.get_eval('selection','percent_best_structs_to_select')
+        self.prop = self.ui.get("run_settings","property_to_optimize")
+        self.op_style = self.ui.get("run_settings","optimization_style")
+        if self.op_style!="maximize" and self.op_style!="minimize":
+            message = "Unknown type of optimization style in run_settings; supporing maximize and minimize"
+            raise ValueError(message)
 
     def get_structures(self):
-	structure_coll_a = self.structure_supercoll.get((self.replica_stoic, self.index))
-	structure_coll_b = self.structure_supercoll.get((self.replica_stoic, self.index))
-	struct_a, fit_a = self.select_structure(structure_coll_a)
-        while True: 
-            struct_b, fit_b = self.select_structure(structure_coll_b)
-            if not struct_a == struct_b: break  # remove this to allow double-selection
+        banned = []
+        structure_coll = self.structure_supercoll.get((self.replica_stoic, self.index))
+    
+        if self.ui.has_option("selection", "ban_num_from_mating"):
+            num = self.ui.get_eval("selection", "ban_num_from_mating")
+            path  = os.path.join(tmp_dir, "energy_vs_addition.0.dat")
+            if os.path.isfile(path):
+                if os.stat(path).st_size == 0:
+                    pass
+                else:
+                    added_list = []
+                    banned_struct_info = np.loadtxt(path, delimiter = ' ', dtype='str')
+                    added_list.append(banned_struct_info)
+
+                    for i in range(len(added_list)):
+                        banned.append(added_list[i][0][0])
+                    banned = banned[-num:]
+                    output.local_message("-- Banned ID's %s" %(banned), self.replica)
+            while True:
+                struct_a, fit_a = self.select_structure(structure_coll)
+                if not struct_a in banned: 
+                    break
+            while True: 
+                struct_b, fit_b = self.select_structure(structure_coll)
+                if not struct_a in banned:
+                    if not struct_a == struct_b: break  # remove this to allow double-selection    
+        else:
+            struct_a, fit_a = self.select_structure(structure_coll)
+            while True: 
+                struct_b, fit_b = self.select_structure(structure_coll)
+                if not struct_a == struct_b: break  # remove this to allow double-selection
         return [struct_a, struct_b]
 
     def select_structure(self, structure_coll):
         '''
-        Will calculate fitness for each structure in a collection and select one structure based on a distribution
+        Will calculate fitness for each structure in a collection and select parents
         '''
         # take care of single-structure case. return only structure
         if len(structure_coll.structures) == 1: 
@@ -68,23 +95,25 @@ class StructureSelection():
             return self.select_best_from_fitness(fitness_dict) 
 
     def get_fitness(self, structure_coll):
-	'''
-	Take a structure collection of 2 or more structures and returns a dictionary of fitness based on the specified property to optimize
-	'''
+        '''
+        Take a structure collection of 2 or more structures and returns a dictionary of fitness 
+        '''
         reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
-	prop_list = np.array([])
+        prop_list = np.array([])
         for index, structure in structure_coll:
-		try:
-        		prop = structure.get_property(self.prop)
-			if self.op_style=="maximize":
-				prop = -prop
-                	prop_list = np.append(prop,prop_list)
-		except KeyError:
-			output.local_message("Structure %s missing the property: %s" % (structure.struct_id, self.prop),self.replica)
+            try:
+                prop = structure.get_property(self.prop)
+                if self.op_style=="maximize":
+                    prop = -prop
+                prop_list = np.append(prop,prop_list)
+            except KeyError:
+                ID = structure.struct_id
+                prop = self.prop
+                output.local_message("Structure %s missing the property: %s" % (ID, prop),self.replica)
 
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
         min_prop = prop_list[0][0]
-  	max_prop = prop_list[-1][0] 
+        max_prop = prop_list[-1][0] 
         fitness = {}
         for index, struct in structure_coll:
             try: prop = float(struct.get_property(self.prop))
@@ -94,26 +123,25 @@ class StructureSelection():
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)  
+                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
         return fitness
     
     def get_energy_fitness(self, structure_coll):
         '''
         Takes a structure collection of 2 or more structures and returns a dictionary of fitness based on energy
         '''
-	reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
-	e_list = np.array([])
+        reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
+        e_list = np.array([])
         for index, structure in structure_coll:
-		try:
-        		energy = structure.get_property('energy')
-                	e_list = np.append(energy,e_list)
-		except:
-
-                        energy = structure.get_property('energy_tier_1')
-                        e_list = np.append(energy,e_list)
+            try:
+                energy = structure.get_property('energy')
+                e_list = np.append(energy,e_list)
+            except:
+                energy = structure.get_property('energy_tier_1')
+                e_list = np.append(energy,e_list)
         e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
         min_e = e_list[0][0]
-  	max_e = e_list[-1][0] 
+        max_e = e_list[-1][0] 
         fitness = {}
         for index, struct in structure_coll:
             try: energy = float(struct.get_property('energy'))
@@ -123,7 +151,7 @@ class StructureSelection():
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)  
+                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
         return fitness
         
     def sorted_fitness(self, fitness_dict):
@@ -133,16 +161,16 @@ class StructureSelection():
         sorted_fitness = sorted(fitness_dict.iteritems(), key=lambda x:x[1])
         # sorted_fitness = sorted_fitness[::-1] # sort fitness 1 to 0
         return sorted_fitness
-    
+
     def normalized_fitness(self, sorted_fit):
         '''
         takes a sorted list of fitness tuples and returns the list of tuples normalized
         '''
         f_sum = 0
-	tmp = []
-	total = 0
+        tmp = []
+        total = 0
         normalized_fit = []
-
+    
         # sum and reduce all fitnesses
         for index, fitness in sorted_fit: f_sum += fitness
         for index, fitness in sorted_fit: tmp.append((index, fitness / f_sum))
@@ -154,11 +182,10 @@ class StructureSelection():
     def select_best_from_fitness(self, fitness_dict):
         fitness = self.sorted_fitness(fitness_dict)
         fitness = self.normalized_fitness(fitness)
-	dec = float(self.percent*0.01)
-	dec_comp = 1-dec
-        #random_num = np.random.random()
-	random_num = np.random.uniform(dec_comp,1.0)
-	#output.local_message("selection random num: "+str(random_num),self.replica)
+        dec = float(self.percent*0.01)
+        dec_comp = 1-dec
+        random_num = np.random.uniform(dec_comp,1.0)
+
         # selects first element to be greater than random number
         return list(filter((lambda x : x[1] > random_num), fitness))[0]
     

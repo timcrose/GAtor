@@ -102,27 +102,26 @@ def file_lock_structures(user_structures_dir, added_user_structures):
 	return files_to_add
 
 def convert_to_structures(files_to_add):
-	'''
-	Args: List of files to add to collection
-	Returns: List of Structures(), 
-	'''
-	#print files_to_add
-	initial_list = []
-	ui = user_input.get_config()
-	for file in files_to_add:	
-		struct = Structure()
-		struct.build_geo_from_json_file(file)
-		struct.set_property('file_path', file)
-		struct.set_property('replica', 'init_pool')
-
-		if ui.ortho():
-			napm = int(struct.get_n_atoms()/ui.get_nmpc())
-			structure_handling.cell_modification(struct,
+    '''
+    Args: List of files to add to collection
+    Returns: List of Structures(), 
+    '''
+    #print files_to_add
+    initial_list = []
+    ui = user_input.get_config()
+    for file in files_to_add:	
+        struct = Structure()
+        struct.build_geo_from_json_file(file)
+        struct.set_property('file_path', file)
+        struct.set_property('replica', 'init_pool')
+        if ui.ortho():
+            napm = int(struct.get_n_atoms()/ui.get_nmpc())
+            struct = structure_handling.cell_modification(struct,
 							     napm,
-							     create_duplicate=False)
-		
-		initial_list.append(struct)
-	return initial_list
+							     create_duplicate=True)
+            initial_list.append(struct)
+
+    return initial_list
 
 def set_IP_structure_matcher(ui):
 	'''
