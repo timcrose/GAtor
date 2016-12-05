@@ -285,7 +285,9 @@ class StoicDict(defaultdict):
         return str(self).__hash__()    
     
     def get_string(self):
-        keys = self.keys()
+        keys = list(self.keys())
+	keys.sort()
+	
 #        keys.sort()
         stoic_string = ''
         for item in keys:
