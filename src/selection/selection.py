@@ -14,7 +14,7 @@ from core import user_input, output
 from core.file_handler import INITIAL_POOL_REFID, tmp_dir
 from structures import structure_collection
 from structures.structure import StoicDict
-
+from structures import structure_handling
 #Returns ID of two parents instead of structure object.  This is to be used to pass to multiprocessing.
 
 def main(structure_supercoll, replica_stoic,replica=user_input.get_config().get_replica_name()):
@@ -51,37 +51,19 @@ class StructureSelection():
     def get_structures(self):
         banned = []
         structure_coll = self.structure_supercoll.get((self.replica_stoic, self.index))
-    
-        if self.ui.has_option("selection", "ban_num_from_mating"):
-            num = self.ui.get_eval("selection", "ban_num_from_mating")
-            path  = os.path.join(tmp_dir, "energy_vs_addition.0.dat")
-            if os.path.isfile(path):
-                if os.stat(path).st_size == 0:
-                    pass
-                else:
-                    added_list = []
-                    banned_struct_info = np.loadtxt(path, delimiter = ' ', dtype='str')
-                    added_list.append(banned_struct_info)
-
-                    for i in range(len(added_list)):
-                        banned.append(added_list[i][0][0])
-                    banned = banned[-num:]
-                    output.local_message("-- Banned ID's %s" %(banned), self.replica)
-            while True:
-                struct_a, fit_a = self.select_structure(structure_coll)
-                if not struct_a in banned: 
-                    break
-            while True: 
-                struct_b, fit_b = self.select_structure(structure_coll)
-                if not struct_a in banned:
-                    if not struct_a == struct_b: break  # remove this to allow double-selection    
-        else:
-            struct_a, fit_a = self.select_structure(structure_coll)
-            while True: 
-                struct_b, fit_b = self.select_structure(structure_coll)
-                if not struct_a == struct_b: break  # remove this to allow double-selection
+        #RDF_coll = self.compute_RDFs(structure_coll)
+        struct_a, fit_a = self.select_structure(structure_coll)
+        while True: 
+            struct_b, fit_b = self.select_structure(structure_coll)
+            if not struct_a == struct_b: break  # remove this to allow double-selection
         return [struct_a, struct_b]
 
+    def compute_RDFs(self, structure_coll):
+
+        for index, struct in structure_coll:
+            struct = structure_handling.compute_RDF_vector(struct)
+            RDF = struct.get_property('RDF_vector')
+            print RDF
     def select_structure(self, structure_coll):
         '''
         Will calculate fitness for each structure in a collection and select parents

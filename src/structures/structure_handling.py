@@ -32,12 +32,13 @@ olm = output.local_message
 
 
 def compute_RDF_vector(original_struct):
-    atomic_pairs = [['C', 'N'],['S', 'N']]
+    atomic_pairs = [['C', 'N'],['S', 'N'],['S','S']]
+    #atomic_pairs = [['C', 'N'],['S', 'N']]
     dist = [2., 3., 4., 5., 6., 7., 8.]
     smoothing_parameter = 1 
     a = smoothing_parameter
     n_factor = [4*np.pi*(0.25*(np.pi/a**3)**0.5+\
-                0.5*r**2*(np.pi/a)**0.5+3*r/a*np.exp(-a*r**2)+\
+                0.5*r**2*(np.pi/a)**0.5+3*r/a*math.exp(-a*r**2)+\
                 (0.25*(np.pi/a**3)**0.5+0.5*r**2*(np.pi/a)**0.5)*\
                 math.erf(r*a**0.5)) \
                 for r in dist]
@@ -55,27 +56,29 @@ def compute_RDF_vector(original_struct):
     structure_extension = [[x,y,z] for x in range (-a_ext-1,a_ext+2)\
                            for y in range (-b_ext-1,b_ext+2)\
                            for z in range (-c_ext-1,c_ext+2)]
-    cell_extension_input(struct, extension=structure_extension, create_duplicate=False)
+    cell_extension(struct, extension=structure_extension, create_duplicate=False)
 
     # Compute interatomic distances and build g vector
     vector_all = [struct.struct_id]
     for pair in atomic_pairs:
         ref_atom_type = pair[0]
         target_atom_type = pair[1]
-        a1_range = [i for i in range (original_struct.get_n_atoms())
-                   if original_struct.geometry[i]["element"] == ref_atom_type]
+        a1_range = [i for i in range (original_struct.get_n_atoms()) if original_struct.geometry[i]["element"] == ref_atom_type]
+        a2_range = [i for i in range (original_struct.get_n_atoms()) if original_struct.geometry[i]["element"] == target_atom_type]
         rs = all_interatomic_distances(struct, ref_atom_type, target_atom_type, a1_range)
         distances = [i[2] for i in rs]
         smoothing_parameter = 1 ###might need to modify
-        g = [sum([np.exp(-smoothing_parameter*(r-r_ij)**2) 
+        g = [sum([math.exp(-smoothing_parameter*(r-r_ij)**2) 
             for r_ij in distances])/len(a1_range) for r in dist]
         g = [g[i]/n_factor[i] for i in range (len(dist))]
         vector_all += g[:]
-    #struct.properties["RDF_smooth"] += vector_all[1:]
-    print vector_all[1:]
-    print "\n"
-    print struct.get_property('RDF_smooth') 
-    print struct.get_property('RDF_vector_description')
+    RDF_vec = vector_all[1:]
+    struct.set_property("RDF_vector", RDF_vec)
+#    print vector_all[1:]
+#    print "\n"
+#    print "orig"
+#    print struct.get_property('RDF_smooth_fr') 
+#    print struct.get_property('RDF_vector_description')
     return struct
 
 def all_interatomic_distances (struct, a1, a2, a1_range=None, a2_range=None):
@@ -238,7 +241,7 @@ def cell_transform_mat(struct,mat,origin=[0,0,0],create_duplicate=True):
 	return struct
 
 
-def cell_extension(struct, create_duplicate=True):
+def cell_extension_2(struct, create_duplicate=True):
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
 	napm=int(len(struct.geometry)/nmpc)
@@ -251,6 +254,23 @@ def cell_extension(struct, create_duplicate=True):
 		for j in range (nmpc):
 			mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
 	return struct
+def cell_extension(struct,extension=[[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]],create_duplicate=True):
+    '''
+    Extends the structure by the specified extensions
+    '''
+
+    if create_duplicate:
+        struct=copy.deepcopy(struct)
+    napc = len(struct.geometry)
+    for extend in extension:
+        #Calculate the trans_vector as a dot product of the extension and traspose of lattice_vector matrix
+        trans_vector = np.dot(extend,[struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"]])
+
+        #Create a new copy of each of the atom in the original geometry
+        for i in range (napc):
+            atom = copy.deepcopy(struct.geometry[i])
+            struct.build_geo_by_atom(atom['x']+trans_vector[0],atom['y']+trans_vector[1],atom['z']+trans_vector[2],atom['element'],atom['spin'],atom['charge'],atom['fixed'])
+    return struct
 
 def cell_extension_input(struct, extension, create_duplicate=True):
     if create_duplicate:

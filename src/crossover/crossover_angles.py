@@ -121,9 +121,17 @@ class Crossover(object):
             Returns: rotations about z, y, x axis and molecule with principal axes 
             aligned. '''
         atoms = []
+        before = ""
         for atom in mol:
             atoms.append([float(atom[0]), float(atom[1]), float(atom[2])])
            # types.append(atom[3])
+        #Visualize
+        #for i in range(len(types)):
+        #    st =  "atom " + str(mol[i][0])+" "+str(mol[i][1])+" "+str(mol[i][2])+" "+types[i]
+        #    before += st + "\n"
+        #self.output("before")
+        #self.output(before)
+
         molp = Molecule(types, atoms)
         centered_molp = molp.get_centered_molecule()
 
@@ -145,10 +153,25 @@ class Crossover(object):
             centered_sites.append(list(site._coords))
         for atom in centered_sites:
             new_atom = np.dot(rot_trans, np.array(atom))
+            new_atom = [new_atom[0], -new_atom[1], new_atom[2]]
             aligned_mol.append(new_atom)
+
+        #visualize
+        #atom_out = ""
+        #for i in range(len(centered_sites)):
+        #    st =  "atom " + str(aligned_mol[i][0])+" "+str(aligned_mol[i][1])+" "+str(aligned_mol[i][2])+" "+types[i]
+        #    atom_out += st + "\n"
+        #self.output(atom_out)
 
         #Euler angles 
         z, y, x =  self.mat2euler(rot)
+
+        if z < 0:
+            z = z + np.pi
+        if y < 0:
+            y = y + np.pi
+        if x < 0:
+            x = x + np.pi
         return z, y, x, aligned_mol
 
     def combine_lattice_info(self, lattice_info_a, lattice_info_b):
@@ -161,10 +184,12 @@ class Crossover(object):
         for i in range(6):
             if i < 3:
                 rand_scale = random.uniform(0.85,1.15)
+                #rand_scale =1
                 new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
                 rand_scale = random.uniform(0.97, 1.03)
+                #rand_scale = 1
                 new_info = rand_scale *(rand_vec[i] * lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
                     self.output("--Setting angle close to 90 degrees")
@@ -189,7 +214,6 @@ class Crossover(object):
         else: 
             parent_a_COM = False
 
-        parent_a_COM = True
         for i in range(len(orientation_info_a)):
             child_z, child_y, child_x  = ( 
                 np.array(orientation_info_a[i][:3])*rand_cut + 
@@ -212,16 +236,22 @@ class Crossover(object):
         lattice= self.lattice_lower_triangular(self.lattice_from_info(child_lattice_info))
         A, B, C = lattice
         child_coordinates = []
+        count = 1 
         for mol_info in child_orientation_info:
             mol_coords = []
             z, y, x, COM, centered_mol = mol_info
-            rot_from_euler = self.euler2mat(z, y, -x)
+            if count % 2 == 0:
+                y = y + np.pi
+            else:
+                z = -z 
+            rot_from_euler = self.euler2mat(z, y, x)
             COM_xyz = np.dot(lattice, COM)
             for atom in centered_mol:
                 mol_coords.append(np.dot(rot_from_euler, np.array(atom).reshape((3,1))).tolist())
             for coord in mol_coords:
-                new_coords = [coord[0][0] + COM_xyz[0], -coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
+                new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
                 child_coordinates.append(new_coords)
+            count +=1
         if random.random() < 0.1:
             self.output("Balanced alignment")
             child_coordinates = []
