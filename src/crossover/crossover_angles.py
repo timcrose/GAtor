@@ -52,7 +52,13 @@ class Crossover(object):
                               (molecule COM's) x, y, z
                               (molecule orientations) thetax, thety, thetaz
         '''
-        #Lattice information for each parenti
+        #shell debugging
+        #print "crossover"
+        #print "parent a \n"
+        #print self.parent_a.get_geometry_atom_format()
+        #print "parent b"
+        #print self.parent_b.get_geometry_atom_format()
+       
         A_a, B_a, C_a = self.parent_a.get_lattice_magnitudes()
         A_b, B_b, C_b = self.parent_b.get_lattice_magnitudes()
         alpha_a, beta_a, gamma_a = self.parent_a.get_lattice_angles()
@@ -80,6 +86,9 @@ class Crossover(object):
         child_orientation_info = self.combine_orientation_info(self.orientation_info_a, self.orientation_info_b) 
         lattice, child_coords = self.reconstruct_child(child_lattice_info, child_orientation_info)
         child_struct = self.create_child_struct(child_coords, lattice, atom_types)
+
+        #print "child"
+        #print child_struct.get_geometry_atom_format()
         return child_struct
 
 
@@ -124,13 +133,13 @@ class Crossover(object):
         before = ""
         for atom in mol:
             atoms.append([float(atom[0]), float(atom[1]), float(atom[2])])
-           # types.append(atom[3])
-        #Visualize
-        #for i in range(len(types)):
-        #    st =  "atom " + str(mol[i][0])+" "+str(mol[i][1])+" "+str(mol[i][2])+" "+types[i]
-        #    before += st + "\n"
-        #self.output("before")
-        #self.output(before)
+
+        #Visualize in shell for debugging
+        #print "beforei\n"
+        for i in range(len(types)):
+            st =  "atom " + str(mol[i][0])+" "+str(mol[i][1])+" "+str(mol[i][2])+" "+types[i]
+            before += st + "\n"
+        #print before
 
         molp = Molecule(types, atoms)
         centered_molp = molp.get_centered_molecule()
@@ -143,8 +152,9 @@ class Crossover(object):
         sort_eig = sorted(eigen_sys)
 
         #Construct rotation matrix and its inverse
-        rot = np.column_stack((sort_eig[2][1], sort_eig[1][1], sort_eig[0][1]))
-        rot_trans = np.transpose(np.array(rot))
+        rot = np.column_stack((sort_eig[0][1], sort_eig[1][1], sort_eig[2][1]))
+        #rot_trans = np.transpose(np.array(rot))
+        rot_trans = np.linalg.inv(np.array(rot))
 
         #Aligned geometry
         centered_sites = []
@@ -153,25 +163,29 @@ class Crossover(object):
             centered_sites.append(list(site._coords))
         for atom in centered_sites:
             new_atom = np.dot(rot_trans, np.array(atom))
-            new_atom = [new_atom[0], -new_atom[1], new_atom[2]]
+            new_atom = [new_atom[0], new_atom[1], new_atom[2]]
             aligned_mol.append(new_atom)
 
-        #visualize
+        #Visualize
+        #print "after"
         #atom_out = ""
         #for i in range(len(centered_sites)):
         #    st =  "atom " + str(aligned_mol[i][0])+" "+str(aligned_mol[i][1])+" "+str(aligned_mol[i][2])+" "+types[i]
         #    atom_out += st + "\n"
         #self.output(atom_out)
+        #print atom_out
 
+        
         #Euler angles 
         z, y, x =  self.mat2euler(rot)
 
-        if z < 0:
-            z = z + np.pi
-        if y < 0:
-            y = y + np.pi
-        if x < 0:
-            x = x + np.pi
+        #if z < 0:
+        #    z = z + np.pi
+        #if y < 0:
+        #    y = y + np.pi
+        #if x < 0:
+        #    x = x + np.pi
+
         return z, y, x, aligned_mol
 
     def combine_lattice_info(self, lattice_info_a, lattice_info_b):
@@ -180,22 +194,20 @@ class Crossover(object):
         rand_vec = [random.uniform(0.25,0.75) for i in range(6)]
         rand_scale = random.uniform(0.85,1.15)
 
-        self.output(str(lattice_info_a))
         for i in range(6):
             if i < 3:
                 rand_scale = random.uniform(0.85,1.15)
-                #rand_scale =1
                 new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
                 rand_scale = random.uniform(0.97, 1.03)
-                #rand_scale = 1
                 new_info = rand_scale *(rand_vec[i] * lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
                     self.output("--Setting angle close to 90 degrees")
                     new_info = 90.0
                 child_lattice_info.append(new_info)
-
+        #debugging
+        #child_lattice_info = lattice_info_a
         return child_lattice_info
 
 
@@ -204,7 +216,7 @@ class Crossover(object):
                             info = [z, y, x, COM, centered_mol]'''
         self.output("Parent A orientation info: "+ str(orientation_info_a[0][:3]))
         self.output("Parent B orientation info: "+ str(orientation_info_b[0][:3]))
-
+    
         orientation_info_child = []
         rand_cut = random.uniform(0.1,0.9)
 
@@ -236,14 +248,11 @@ class Crossover(object):
         lattice= self.lattice_lower_triangular(self.lattice_from_info(child_lattice_info))
         A, B, C = lattice
         child_coordinates = []
+
         count = 1 
         for mol_info in child_orientation_info:
             mol_coords = []
             z, y, x, COM, centered_mol = mol_info
-            if count % 2 == 0:
-                y = y + np.pi
-            else:
-                z = -z 
             rot_from_euler = self.euler2mat(z, y, x)
             COM_xyz = np.dot(lattice, COM)
             for atom in centered_mol:
@@ -252,19 +261,6 @@ class Crossover(object):
                 new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
                 child_coordinates.append(new_coords)
             count +=1
-        if random.random() < 0.1:
-            self.output("Balanced alignment")
-            child_coordinates = []
-            for mol_info in child_orientation_info:
-                mol_coords = []
-                z, y, x, COM, centered_mol = mol_info
-                COM_xyz = np.dot(lattice, COM)
-                rot_from_euler = np.array([[1,0,0],[0,1,0],[0,0,-1]])
-                for atom in centered_mol:
-                    mol_coords.append(np.dot(rot_from_euler, np.array(atom).reshape((3,1))).tolist())
-                for coord in mol_coords:
-                    new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
-                    child_coordinates.append(new_coords)
 
         lattice = [A, B, C]
         return lattice, np.array(child_coordinates)
