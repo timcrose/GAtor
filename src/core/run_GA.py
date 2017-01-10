@@ -9,7 +9,7 @@ import random
 import numpy as np
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) # add source directory to python path
 sys.path.append(src_dir)
-import core
+
 from core import user_input, data_tools, output, activity
 from file_handler import *
 from kill import *
@@ -47,9 +47,6 @@ class RunGA():
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.GA_module_init()
         self.verbose = self.ui.verbose()
-        #self.control_list = self.ui.get_list('FHI-aims', 'control_in_filelist')
-        self.singlemutate = self.ui.get_eval('mutation', 'mutation_probability')
-        self.doublemutate = self.ui.get_eval('mutation', 'double_mutate_prob')
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")
         self.number_of_GA_structures = int(self.ui.get('run_settings', 'end_GA_structures_added'))
@@ -64,12 +61,15 @@ class RunGA():
         data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
         structure_collection.update_supercollection(self.structure_supercoll)
         self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
-        sname = "parallel_settings"
+        #sname = "parallel_settings"
         self.processes = self.ui.get_multiprocessing_processes()
         if self.processes > 1:
             self.worker_pool = multiprocessing.Pool(processes=self.processes)
 
-    def output(self, message): output.local_message(message, self.replica)
+    def output(self, message):
+        ''' Output messages to replica output in replica_out folder'''
+        output.local_message(message, self.replica)
+
     def start(self):
         '''
         Performs main genetic algorithm operations
@@ -83,6 +83,8 @@ class RunGA():
         restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
         restart_count = 0
         convergeTF = None
+
+        # Main loop of GA
         while True:
             #----- Beginning of Iteration Tasks -----#
             begin_time = self.beginning_tasks(restart_count)
@@ -104,6 +106,7 @@ class RunGA():
                 convergeTF = False
                 rmdir_silence(self.working_dir)
                 continue
+
             #----- Relax Trial Structure -----#
             if self.ui.get_boolean("run_settings", "skip_energy_evaluations"):
                 struct.set_property('energy',0.0)
@@ -149,9 +152,9 @@ class RunGA():
         self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
 
     def beginning_tasks(self, restart_count):
+        st = ' -------------------------------------------------------------------------'
         output.move_to_shared_output(self.replica)
         begin_time = datetime.datetime.now()
-        st = ' -------------------------------------------------------------------------'
         self.output(st)
         self.output('|  Replica %s Beginning New Iteration: %s |' % (self.replica, begin_time))
         self.output(st)
@@ -180,37 +183,40 @@ class RunGA():
 		message = ""
 		if self.op_style=="minimize" and prop<glob:
 			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
-			'\n  old minimum:  ' + str(glob) + \
-			'\n  new minimum:  ' + str(prop) + \
-			'\n  difference:  ' + str(diff)
+			'\n  Old minimum:  ' + str(glob) + \
+			'\n  New minimum:  ' + str(prop) + \
+			'\n  Difference:  ' + str(diff)
 		if self.op_style=="maximize" and prop>glob:
 			message = '*********** NEW GLOBAL MAXIMUM FOUND ************' + \
-			'\n  old maximum:  ' + str(glob) + \
-			'\n  new maximum:  ' + str(prop) + \
-			'\n  difference:  ' + str(diff)
+			'\n  Old maximum:  ' + str(glob) + \
+			'\n  New maximum:  ' + str(prop) + \
+			'\n  Difference:  ' + str(diff)
 		self.output(message)
     
-    def add_to_collection(self, struct, ref_label):	
-		prev_struct_index = None #none for now because only using GA for FF not both
-		ID = len(StructureCollection(self.replica_stoic, 0).structures) + 1
-		#ID = len(self.structure_supercoll.get((self.replica_stoic,0)).structures) + 1
-		self.replica_child_count = self.replica_child_count + 1
-		struct.set_property('ID', ID) 
-		try:
-			struct.set_property('prev_struct_id', prev_struct_index)  # tracks cascade sequence
-			struct.set_property('ID', ID)	
-			struct.set_property('replica', self.replica)	
-			struct.set_property('child_counter', self.replica_child_count)		
-		except: pass
+    def add_to_collection(self, struct, ref_label):
+        '''
+        Return index of structure sucessfully added 
+        to the common pool
+        '''	
+        prev_struct_index = None #None for now
+        ID = len(StructureCollection(self.replica_stoic, 0).structures) + 1
+        self.replica_child_count = self.replica_child_count + 1
+        struct.set_property('ID', ID) 
+        try:
+            struct.set_property('prev_struct_id', prev_struct_index)
+            struct.set_property('ID', ID)
+            struct.set_property('replica', self.replica)
+            struct.set_property('child_counter', self.replica_child_count)
+        except: pass
 
-		struct_index = structure_collection.add_structure(struct, self.replica_stoic, ref_label)
-		struct_coll = structure_collection.get_collection(self.replica_stoic, ref_label)
-		struct_coll.update_local()
-		structure_collection.update_supercollection(self.structure_supercoll) #UpdateSupercollection/Database		
-                data_tools.write_energy_vs_addition(struct_coll)
-                data_tools.write_energy_hierarchy(struct_coll)
-		#data_tools.write_spe_vs_addition(struct_coll)
-		return struct_index
+        #UpdateSupercollection/Database
+        struct_index = structure_collection.add_structure(struct, self.replica_stoic, ref_label)
+        struct_coll = structure_collection.get_collection(self.replica_stoic, ref_label)
+        struct_coll.update_local()
+        structure_collection.update_supercollection(self.structure_supercoll)
+        data_tools.write_energy_vs_addition(struct_coll)
+        data_tools.write_energy_hierarchy(struct_coll)
+        return struct_index
 
     def check_finished(self, convergeTF):
         end = False
@@ -266,7 +272,10 @@ class RunGA():
         return end
 
     def check_local_convergence(self, old_prop_list):
-        #Check if top N structures havent changed in X iterations
+        '''
+        Check if top N structures havent 
+        changed in X iterations
+        '''
         new_e_list = np.array([])
         coll_new = self.structure_supercoll.get((self.replica_stoic,0))
         new_prop_list = self.return_property_array(coll_new)
@@ -440,7 +449,7 @@ class RunGA():
             self.output("-- Generating structure maxed out on generation attempts: %s" % (total_attempts))
             self.output("-- Selecting new parents --")
             return struct
-        self.output("New trial structure generated:")
+        self.output("-- New trial structure generated:")
         self.output("-- Number of attempts for structure generation: %s" % (count))
         self.output("-- Time for structure generation: %s seconds" % (end_time-begin_time))
         return struct
@@ -534,30 +543,8 @@ class RunGA():
         elif converged is "converged":
             return True	
 
-	def avg_fitness(self, min_e, max_e, structure_coll):
-		fitness = {}
-		for index, struct in structure_coll:
-			try: energy = float(struct.get_property('energy'))
-			except: pass
-			rho = (max_e - energy) / (max_e - min_e)
-			if self.ui.get('selection', 'fitness_function') == 'standard':
-				fitness[struct] = rho
-				sorted_fit = sorted(fitness.iteritems(), key=lambda x:x[1])
-				f_sum = 0
-				tmp = []
-				total = 0
-				normalized_fit = []
-
-		# sum and reduce all fitnesses
-		for index, fitness in sorted_fit: f_sum += fitness
-		for index, fitness in sorted_fit: tmp.append((index, fitness / f_sum))
-		for index, t_fitness in tmp:
-			normalized_fit.append((index, t_fitness + total))
-			total = t_fitness + total
-		return normalized_fit
-
-	def add_structure(self,struct,input_ref):
-		structure_collection.add_struture(struct,struct.self.replica_stoic(),"pre-evaluation")
+	def add_structure(self, struct, input_ref):
+		structure_collection.add_structure(struct,struct.self.replica_stoic(),"pre-evaluation")
 		self.output("--Added-- structure %s to input_ref %s"
 		% (struct.struct_id,str(input_ref)))
 
@@ -609,9 +596,9 @@ def structure_create_for_multiprocessing(args):
             new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
             + str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
 
-    #----- Symmetric Crossover -----#
+    #----- Alternative Crossover -----#
     elif rand_cross > cross_prob and rand_cross <= cross_prob + sym_cross_prob:
-        output.local_message("\n---- Symmetric Crossover ----", replica)
+        output.local_message("\n---- Alternative Crossover ----", replica)
         new_struct = alt_crossover_module.main(structures_to_cross, replica)
         if new_struct is False:
             output.local_message("Crossover failure", replica)
