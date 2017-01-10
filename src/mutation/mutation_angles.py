@@ -8,12 +8,14 @@ import numpy as np
 import random
 import time
 import itertools
+import math
 
 from core import user_input,output
 from structures.structure import Structure
 from utilities import space_group_utils as sgu
 from pymatgen import Molecule
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer as pga
+
 
 def main(struct, replica):
     '''
@@ -37,7 +39,7 @@ def main(struct, replica):
 def select_mutator(input_struct, num_mols, replica):
     '''
     In this mutation implementation, there are several classes, each performing a 
-    different mutation. This method selecting which mutation to empoly
+    different mutation. This method selecting which mutation to employ
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
@@ -273,9 +275,9 @@ class RandomRotationFrameMutation(object):
         for mol in mol_list:
             COM = self.get_COM_frac(mol, [self.A, self.B, self.C])
             centered_mol, types = self.get_centered_molecule(mol)
-            rot, aligned_mol = self.get_orientation_info(centered_mol, mol_index, types)
-            self.orientation_info.append([rot, COM, aligned_mol])
-        lattice, child_coords = self.rotate_in_frame(self.orientation_info)
+            z, y, x, aligned_mol = self.get_orientation_info(centered_mol, mol_index, types)
+            self.orientation_info.append([z, y, x, COM, aligned_mol])
+        lattice, child_coords = self.random_rotation_frame(self.orientation_info)
         mutated_struct = self.create_child_struct(child_coords, lattice, atom_types)
         return mutated_struct
 
@@ -306,20 +308,42 @@ class RandomRotationFrameMutation(object):
             centered_mol.append(list(site._coords))
         return centered_mol, types
 
-    def rotate_in_frame(self, orientation_info):
+    def random_rotation_frame(self, orientation_info):
         '''
         Reconstructs the child's atomic positions and lattice
         from its inherited genes 
         '''
+        rand = random.random()
+        while True:
+            rand_angs = [0, 5, 10, 
+                    15, 30, 45, 
+                    60, 75, 90, 
+                    105, 130, 145, 
+                    160, 170, 175, 
+                    180]
+            u = random.choice([-1,1])
+            t = random.choice([-1,1])
+            v = random.choice([-1,1])
+            dx = u*random.choice(rand_angs)
+            dy = t*random.choice(rand_angs)
+            dz = v*random.choice(rand_angs)
+            if dx != 0 and dy !=0 and dz !=0:
+                break
+  
+        self.output("-- Mutation rotation angles: %s %s %s" %(dx, dy, dz))
+        dx = dx * np.pi/180
+        dy = dy * np.pi/180
+        dz = dz * np.pi/180
         lattice = [self.A, self.B, self.C]
         child_coordinates = []
         COM_xyz = []
         for mol_info in orientation_info:
             mol_coords = []
-            rot, COM, centered_mol = mol_info
+            z, y, x, COM, centered_mol = mol_info
+            rot_from_euler = euler2mat(z + dz, y + dy, x + dx)
             COM_xyz = np.dot(lattice, COM)
             for atom in centered_mol:
-                mol_coords.append(np.dot(rot, np.array(atom).reshape((3,1))).tolist())
+                mol_coords.append(np.dot(rot_from_euler, np.array(atom).reshape((3,1))).tolist())
             for coord in mol_coords:
                 new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
                 child_coordinates.append(new_coords)
@@ -333,14 +357,14 @@ class RandomRotationFrameMutation(object):
         Returns: rotations about z, y, x axis and molecule with principal axes 
         aligned. 
         '''
+        # Center molecule at origin about center of mass
         atoms = []
         for atom in mol:
             atoms.append([float(atom[0]), float(atom[1]), float(atom[2])])
-           # types.append(atom[3])
         molp = Molecule(types, atoms)
         centered_molp = molp.get_centered_molecule()
 
-        #compute principal axes and eignvalues
+        #Xompute principal axes and eignvalues
         PGA = pga(centered_molp)
         ax1, ax2, ax3 = PGA.principal_axes
         eig1, eig2, eig3 = PGA.eigvals
@@ -348,48 +372,22 @@ class RandomRotationFrameMutation(object):
         sort_eig = sorted(eigen_sys)
 
         #Construct rotation matrix and its inverse
-        rot = np.column_stack((sort_eig[2][1], -sort_eig[1][1], sort_eig[0][1]))
-        rot_trans = np.transpose(np.array(rot))
+        rot = np.column_stack((sort_eig[0][1], sort_eig[1][1], sort_eig[2][1]))
+        rot_trans = np.linalg.inv(np.array(rot))
 
-        #Apply random rotation  
+        #Aligned geometry
         centered_sites = []
         aligned_mol = []
-        rand_angs = [0, 5, 10, 
-                    15, 30, 45, 
-                    60, 75, 90, 
-                    105, 130, 145, 
-                    160, 170, 175, 
-                    180]
-
-        u = random.choice([-1,1])
-        t = random.choice([-1,1])
-        v = random.choice([-1,1])
-        theta = u*random.choice(rand_angs)
-        psi = t*random.choice(rand_angs)
-        phi = v*random.choice(rand_angs)
-        rot_mut = rotation_matrix(theta, psi, phi)
-     #   if ( (mol_index % 2) == 0 ): # racemic 
-     #       for site in centered_molp.sites:
-     #           centered_sites.append(list(site._coords))
-     #       for atom in centered_sites:
-     #           new_atom = np.dot(rot_trans, np.array(atom))
-     #           new_atom = np.dot(rot_mut, new_atom)
-     #           aligned_mol.append(new_atom)
-     #   else:
-     #       for site in centered_molp.sites:
-     #           centered_sites.append(list(site._coords))
-     #       for atom in centered_sites: #chiral
-     #           new_atom = np.dot(rot_trans, np.array(atom))
-     #           new_atom = np.dot(np.linalg.inv(rot_mut), new_atom)
-     #           aligned_mol.append(new_atom)
-
         for site in centered_molp.sites:
             centered_sites.append(list(site._coords))
         for atom in centered_sites: #chiral
             new_atom = np.dot(rot_trans, np.array(atom))
-            new_atom = np.dot(rot_mut, new_atom)
             aligned_mol.append(new_atom)
-        return rot, aligned_mol
+        
+        #Compute euler angles of orientation
+        z, y, x =  mat2euler(rot)
+        self.output("-- Molecule rotation angles: %s %s %s" %  (z, y, x))
+        return z, y, x, aligned_mol
 
     def angle(self,v1,v2):
         numdot = np.dot(v1,v2)
@@ -604,6 +602,7 @@ class PairTranslationMutation(object):
         struct.set_property('gamma', self.gamma)
         struct.set_property('mutation_type', 'pair_trans_mol')
         return struct
+
 class PairRotationMolMutation(object):
     ''' 
     Gives a rotation to the COM of the pairs of molecules in the unit cell.
@@ -851,7 +850,6 @@ class PermutationMutation(object):
             choice +=1
             if choice % len(mol_list) == 0:
                 choice = 0
-
         return permuted_geometry
 
     def create_permutated_struct(self, swapped_geo, atom_types):
@@ -873,6 +871,7 @@ class PermutationMutation(object):
         struct.set_property('gamma', self.gamma)
         struct.set_property('mutation_type', 'permute_mol')
         return struct
+
 class RandomStrainMutationMoveMols(object):
     '''Gives a random strain to the lattice and moves the COM of the molecules'''
     def __init__(self, input_struct, num_mols, replica):
@@ -1230,3 +1229,50 @@ def angle(v1,v2):
 def leng(v):
         length = np.linalg.norm(v)
         return length
+
+def mat2euler(M, cy_thresh=None):
+        M = np.asarray(M)
+        if cy_thresh is None:
+            try:
+                cy_thresh = np.finfo(M.dtype).eps * 4
+            except ValueError:
+                cy_thresh = _FLOAT_EPS_4
+        r11, r12, r13, r21, r22, r23, r31, r32, r33 = M.flat
+        cy = math.sqrt(r33 * r33 + r23 * r23)
+        if cy > cy_thresh: # cos(y) not close to zero, standard form
+            z = math.atan2(-r12,  r11) # atan2(cos(y)*sin(z), cos(y)*cos(z))
+            y = math.atan2(r13,  cy) # atan2(sin(y), cy)
+            x = math.atan2(-r23, r33) # atan2(cos(y)*sin(x), cos(x)*cos(y))
+        else: # cos(y) (close to) zero, so x -> 0.0 (see above)
+            # so r21 -> sin(z), r22 -> cos(z) and
+            z = math.atan2(r21,  r22)
+            y = math.atan2(r13,  cy) # atan2(sin(y), cy)
+            x = 0.0
+        return z, y, x
+
+def euler2mat(z=0, y=0, x=0):
+        Ms = []
+        if z:
+            cosz = math.cos(z)
+            sinz = math.sin(z)
+            Ms.append(np.array(
+                 [[cosz, -sinz, 0],
+                 [sinz, cosz, 0],
+                 [0, 0, 1]]))
+        if y:
+            cosy = math.cos(y)
+            siny = math.sin(y)
+            Ms.append(np.array(
+                [[cosy, 0, siny],
+                 [0, 1, 0],
+                 [-siny, 0, cosy]]))
+        if x:
+            cosx = math.cos(x)
+            sinx = math.sin(x)
+            Ms.append(np.array(
+                [[1, 0, 0],
+                 [0, cosx, -sinx],
+                 [0, sinx, cosx]]))
+        if Ms:
+            return reduce(np.dot, Ms[::-1])
+        return np.eye(3)

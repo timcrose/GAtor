@@ -136,9 +136,9 @@ class Crossover(object):
 
         #Visualize in shell for debugging
         #print "beforei\n"
-        for i in range(len(types)):
-            st =  "atom " + str(mol[i][0])+" "+str(mol[i][1])+" "+str(mol[i][2])+" "+types[i]
-            before += st + "\n"
+        #for i in range(len(types)):
+        #    st =  "atom " + str(mol[i][0])+" "+str(mol[i][1])+" "+str(mol[i][2])+" "+types[i]
+        #    before += st + "\n"
         #print before
 
         molp = Molecule(types, atoms)
@@ -192,11 +192,10 @@ class Crossover(object):
         ''' combines a, b, c, alpha, beta, gamma from parent lattices '''
         child_lattice_info = []
         rand_vec = [random.uniform(0.25,0.75) for i in range(6)]
-        rand_scale = random.uniform(0.85,1.15)
-
+ 
         for i in range(6):
             if i < 3:
-                rand_scale = random.uniform(0.85,1.15)
+                rand_scale = random.uniform(0.85,1.1)
                 new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
@@ -249,7 +248,6 @@ class Crossover(object):
         A, B, C = lattice
         child_coordinates = []
 
-        count = 1 
         for mol_info in child_orientation_info:
             mol_coords = []
             z, y, x, COM, centered_mol = mol_info
@@ -260,8 +258,6 @@ class Crossover(object):
             for coord in mol_coords:
                 new_coords = [coord[0][0] + COM_xyz[0], coord[1][0] + COM_xyz[1], coord[2][0]+COM_xyz[2]]
                 child_coordinates.append(new_coords)
-            count +=1
-
         lattice = [A, B, C]
         return lattice, np.array(child_coordinates)
 
@@ -312,29 +308,8 @@ class Crossover(object):
         lattice[2][2] = (c**2 - lattice[2][0]**2 - lattice[2][1]**2)**0.5
         return np.array(lattice)
 
-    def lattice_standard_form(lattice):
-        A, B, C = lattice
-        a = np.linalg.norm(A)
-        b = np.linalg.norm(B)
-        c = np.linalg.norm(C)
-        alpha_r = angle(B, C)
-        beta_r = angle(C, A)
-        gamma_r = angle(A, B)
-        val = (np.cos(alpha_r) * np.cos(beta_r) - np.cos(gamma_r))\
-            / (np.sin(alpha_r) * np.sin(beta_r))
-        # Sometimes rounding errors result in values slightly > 1.
-        val = max(min(val, 1), -1)
-        gamma_star = np.arccos(val)
-        vector_a = [a * np.sin(beta_r), 0.0, a * np.cos(beta_r)]
-        vector_b = [-b * np.sin(alpha_r) * np.cos(gamma_star),
-                    b * np.sin(alpha_r) * np.sin(gamma_star),
-                    b * np.cos(alpha_r)]
-        vector_c = [0.0, 0.0, float(c)]
-        return [vector_a, vector_b, vector_c]
-
     def lattice_from_info(self, lattice_info):
         a, b, c, alpha, beta, gamma = lattice_info 
-
         lattice = Lattice.from_parameters(a, 
                                           b, 
                                           c, 
@@ -365,7 +340,6 @@ class Crossover(object):
         self.output(message)
 
     def output(self, message): output.local_message(message, self.replica)
-
 
     def mat2euler(self, M, cy_thresh=None):
         ''' 
