@@ -46,6 +46,7 @@ class RunGA():
         self.replica_stoic = stoic
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.GA_module_init()
+        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
         self.verbose = self.ui.verbose()
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")
@@ -56,8 +57,10 @@ class RunGA():
         self.replica_child_count = 0
         self.convergence_count= 0
         self.structure_supercoll = {}
-        self.structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
-        self.structure_supercoll[(self.replica_stoic, 'duplicates')] = structure_collection.get_collection(self.replica_stoic, 'duplicates')
+        self.structure_supercoll[(self.replica_stoic, 0)] = \
+        structure_collection.get_collection(self.replica_stoic, 0)
+        self.structure_supercoll[(self.replica_stoic, 'duplicates')] = \
+        structure_collection.get_collection(self.replica_stoic, 'duplicates')
         data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
         structure_collection.update_supercollection(self.structure_supercoll)
         self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
@@ -75,14 +78,21 @@ class RunGA():
         Performs main genetic algorithm operations
         Loads necessary modules based on UI at runtime
         ''' 
-        # Report Replica to Common Output and Update Supercollection
+        # Report Replica to Common Output 
         self.output("----Replica %s running GA on common pool----" %(self.replica))
-        structure_collection.update_supercollection(self.structure_supercoll)
 
         # Intialiaze restarts
         restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
         restart_count = 0
         convergeTF = None
+
+        # Optionally Cluster Input Collection
+        if self.ui.get_boolean("clustering","cluster_pool"):
+            struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
+            self.clustering_module.main(struct_coll, self.replica)
+            data_tools.write_energy_hierarchy(struct_coll)
+        # Update Supercollection of Structures
+        structure_collection.update_supercollection(self.structure_supercoll)
 
         # Main loop of GA
         while True:
@@ -138,18 +148,22 @@ class RunGA():
             #----- Success Message -----#
             self.success_message(struct, struct_index)
 
+            #----- Optional Clustering ----#
+            if self.ui.get_boolean("clustering","cluster_pool"):
+                struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
+                self.clustering_module(struct_coll, self.replica)
+                structure_collection.update_supercollection(self.structure_supercoll)
+
             #----- End of Iteration Data Tasks -----#
             restart_count += 1
             convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
 
     def GA_module_init(self):
         '''This routine reads in the modules defined in ui.conf'''
-        #self.initial_pool_module = my_import(self.ui.get('modules', 'initial_pool_module'), package='initial_pool')
-        self.selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
-        self.crossover_module = my_import(self.ui.get('modules', 'crossover_module'), package='crossover')
-        self.mutation_module = my_import(self.ui.get('modules', 'mutation_module'), package='mutation')
         self.relaxation_module = my_import(self.ui.get('modules', 'relaxation_module'), package='relaxation')
         self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
+        try: self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
+        except: pass
 
     def beginning_tasks(self, restart_count):
         st = ' -------------------------------------------------------------------------'
