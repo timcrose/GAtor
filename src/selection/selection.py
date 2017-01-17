@@ -51,19 +51,12 @@ class StructureSelection():
     def get_structures(self):
         banned = []
         structure_coll = self.structure_supercoll.get((self.replica_stoic, self.index))
-        #RDF_coll = self.compute_RDFs(structure_coll)
         struct_a, fit_a = self.select_structure(structure_coll)
         while True: 
             struct_b, fit_b = self.select_structure(structure_coll)
             if not struct_a == struct_b: break  # remove this to allow double-selection
         return [struct_a, struct_b]
 
-    def compute_RDFs(self, structure_coll):
-
-        for index, struct in structure_coll:
-            struct = structure_handling.compute_RDF_vector(struct)
-            RDF = struct.get_property('RDF_vector')
-            print RDF
     def select_structure(self, structure_coll):
         '''
         Will calculate fitness for each structure in a collection and select parents
@@ -72,7 +65,6 @@ class StructureSelection():
         if len(structure_coll.structures) == 1: 
             return (structure_coll.get_struct(0), 0)
         else: 
-#            fitness_dict = self.get_energy_fitness(structure_coll)  # this can be altered to select for different fitness
             fitness_dict = self.get_fitness(structure_coll)
             return self.select_best_from_fitness(fitness_dict) 
 
@@ -106,7 +98,7 @@ class StructureSelection():
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
-            print "normalized fitness: %s  %s" %(rho, index)
+            #print "normalized fitness: %s  %s" %(rho, index)
         return fitness
     
     def get_energy_fitness(self, structure_coll):
@@ -135,7 +127,7 @@ class StructureSelection():
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
-            print rho
+            #print rho
         return fitness
         
     def sorted_fitness(self, fitness_dict):
