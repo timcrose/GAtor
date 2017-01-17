@@ -75,19 +75,20 @@ def get_energy_list(structure_coll):
         parent1 = structure.get_property('parent_1')
         cluster = structure.get_property('cluster_label')
         mem = structure.get_property('cluster_members')
+        rev = structure.get_property('revisits')
         if energy is not None:
             energy_list.append([ID, replica, index, energy, \
                                 vol, a, b, c, alpha, beta, \
                                 gamma, spacegroup, mut, \
                                 str(parent0)[15:], str(parent1)[15:],\
-                                crosstype, cluster, mem])
+                                crosstype, cluster, mem, rev])
     return energy_list
 
 def write_energy_vs_addition(structure_coll):
     energy_list = get_energy_list(structure_coll)
     to_write = ''
     energy_list.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, clus, mem in energy_list:
+    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, clus, mem, st in energy_list:
         if rep == 'init_pool':
             continue
         to_write += str(index)+"    "+str(Id)+"    "+str(energy)+'\n' 
@@ -115,8 +116,8 @@ def write_energy_hierarchy(structure_coll):
 	for count in range(len(energy_list)):
 		ranked_energy_list.append([count + 1] + energy_list[count])
 	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
-                                                             'Spacegroup', 'Mutation','ParentA', 'ParentB','Crossover', "Cluster", "Cluster_Members"])
-	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<7} {:<7}'
+                                                             'Spacegroup', 'Mutation','ParentA', 'ParentB','Crossover', "Cluster", "Cluster_Members", "Revisits"])
+	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<7} {:<7} {:<7}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'

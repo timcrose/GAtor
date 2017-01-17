@@ -151,7 +151,7 @@ class RunGA():
             #----- Optional Clustering ----#
             if self.ui.get_boolean("clustering","cluster_pool"):
                 struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
-                self.clustering_module(struct_coll, self.replica)
+                self.clustering_module.main(struct_coll, self.replica)
                 structure_collection.update_supercollection(self.structure_supercoll)
 
             #----- End of Iteration Data Tasks -----#

@@ -56,7 +56,7 @@ def compute_RDF_vector(original_struct):
     structure_extension = [[x,y,z] for x in range (-a_ext-1,a_ext+2)\
                            for y in range (-b_ext-1,b_ext+2)\
                            for z in range (-c_ext-1,c_ext+2)]
-    cell_extension(struct, extension=structure_extension, create_duplicate=False)
+    ex_struct = cell_extension(struct, extension=structure_extension, create_duplicate=True)
 
     # Compute interatomic distances and build g vector
     vector_all = [struct.struct_id]
@@ -65,7 +65,7 @@ def compute_RDF_vector(original_struct):
         target_atom_type = pair[1]
         a1_range = [i for i in range (original_struct.get_n_atoms()) if original_struct.geometry[i]["element"] == ref_atom_type]
         a2_range = [i for i in range (original_struct.get_n_atoms()) if original_struct.geometry[i]["element"] == target_atom_type]
-        rs = all_interatomic_distances(struct, ref_atom_type, target_atom_type, a1_range)
+        rs = all_interatomic_distances(ex_struct, ref_atom_type, target_atom_type, a1_range)
         distances = [i[2] for i in rs]
         smoothing_parameter = 1 ###might need to modify
         g = [sum([math.exp(-smoothing_parameter*(r-r_ij)**2) 

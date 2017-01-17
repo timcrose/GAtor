@@ -20,7 +20,7 @@ from __future__ import division
 import numpy as np
 from core import user_input, output
 from time import time
-from structures import structure_collection
+from structures import structure_collection, structure_handling
 from structures.structure_collection import StructureCollection
 from sklearn.cluster import KMeans
 
@@ -57,9 +57,8 @@ class KMeansClusteringRDF():
         self.num_clusters = self.ui.get_eval("clustering", "num_clusters")
         self.replica = replica
         self.struct_coll = structure_coll
+        self.feature_type = self.ui.get_eval("clustering", "feature_vector")
 
-    def output(self, message):
-        output.local_message(message, self.replica)
 
     def return_clusters(self):
         feature_list = self.return_RDF_list()
@@ -68,11 +67,19 @@ class KMeansClusteringRDF():
         clustered_coll = self.cluster_coll(clustered_data)
         return self.struct_coll
 
+    def output(self, message):
+        output.local_message(message, self.replica)
+
     def return_RDF_list(self):
         RDFs = []
         for index, struct in self.struct_coll:
-            RDF = struct.get_property("RDF_smooth")
-            RDFs.append(RDF)
+            RDF = struct.get_property(self.feature_type)
+            if RDF is not None:
+                RDFs.append(RDF)
+            elif RDF is None:
+                struct = structure_handling.compute_RDF_vector(struct)
+                RDF = struct.get_property(self.feature_type)
+                RDFs.append(RDF)
         return RDFs
 
     def cluster_coll(self, clustered_data):
@@ -97,8 +104,10 @@ class KMeansClusteringRDF():
                     struct.set_property('cluster_members', j[1])
 
         # Output info
-        self.output("Number of clusters %s" % (len(info)))
-        self.output("Distribution of clusters %s" % (sorted_info))
+        self.output("-- Clustering Feature vector %s" % (self.feature_type))
+        self.output("-- Number of clusters %s" % (len(info)))
+        self.output("-- Distribution of clusters %s" % (sorted_info))
+        
 
 
 

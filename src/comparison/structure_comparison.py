@@ -6,7 +6,6 @@ Created on Tues May 10 11:03:12 2016
 from __future__ import division
 
 import os
-import math
 import numpy as np
 from copy import deepcopy
 from core import user_input, output
@@ -28,21 +27,16 @@ def main(struct, structure_coll, replica, comparison_type):
     Returns: True/False if the structure passes/fails test for uniqueness and for energy
     '''
     if comparison_type == "pre_relaxation_comparison":
-	comp = Comparison(struct, structure_coll, replica, comparison_type)
-	structs_to_compare = comp.get_all_structures()
+        comp = Comparison(struct, structure_coll, replica, comparison_type)
+        structs_to_compare = comp.get_all_structures()
         dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
     elif comparison_type == "post_relaxation_comparison":
         comp = Comparison(struct, structure_coll, replica, comparison_type)
-        # make sure energy is higher than the worst in the collection
-#        en_result = comp.acceptable_energy()
-#        if en_result is False:
-#            return False
-	structs_to_compare = comp.get_similar_energy_structures(comparison_type)
-	dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
+        structs_to_compare = comp.get_similar_energy_structures(comparison_type)
+        dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
     if dup_result:
         output.local_message("-- The structure compared is unique. ", replica)
     return dup_result # Boolean
-
 
 class Comparison:
 
@@ -52,37 +46,37 @@ class Comparison:
         self.struct = deepcopy(struct)
         self.structure_coll = structure_coll
         self.ui = user_input.get_config()
-	self.comparison_type = comparison_type
+        self.comparison_type = comparison_type
+        self.stoic = struct.get_stoic()
 
     def output(self, message): output.local_message(message, self.replica)
 
     def acceptable_energy(self):
         energy = self.struct.get_property('energy')
         if energy == None: raise Exception
-
         energies = []
         for index, comp_struct in self.structure_coll:
             energies.append(comp_struct.get_property('energy'))
         sorted_ens = np.sort(np.array(energies))
-        worst_energy =sorted_ens[-1] 
+        worst_energy =sorted_ens[-1]
 
-	self.output("Energy of current structure: " + str(energy))
+        self.output("Energy of current structure: " + str(energy))
         self.output("Highest energy in collection: " + str(worst_energy))
 
         if energy > worst_energy:
             self.output("Structure has unacceptable energy that is higher than entire collection")
             return False
         elif energy <= worst_energy:
-	    self.output("Structure has acceptable energy.")
+            self.output("Structure has acceptable energy.")
             return True
 
     def get_all_structures(self):
         '''
-	returns full list of structures w/o index
+        returns full list of structures 
         '''
         struct_list = []
         for index, struct in self.structure_coll:
-                struct_list.append((index, struct))
+            struct_list.append((index, struct))
         return struct_list
         
     def get_similar_energy_structures(self, comparison_type):
@@ -95,42 +89,40 @@ class Comparison:
 
         sim_list = []
         en = float(self.struct.get_property(self.ui.get_property_to_optimize()))
-	for index, comp_struct in self.structure_coll:
+        for index, comp_struct in self.structure_coll:
             comp_en = float(comp_struct.get_property(self.ui.get_property_to_optimize()))
             if en - e_tol <= comp_en <= en + e_tol:
-#		self.output("comp en: " +str(comp_en)) 
                 sim_list.append((index, comp_struct)) 
         self.output("-- Number of structures w/in duplicate energy tolerance: "+str(len(sim_list)))
         return sim_list
 
     def check_if_duplicate(self, struct, comp_list, comparison_type):
-	dup_pair = []
-	dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
-	for indexc, structc in comp_list:
+        dup_pair = []
+        dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
+        for indexc, structc in comp_list:
             fit = self.compute_pymatgen_fit(struct, structc, comparison_type)
             if fit:
                 self.output("-- Structure is a duplicate of another in common pool")
-		self.output("-- Duplicate Structure ID in common pool is: %s" % indexc)
-		index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
-		self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
-		dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
-	        for pair in dup_pair:
-	            dup_output.write('\t'.join(str(s) for s in pair) + '\n')
-	        return False
+                self.output("-- Duplicate Structure ID in common pool is: %s" % indexc)
+                index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
+                self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
+                dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
+                for pair in dup_pair:
+                    dup_output.write('\t'.join(str(s) for s in pair) + '\n')
+            return False
         self.ui.grant_permission(os.path.join(tmp_dir,"GA_duplicates.dat"))
-	return True
+        return True
 
     def check_if_duplicate_multiprocessing(self, struct, comp_list, comparison_type):
         global pool
-	processes = self.ui.get_multiprocessing_processes() 
+        processes = self.ui.get_multiprocessing_processes()
         pool = multiprocessing.Pool(processes)
-	self.output("-- Comparison done with %i parallel processes" % processes)
-
+        self.output("-- Comparison done with %i parallel processes" % processes)
+        
         global is_dup
-	is_dup = None
-
-	runs = []
-	try:
+        is_dup = None
+        runs = []
+        try:
             for indexc, structc in comp_list:
                 runs.append(pool.apply_async(compute_pymatgen_fit, 
                                              args = [struct, structc, comparison_type], 
@@ -141,52 +133,30 @@ class Comparison:
             return True
 
         if is_dup == None:
-	#Not a duplicate
+	        #Not a duplicate
             return True
 
-	dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
+        stoic = struct.get_stoic()
         self.output("-- Structure is a duplicate of another in common pool")
         self.output("-- Structure ID in Common pool is: %s" % is_dup)
-        index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
-	self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
+        index = structure_collection.add_structure(struct, stoic, 'duplicates')
+        self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
         pair = ("0/"+ str(is_dup),"duplicates/"+str(index))
-	dup_output.write('\t'.join(str(s) for s in pair) + '\n')
-	return False
+
+        #Update revisted count for duplicate structure in pool
+        struct_coll = structure_collection.get_collection(stoic, 0)
+        for index, struct in struct_coll:
+            if index == struct.struct_id:
+                count = struct.get_property("revisits")
+                if count == None: 
+                    count = 0
+                count +=1
+                struct.set_property("revisits", count)
         
-
-#    def compute_pymatgen_fit(self, struct, structc, comparison_type):
-#            sm = self.set_comp_structure_matcher(comparison_type)
-#            structp = self.get_pymatgen_structure(struct.get_frac_data())
-#            structpc = self.get_pymatgen_structure(structc.get_frac_data())
-#            fit = sm.fit(structp, structpc)
-#            return fit
-
-    def check_if_duplicate_2(self, comp_list, comparison_type):
-        '''
-        Args: list of Structures() to compare
-        Returns: T/F is structure is duplicate
-        '''
-        sm = self.set_comp_structure_matcher(comparison_type)
- 
-	TF_list = []
-        structp = self.get_pymatgen_structure(self.struct)
-        for comp_struct in comp_list: 
-            comp_frac_data = comp_struct.get_frac_data()
-            comp_structp = self.get_pymatgen_structure(comp_struct)
-            fitTF = sm.fit(structp,comp_structp)
-            TF_list.append(fitTF)
-                    #print TF_list
-        try:            
-            if True not in TF_list:
-                print "Structure is non-duplicate!"
-                print "Total Checked: "+str(len(comp_list)) 
-                return True
-        except:
-            self.output("Structure compared found to be a duplicate")
-            self.output("Total Checked"+ str(len(comp_list))) 
-            return False
-
-
+        dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
+        dup_output.write('\t'.join(str(s) for s in pair) + '\n')
+        return False
+        
     def set_comp_structure_matcher(self, comparison_type):
         '''
         Args: self

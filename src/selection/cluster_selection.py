@@ -56,12 +56,6 @@ class StructureSelection():
             if not struct_a == struct_b: break  # remove this to allow double-selection
         return [struct_a, struct_b]
 
-    def compute_RDFs(self, structure_coll):
-
-        for index, struct in structure_coll:
-            struct = structure_handling.compute_RDF_vector(struct)
-            RDF = struct.get_property('RDF_vector')
-            print RDF
     def select_structure(self, structure_coll):
         '''
         Will calculate fitness for each structure in a collection and select parents
@@ -121,9 +115,12 @@ class StructureSelection():
 
   
     def select_best_from_fitness(self, fitness_dict):
+        ''' Roulette Wheel Selection Criterion '''
         fitness = sorted(fitness_dict.iteritems(), key=lambda x:x[1])
-        print fitness[0][0].struct_id, fitness[0][1]
-        print fitness[-1][0].struct_id, fitness[-1][1]
+        output.local_message("Worst fitness: %s", fitness[0][0].struct_id)
+        output.local_message("Best fitness: %s", fitness[-1][0].struct_id)
+
+        # Choose random number
         dec = float(self.percent*0.01)
         dec_comp = 1-dec
         random_num = np.random.uniform(dec_comp,1.0)
