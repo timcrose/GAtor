@@ -30,6 +30,13 @@ all_geo = ui.all_geo()
 nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 olm = output.local_message
 
+#def compute_RCD_vector(original_struct):
+
+
+
+
+
+
 
 def compute_RDF_vector(original_struct):
     atomic_pairs = [['C', 'N'],['S', 'N'],['S','S']]
@@ -63,8 +70,10 @@ def compute_RDF_vector(original_struct):
     for pair in atomic_pairs:
         ref_atom_type = pair[0]
         target_atom_type = pair[1]
-        a1_range = [i for i in range (original_struct.get_n_atoms()) if original_struct.geometry[i]["element"] == ref_atom_type]
-        a2_range = [i for i in range (original_struct.get_n_atoms()) if original_struct.geometry[i]["element"] == target_atom_type]
+        a1_range = [i for i in range (original_struct.get_n_atoms()) 
+                        if original_struct.geometry[i]["element"] == ref_atom_type]
+        a2_range = [i for i in range (original_struct.get_n_atoms()) 
+                        if original_struct.geometry[i]["element"] == target_atom_type]
         rs = all_interatomic_distances(ex_struct, ref_atom_type, target_atom_type, a1_range)
         distances = [i[2] for i in rs]
         smoothing_parameter = 1 ###might need to modify
@@ -177,13 +186,18 @@ def cell_reflection_x(struct,create_duplicate=True):
 	struct.properties["lattice_vector_c"][0]=-struct.properties["lattice_vector_c"][0]
 	return struct
 
-def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_rad=None,origin=[0,0,0],deg=None,rad=None,create_duplicate=True):
-	if create_duplicate:
-		struct=copy.deepcopy(struct)    
-	if (deg==None) and (rad==None):
-		return False
-	if (vec==None) and (((theta_deg==None) and (theta_rad==None)) or ((phi_deg==None) and (phi_rad==None))):
-		return False
+def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,
+                  phi_deg=None,phi_rad=None,origin=[0,0,0],
+                  deg=None,rad=None,create_duplicate=True):
+    if create_duplicate:
+        struct=copy.deepcopy(struct)
+#    if (deg==None) and (rad==None):
+#        print "here1"
+#        return False
+    if (vec==None) and (((theta_deg==None) and (theta_rad==None)) 
+                       or ((phi_deg==None) and (phi_rad==None))):
+        print "here2"
+        return False
 	if rad==None:
 		rad=np.deg2rad(deg)
 	if (theta_rad==None) and (theta_deg!=None):
