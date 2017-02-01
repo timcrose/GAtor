@@ -15,19 +15,25 @@ from pymatgen.symmetry.analyzer import PointGroupAnalyzer as pga
 
 def main(list_of_structures, replica):
     '''
-    Args: list of 2 Structures() to crossover, the replica name running the crossover instance.
-    Returns: A single Structure() if crossover is successful or False if crossover fails 
+    Args: list of 2 Structures() to crossover, 
+    the replica name running the crossover instance.
+    Returns: A single Structure() if crossover 
+    is successful or False if crossover fails 
     '''
-    num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
+    ui = user_input.get_config()
+    num_mols = ui.get_eval('unit_cell_settings', 'num_molecules')
     parent_a = list_of_structures[0]
     parent_b = list_of_structures[1]
     output_parent_properties(parent_a, parent_b, replica)
     cross_obj = Crossover(parent_a, parent_b, num_mols, replica)
     child_struct = cross_obj.cross()
+    print child_struct.get_geometry_atom_format()
     return child_struct
 
 class Crossover(object):
-    ''' Takes 2 parent structures and combines them via different crossover options.'''
+    ''' 
+    Takes 2 parent structures and combines their 
+    lattice vectors and moelcular orientations'''
 
     def __init__(self, parent_a, parent_b, num_mols, replica):
         '''__init__ will always run when a class is initialized. '''
@@ -47,18 +53,27 @@ class Crossover(object):
     def cross(self):
         '''
         Crossover function which combines 
-                              (cell lattice angles) alpha, beta, gamma 
-                              (lattice vector magnitudes) a, b, c
-                              (molecule COM's) x, y, z
-                              (molecule orientations) thetax, thety, thetaz
+        (cell lattice angles) alpha, beta, gamma 
+        (lattice vector magnitudes) a, b, c
+        (molecule COM's) x, y, z
+        (molecule orientations) thetax, thety, thetaz
         '''
         #shell debugging
         #print "crossover"
-        #print "parent a \n"
-        #print self.parent_a.get_geometry_atom_format()
-        #print "parent b"
-        #print self.parent_b.get_geometry_atom_format()
-       
+        print "parent a \n"
+        print self.parent_a.get_geometry_atom_format()
+        print "parent b"
+        print self.parent_b.get_geometry_atom_format()
+      
+
+        self.random_orientation(self.parent_a)
+        self.random_orientation(self.parent_b)
+
+
+        #structure_handling.cell_transform_mat(self.parent_a,mat, create_duplicate=False)
+        
+
+        # Get lattice information from each parent 
         A_a, B_a, C_a = self.parent_a.get_lattice_magnitudes()
         A_b, B_b, C_b = self.parent_b.get_lattice_magnitudes()
         alpha_a, beta_a, gamma_a = self.parent_a.get_lattice_angles()
@@ -82,10 +97,15 @@ class Crossover(object):
 
         #Create Child From combining 'genes' of parents
         atom_types = [self.geometry_a[i][3] for i in range(len(self.geometry_a))]
-        child_lattice_info = self.combine_lattice_info(lattice_info_a, lattice_info_b)
-        child_orientation_info = self.combine_orientation_info(self.orientation_info_a, self.orientation_info_b) 
-        lattice, child_coords = self.reconstruct_child(child_lattice_info, child_orientation_info)
-        child_struct = self.create_child_struct(child_coords, lattice, atom_types)
+        child_lattice_info = self.combine_lattice_info(lattice_info_a, 
+                                                       lattice_info_b)
+        child_orientation_info = self.combine_orientation_info(self.orientation_info_a, 
+                                                       self.orientation_info_b) 
+        lattice, child_coords = self.reconstruct_child(child_lattice_info, 
+                                                       child_orientation_info)
+        child_struct = self.create_child_struct(child_coords, 
+                                                       lattice, 
+                                                       atom_types)
 
         #print "child"
         #print child_struct.get_geometry_atom_format()
@@ -94,7 +114,8 @@ class Crossover(object):
 
     def get_mol_list(self, geo):
         ''' Returns input geometry grouped into arrays of molecules '''
-        mol_list = [geo[x:x+self.num_atom_per_mol] for x in range(0, len(geo), self.num_atom_per_mol)]
+        mol_list = [geo[x:x+self.num_atom_per_mol] 
+                    for x in range(0, len(geo), self.num_atom_per_mol)]
         return mol_list
 
     def get_COM_frac(self, mol, lattice_vectors):
@@ -170,7 +191,8 @@ class Crossover(object):
         #print "after"
         #atom_out = ""
         #for i in range(len(centered_sites)):
-        #    st =  "atom " + str(aligned_mol[i][0])+" "+str(aligned_mol[i][1])+" "+str(aligned_mol[i][2])+" "+types[i]
+        #    st =  "atom " + str(aligned_mol[i][0])+" "\
+        #    +str(aligned_mol[i][1])+" "+str(aligned_mol[i][2])+" "+types[i]
         #    atom_out += st + "\n"
         #self.output(atom_out)
         #print atom_out
@@ -178,14 +200,6 @@ class Crossover(object):
         
         #Euler angles 
         z, y, x =  self.mat2euler(rot)
-
-        #if z < 0:
-        #    z = z + np.pi
-        #if y < 0:
-        #    y = y + np.pi
-        #if x < 0:
-        #    x = x + np.pi
-
         return z, y, x, aligned_mol
 
     def combine_lattice_info(self, lattice_info_a, lattice_info_b):
@@ -195,12 +209,14 @@ class Crossover(object):
  
         for i in range(6):
             if i < 3:
-                rand_scale = random.uniform(0.85,1.1)
-                new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
+                rand_scale = random.uniform(0.8,1.1)
+                new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] 
+                                      + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
-                rand_scale = random.uniform(0.97, 1.03)
-                new_info = rand_scale *(rand_vec[i] * lattice_info_a[i] + (1-rand_vec[i]) * lattice_info_b[i])
+                rand_scale = random.uniform(0.96, 1.04)
+                new_info = rand_scale * (rand_vec[i] * lattice_info_a[i] 
+                                      + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
                     self.output("--Setting angle close to 90 degrees")
                     new_info = 90.0
@@ -261,6 +277,51 @@ class Crossover(object):
         lattice = [A, B, C]
         return lattice, np.array(child_coordinates)
 
+    def random_orientation(self, struct):
+        rand = random.random()
+        if rand < 0.2:
+            choice = np.random.choice(["bca","cab"])
+            if choice == "bca":
+                self.output( "bca orientation")
+                struct.set_property("lattice_vector_a", self.latA[1])
+                struct.set_property("lattice_vector_b", self.latA[2])
+                struct.set_property("lattice_vector_c", self.latA[0])
+                self.output(struct.get_geometry_atom_format())
+            elif choice == "cab":
+                self.output( "cab orientation")
+                struct.set_property("lattice_vector_a", self.latA[2])
+                struct.set_property("lattice_vector_b", self.latA[0])
+                struct.set_property("lattice_vector_c", self.latA[1])
+                self.output(struct.get_geometry_atom_format())
+        rand = random.random()
+        if rand < 0.2:
+            ang = np.random.choice([90, 180, 270])
+            direction = np.random.choice(['x','y','z'])
+            if direction =='x':
+                self.output("X rotation %s" %(ang))
+                rot_mat = rotation_matrix(ang, 0, 0)
+            if direction =='y':
+                self.output("Y rotation %s" %(ang))
+                rot_mat = rotation_matrix(0, ang, 0)
+            if direction =='z': 
+                self.output("Z rotation %s " %(ang))
+                rot_mat = rotation_matrix(0, 0, ang)
+            for atom in struct.geometry:
+                N = len(struct.geometry)
+                rsum = [0, 0, 0]
+                rsum[0] +=atom['x']
+                rsum[1] +=atom['y']
+                rsum[2] +=atom['z']
+                COM = np.array(rsum)/N
+            for atom in struct.geometry:
+                atom_vec = np.array([atom['x'], atom['y'], atom['z']])
+                rot_atom = np.dot(rot_mat, atom_vec - COM) + COM
+                atom['x'], atom['y'], atom['z'] = rot_atom.tolist()[0]
+            self.output("Rotated Parent")
+            structure_handling.move_molecule_in(struct, create_duplicate=False)     
+            self.output(struct.get_geometry_atom_format())
+
+ 
     def create_child_struct(self, child_geometry, child_lattice, atom_types):
         ''' Creates a Structure() for the child to be added to the collection'''
         child_A, child_B, child_C = child_lattice 
@@ -513,6 +574,19 @@ class Crossover(object):
             return reduce(np.dot, Ms[::-1])
         return np.eye(3)
 
+def rotation_matrix(theta, psi, phi):
+    Rxyz = np.matrix([ ((np.cos(theta) * np.cos(psi)),
+                (-np.cos(phi) * np.sin(psi)) + (np.sin(phi) * np.sin(theta) * np.cos(psi)),
+                (np.sin(phi) * np.sin(psi)) + (np.cos(phi) * np.sin(theta) * np.cos(psi))),
+
+                ((np.cos(theta) * np.sin(psi)),
+                (np.cos(phi) * np.cos(psi)) + (np.sin(phi) * np.sin(theta) * np.sin(psi)),
+                (-np.sin(phi) * np.cos(psi)) + (np.cos(phi) * np.sin(theta) * np.sin(psi))),
+
+                ((-np.sin(theta)),
+                (np.sin(phi) * np.cos(theta)),
+                (np.cos(phi) * np.cos(theta)))])
+    return Rxyz
 def output_parent_properties(parent_a, parent_b, replica):
     parent_a_vecs = np.array(map(float, parent_a.get_lattice_magnitudes()))
     parent_b_vecs = np.array(map(float, parent_b.get_lattice_magnitudes()))
