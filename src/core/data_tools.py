@@ -74,6 +74,8 @@ def get_energy_list(structure_coll):
         parent0 = structure.get_property('parent_0')
         parent1 = structure.get_property('parent_1')
         cluster = structure.get_property('cluster_label')
+        #apcluster = structure.get_property('af_cluster_label')
+        #apmem = structure.get_property('af_cluster_members')
         mem = structure.get_property('cluster_members')
         rev = structure.get_property('revisits')
         if energy is not None:
@@ -115,8 +117,10 @@ def write_energy_hierarchy(structure_coll):
 	energy_list.sort(key=lambda x: float(x[3]))
 	for count in range(len(energy_list)):
 		ranked_energy_list.append([count + 1] + energy_list[count])
-	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
-                                                             'Spacegroup', 'Mutation','ParentA', 'ParentB','Crossover', "Cluster", "Cluster_Members", "Revisits"])
+	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 
+                'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
+                'Spacegroup', 'Mutation','ParentA', 'ParentB',
+                'Crossover', "Cluster", "Cluster_Members", "Revisits"])
 	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<7} {:<7} {:<7}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
