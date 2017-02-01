@@ -82,7 +82,6 @@ class StructureSelection():
                 prop = structure.get_property(self.prop)
                 if self.op_style=="maximize":
                     prop = -prop
-
                 clust_mem = structure.get_property('cluster_members')
                 prop_clus = prop/clust_mem
                 prop_list = np.append(prop_clus,prop_list)
