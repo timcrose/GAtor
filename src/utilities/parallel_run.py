@@ -15,37 +15,27 @@ import time
 ui = user_input.get_config()
 
 def launch_parallel():
-	sname = "parallel_settings"
-#	nor = ui.get_eval(sname,"number_of_replicas")
-#	if nor == 1:
-#		output.time_log("launch_replica is called by number_of_replicas is set to 1; exiting...",replica)
-#		return None
+    # Get user-defined parallization method
+    sname = "parallel_settings"
+    spawn_method = ui.get(sname,"parallelization_method")
+    output.time_log("Parallelization method: "+spawn_method)
+    if spawn_method == "serial":
+        if ui.is_master_process():
+            output.time_log("No parallelization is called")
+        return 
+    fh.mkdir_p(fh.conf_tmp_dir)
 
-	spawn_method = ui.get(sname,"parallelization_method")
-	output.time_log("Parallelization method: "+spawn_method)
-	if spawn_method == "serial":
-		if ui.is_master_process():
-			output.time_log("No parallelization is called")
-			
-		return 
-
-	fh.mkdir_p(fh.conf_tmp_dir)
-	
-	if spawn_method == "subprocess":
-		launch_parallel_subprocess()
-
-	elif spawn_method == "mira" or spawn_method == "cetus":
-		launch_parallel_bgq()
-	
-	#At this point, all is left is regular mpirun and srun spawn
-	elif spawn_method == "mpirun":
+    # Different subroutines for different parallelization methods	
+    if spawn_method == "subprocess":
+        launch_parallel_subprocess()
+    elif spawn_method == "mira" or spawn_method == "cetus":
+        launch_parallel_bgq()
+    elif spawn_method == "mpirun":
 		launch_parallel_mpirun()
-
-	elif spawn_method == "srun":
+    elif spawn_method == "srun":
 		launch_parallel_mpirun(use_srun=True)
-	
-	else:
-		raise ValueError("Unknown parallelization method: "+spawn_method)
+    else:
+        raise ValueError("Unknown parallelization method: "+spawn_method)
 
 
 def launch_bundled():
@@ -183,12 +173,6 @@ def launch_bundled_bgq():
 		message = "block size larger than the total number of nodes; "
 		message += "modify bgq_block_size or submission script"
 		raise ValueError(message)
-#	if npr > block_size:
-#		message = "Number of nodes per replica (%i) " % npr
-#		message += "larger than block size (%i); " % block_size
-#		message += "Modify nodes_per_replica or bgq_block_size"
-#		raise ValueError(message)
-
 	otl = output.time_log
 	otl("Launching parallel replicas on machines: " + spawn_method)
 	otl("Total number of nodes: " + str(partsize))
@@ -285,41 +269,36 @@ def launch_bundled_bgq():
 			p = subprocess.Popen(arglist)
 			processes.append(p)
 		
-
-	
 	for p in processes:
 		p.wait()
 
 
 def launch_parallel_mpirun(use_srun=False):
-	
-	sname = "parallel_settings"
-	output.time_log("mpirun/srun parallelization method is called")
+    sname = "parallel_settings"
+    output.time_log("mpirun/srun parallelization method is called")
+    if ui.has_option(sname,"allocated_nodes"):
+    #Unsual case where a wrapper script pre-determines the nodes allocated to a master replica
+        all_nodes = ui.get_eval(sname,"allocated_nodes")
+        if not use_srun:
+            all_processes = get_all_processes("mpirun",all_nodes)
+        else:
+            all_processes = get_all_processes("srun",all_nodes)
+    else: #Obtains all nodes and processes available for this job
+        if not use_srun:
+            all_processes = get_all_processes("mpirun")
+        else:
+            all_processes = get_all_processes("srun")
+        all_nodes = list(set(all_processes))
 
-#	nor = ui.get_eval(sname,"number_of_replicas")
-	if ui.has_option(sname,"allocated_nodes"):
-	#Unsual case where a wrapper script pre-determines the nodes allocated to a master replica
-		all_nodes = ui.get_eval(sname,"allocated_nodes")
-		if not use_srun:
-			all_processes = get_all_processes("mpirun",all_nodes)
-		else:
-			all_processes = get_all_processes("srun",all_nodes)
-	else: #Obtains all nodes and processes available for this job
-		if not use_srun:
-			all_processes = get_all_processes("mpirun")
-		else:
-			all_processes = get_all_processes("srun")
-		all_nodes = list(set(all_processes))
+    output.time_log("All nodes: "+", ".join(map(str,all_nodes)))
+    nop = len(all_processes) #Number of processes
+    non = len(all_nodes) #Number of nodes
+    ppn = int(nop/non) #Processes per node
+    npr = [] #Nodes per replica
+    ppr = [] #Processes per replica
+    nor = 0 #Number of replicas
 
-	output.time_log("All nodes: "+", ".join(map(str,all_nodes)))
-	nop = len(all_processes) #Number of processes
-	non = len(all_nodes) #Number of nodes
-	ppn = int(nop/non) #Processes per node
-	npr = [] #Nodes per replica
-	ppr = [] #Processes per replica
-	nor = 0 #Number of replicas
-
-	if ui.has_option(sname,"nodes_per_replica"):
+    if ui.has_option(sname,"nodes_per_replica"):
 		npr = ui.get_eval(sname,"nodes_per_replica")
 		if ui.has_option(sname,"processes_per_replica"):
 			ppr = ui.get_eval(sname,"processes_per_replica")
@@ -331,18 +310,17 @@ def launch_parallel_mpirun(use_srun=False):
 			nor = non/npr
 		npr = [npr]*nor
 		ppr = [ppr]*nor
-
-	elif ui.has_option(sname,"processes_per_replica"):
-		ppr = ui.get_eval(sname,"processes_per_replica")
-		if ppr >= ppn:
-			npr = int(math.ceil(ppr/(ppn+0.0)))
-			if ui.has_option(sname,"number_of_replicas"):
-				nor = ui.get_eval(sname,"number_of_replicas")
-			else:
-				nor = non/npr
-			npr = [npr]*nor
-			ppr = [ppr]*nor
-		else:
+    elif ui.has_option(sname,"processes_per_replica"):
+        ppr = ui.get_eval(sname,"processes_per_replica")
+        if ppr >= ppn:
+            npr = int(math.ceil(ppr/(ppn+0.0)))
+            if ui.has_option(sname,"number_of_replicas"):
+                nor = ui.get_eval(sname,"number_of_replicas")
+            else:
+                nor = non/npr
+            npr = [npr]*nor
+            ppr = [ppr]*nor
+        else:
 			rpn = ppn/ppr
 			if ui.has_option(sname,"number_of_replicas"):
 				nor = ui.get_eval(sname,"number_of_replicas")
@@ -350,70 +328,88 @@ def launch_parallel_mpirun(use_srun=False):
 				nor = non*rpn
 			npr = [int(0+(x%3)==0) for x in range(1,nor+1)]
 			ppr = [ppr]*nor
-
-	elif ui.has_option(sname,"number_of_replicas"):
-		nor = ui.get_eval(sname,"number_of_replicas")
-		if nor > non: #Multiple replicas have to share same node
-			rpn = nor / non
-			add = nor % non #Certain nodes may have to handle more replicas
-			npr = ([0]*rpn+[1])*add + ([0]*(rpn-1)+[1])*(non-add) 
-			#Only the last replica on the node gets a 1
+    elif ui.has_option(sname,"number_of_replicas"):
+        nor = ui.get_eval(sname,"number_of_replicas")
+        if nor > non: #Multiple replicas have to share same node
+            rpn = nor / non
+            add = nor % non #Certain nodes may have to handle more replicas
+            npr = ([0]*rpn+[1])*add + ([0]*(rpn-1)+[1])*(non-add) 
+            #Only the last replica on the node gets a 1
 			#Later, when assigning nodes, this is when the next node is accessed
 			#First assign the number of processes for each replica on the extra-loaded nodes
-			ppr = ([ppn/(rpn+1)+1]*(ppn%(rpn+1))\
+            ppr = ([ppn/(rpn+1)+1]*(ppn%(rpn+1))\
 				+[ppn/(rpn+1)]*(rpn+1-(ppn%(rpn+1))))*add
-			ppr+= ([ppn/rpn+1]*(ppn%rpn)+[ppn/rpn]*(rpn-(ppn%rpn)))*(non-add)
-		else:
+            ppr+= ([ppn/rpn+1]*(ppn%rpn)+[ppn/rpn]*(rpn-(ppn%rpn)))*(non-add)
+        else:
 			npr = non / nor
 			add = non % nor
 			npr = [npr+1]*add + [npr]*(nor-add)
 			ppr = [ppn*x for x in npr]
-	else:
-		raise KeyError("mpirun/srun parallelization method requires the setting of at least one of the following parameter within parallel_settings: nodes_per_replica, processes_per_replica, and number_of_replicas; None is found")
+    else:
+        message = "mpirun/srun parallelization method requires the setting " 
+        message += "of at least one of the following parameter within parallel_settings: "
+        message += "nodes_per_replica, processes_per_replica, and number_of_replicas; None is found"
+        raise KeyError(message)    
 
-	output.time_log("Number of parallel replicas: "+str(nor))
-	output.time_log("Nodes assigned to each replica (0 indicates that this replica is assigned a fraction of a node and is not the last replica on the node: " + " ".join(map(str,npr)))
-	output.time_log("Processes assigned to each replica: "+" ".join(map(str,ppr)))
+    # Time Log outputs for Nodes
+    message = " Number of parallel replicas: %s \n" % (nor)   
+    message += "Nodes assigned to each replica: %s \n" % (npr)
+    message += "(0 indicates that a replica is assigned a fraction of a node) \n"               
+    message += "Processes assigned to each replica: %s \n" %(ppr)
+    message += "Total available nodes: %i; assigned nodes: %s" % (non,sum(npr))
+    output.time_log(message)
 
-	output.time_log("Total available nodes: %i; assigned nodes: %i" % (non,sum(npr)))
+    # Check for Oversubscription or underutilization
+    if sum(npr) > non:
+        message = "Oversubscription of node has occurred;"
+        message +="Check the compatibility of number_of_replicas "
+        message +="and nodes_per_replica/processes_per_node; aborting..."
+        output.time_log(message)
+        raise ValueError(message)
+    elif sum(npr) < non:
+        message = "Not all nodes are utilized; try setting only number_of_replicas "
+        message += "or setting a replica_per_node that divides the total number of nodes"
+        output.time_log(message)
 
-	if sum(npr) > non:
-		output.time_log("Oversubscription of node has occured; Check the compatibility of number_of_replicas and nodes_per_replica/processes_per_node; aborting...")
-		raise ValueError("Oversubscription of node has occured; Check the compatibility of number_of_replicas and nodes_per_replica/processes_per_node")
-	elif sum(npr) < non:
-		output.time_log("Not all nodes are utilized; try setting only number_of_replicas or setting a replica_per_node that divides the total number of nodes")
+    # Time log outputs for processes
+    message = "Total available processes: %i; assigned processes: %i" % (nop,sum(ppr))
+    output.time_log(message)
+    if sum(ppr)>nop:
+        message = "Oversubscription of processes has occurred;"
+        message += "This should be avoided in general,"
+        message += "but GAtor will proceed for now."
+        output.time_log(message)
+    elif sum(ppr)<nop:
+        message = "Undersubscription of processes has occurred;"
+        message += "If wish to utilize all processes, try setting only number_of_replicas "
+        message += "or setting a processes_per_replica that fits the processes_per_node"
+        output.time_log(message)
 
-	output.time_log("Total available processes: %i; assigned processes: %i" % (nop,sum(ppr)))
-	if sum(ppr)>nop:
-		output.time_log("Oversubscription of processes has occured; This should be avoided in general, but GAtor will proceed for now.")
-	elif sum(ppr)<nop:
-		output.time_log("Undersubscription of processes has occured; If wish to utilize all processes, try setting only number_of_replicas or setting a processes_per_replica that fits the processes_per_node")
+    # Setup individual ui.conf for each replica
+    processes = [] 
+    new_ui = deepcopy(ui)
+    new_ui.set(sname,"parallelization_method","serial")
+    if not ui.has_option(sname,"processes_per_node"):
+        new_ui.set(sname,"processes_per_node",str(ppn))
+    python_command = ui.get(sname,"python_command")
+    new_ui.set(sname,"im_not_master_process","TRUE")
 
-	processes = [] 
-	new_ui = deepcopy(ui)
-	new_ui.set(sname,"parallelization_method","serial")
-	if not ui.has_option(sname,"processes_per_node"):
-		new_ui.set(sname,"processes_per_node",str(ppn))
-	
-	python_command = ui.get(sname,"python_command")
-	new_ui.set(sname,"im_not_master_process","TRUE")
-
-
-	for i in range(nor):
-		new_ui.set(sname,"replica_name",misc.get_random_index())
-		new_ui.set(sname,"processes_per_replica",str(ppr[i]))
-		new_ui.set(sname,"allocated_nodes",str(all_nodes[:max(1,npr[i])]))
-		conf_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".conf")
-		exe_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".exe")
-		f = open(conf_path,"w")
-		new_ui.write(f)
-		f.close()
+    # Main loop to launch parallel replicas
+    for i in range(nor):
+        new_ui.set(sname,"replica_name",misc.get_random_index())
+        new_ui.set(sname,"processes_per_replica",str(ppr[i]))
+        new_ui.set(sname,"allocated_nodes",str(all_nodes[:max(1,npr[i])]))
+        conf_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".conf")
+        exe_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".exe")
+        f = open(conf_path,"w")
+        new_ui.write(f)
+        f.close()
 		#Launch 1 instance of GAtor on the first node allocated
-		if not use_srun:
-			p = subprocess.Popen(["mpirun","-n","1","-host",all_nodes[0],python_command,fh.GAtor_master_path,conf_path])
-			processes.append(p)
-		else:
-			arguments = ["srun","-n","1",
+        if not use_srun:
+            p = subprocess.Popen(["mpirun","-n","1","-host",all_nodes[0],python_command,fh.GAtor_master_path,conf_path])
+            processes.append(p)
+        else:
+            arguments = ["srun","-n","1",
 				     "-w",all_nodes[0],
 				     "-c",new_ui.get(sname,"processes_per_node"),
 				     "--mem",ui.get(sname,"srun_gator_memory"),
@@ -422,33 +418,12 @@ def launch_parallel_mpirun(use_srun=False):
 				     python_command,
 				     fh.GAtor_master_path,
 				     conf_path]
-
-			p = subprocess.Popen(arguments)
-#			f = open(exe_path,"w")
-#			f.write(python_command + " " 
-#				+ fh.GAtor_master_path 
-#				+ " " + conf_path)
-#			f.close()
-#			os.system("chmod +x " + exe_path)
-#
-#			arguments = ["srun","-n","1",
-#				     "-w",all_nodes[0],
-#				     "sh", exe_path]
-
-#			p = subprocess.Popen(arguments)
-#			p.wait()
-			processes.append(p)
-			output.time_log("Running command: " + 
+            p = subprocess.Popen(arguments)
+            processes.append(p)
+            output.time_log("Running command: " + 
 					" ".join(map(str,arguments)))
-	
-		all_nodes = all_nodes[npr[i]:]
-
-#	time.sleep(86400)
-#	if not use_srun:
-#		for p in processes:
-#			p.wait()
-#	else:
-	monitor_srun(processes)
+        all_nodes = all_nodes[npr[i]:]
+    monitor_srun(processes)
 
 
 def get_all_processes(command,hostlist=None):
