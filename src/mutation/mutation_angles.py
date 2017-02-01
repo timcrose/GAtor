@@ -12,6 +12,7 @@ import math
 
 from core import user_input,output
 from structures.structure import Structure
+from structures import structure_handling
 from utilities import space_group_utils as sgu
 from pymatgen import Molecule
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer as pga
@@ -46,7 +47,7 @@ def select_mutator(input_struct, num_mols, replica):
     mutation_list = (["Frame_trans_mol", "Pair_trans_mol", 
                       "Frame_rot_mol", "Pair_rot_mol", "Rot_mol",
                       "Strain_rand_mols","Strain_sym_mols", 
-                      "Swap_mol", "Permute_mol","Strain_vol"])
+                      "Swap_mol", "Permute_mol","Strain_vol","Rand_orient_mol"])
     try:
         mut_choice = np.random.choice(mutation_list)
     except:
@@ -54,12 +55,16 @@ def select_mutator(input_struct, num_mols, replica):
     message = "-- Mutation Choice: %s" % (mut_choice)
     output.local_message(message, replica)
 
+
+
     if mut_choice == "Frame_trans_mol":
         mutator = RandomTranslationFrameMutation(input_struct, num_mols, replica)
     elif mut_choice == "Frame_rot_mol":
         mutator = RandomRotationFrameMutation(input_struct, num_mols, replica)
     elif mut_choice == "Rot_mol":
         mutator = RandomRotationMolMutation(input_struct, num_mols, replica)
+    elif mut_choice == "Rand_orient_mol":
+        mutator = RandomOrientationMolMutation(input_struct, num_mols, replica)
     elif mut_choice == "Pair_trans_mol":
         mutator = PairTranslationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Pair_rot_mol":
@@ -490,6 +495,76 @@ class RandomRotationMolMutation(object):
         struct.set_property('beta', self.beta)
         struct.set_property('gamma', self.gamma)
         struct.set_property('mutation_type', 'rot_mol')
+        return struct
+
+class RandomOrientationMolMutation(object):
+    ''' Gives a random rotation to the COM of the molecules in the unit cell.'''
+
+    def __init__(self, input_struct, num_mols, replica):
+        self.input_struct = input_struct
+        self.num_mols = num_mols
+        self.replica = replica
+        self.geometry = deepcopy(input_struct.get_geometry())
+        self.ui = user_input.get_config()
+        self.st_dev = self.ui.get_eval('mutation', 'stand_dev_rot')
+        self.A = self.input_struct.get_property('lattice_vector_a')
+        self.B = self.input_struct.get_property('lattice_vector_b')
+        self.C = self.input_struct.get_property('lattice_vector_c')
+        self.alpha = self.input_struct.get_property('alpha')
+        self.beta = self.input_struct.get_property('beta')
+        self.gamma = self.input_struct.get_property('gamma')
+        self.cell_vol = self.input_struct.get_unit_cell_volume()
+        self.cross_type = self.input_struct.get_property('crossover_type')
+
+    def output(self, message): output.local_message(message, self.replica)
+
+    def mutate(self):
+        return self.rotate_geometry()
+
+    def rotate_geometry(self):
+        ''' Randomly rotates all molecules COM by 90, 180, 270'''
+        struct = self.input_struct
+        ang = np.random.choice([90, 180, 270])
+        direction = np.random.choice(['x','y','z'])
+        if direction =='x':
+            self.output( "X rotation %s" %(ang))
+            rot_mat = rotation_matrix(ang, 0, 0)
+        if direction =='y':
+            self.output( "Y rotation %s" %(ang))
+            rot_mat = rotation_matrix(0, ang, 0)
+        if direction =='z':
+            self.output("Z rotation %s " %(ang))
+            rot_mat = rotation_matrix(0, 0, ang)
+        for atom in struct.geometry:
+            N = len(struct.geometry)
+            rsum = [0, 0, 0]
+            rsum[0] +=atom['x']
+            rsum[1] +=atom['y']
+            rsum[2] +=atom['z']
+            COM = np.array(rsum)/N
+        for atom in struct.geometry:
+            atom_vec = np.array([atom['x'], atom['y'], atom['z']])
+            rot_atom = np.dot(rot_mat, atom_vec - COM) + COM 
+            atom['x'], atom['y'], atom['z'] = rot_atom.tolist()[0]
+        self.output("Rotated Parent")
+        rot_struct = structure_handling.move_molecule_in(struct, create_duplicate=False)
+        self.output(rot_struct.get_geometry_atom_format())
+        return self.set_properties(rot_struct)
+
+    def set_properties(self, struct):
+        ''' Creates Structure from mutated geometry'''
+        struct.set_property('lattice_vector_a', self.A)
+        struct.set_property('lattice_vector_b', self.B)
+        struct.set_property('lattice_vector_c', self.C)
+        struct.set_property('a', leng(self.A))
+        struct.set_property('b', leng(self.B))
+        struct.set_property('c', leng(self.C))
+        struct.set_property('cell_vol', self.cell_vol)
+        struct.set_property('crossover_type', self.cross_type)
+        struct.set_property('alpha',self.alpha)
+        struct.set_property('beta', self.beta)
+        struct.set_property('gamma', self.gamma)
+        struct.set_property('mutation_type', 'rot_orient_mol')
         return struct
 
 class PairTranslationMutation(object):
