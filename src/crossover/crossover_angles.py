@@ -279,7 +279,7 @@ class Crossover(object):
 
     def random_orientation(self, struct):
         rand = random.random()
-        if rand < 0.2:
+        if rand < 0.3:
             choice = np.random.choice(["bca","cab"])
             if choice == "bca":
                 self.output( "bca orientation")
@@ -294,7 +294,7 @@ class Crossover(object):
                 struct.set_property("lattice_vector_c", self.latA[1])
                 self.output(struct.get_geometry_atom_format())
         rand = random.random()
-        if rand < 0.2:
+        if rand < 0.3:
             ang = np.random.choice([90, 180, 270])
             direction = np.random.choice(['x','y','z'])
             if direction =='x':

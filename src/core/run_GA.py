@@ -646,6 +646,16 @@ def structure_create_for_multiprocessing(args):
             return False
         new_struct.set_property('parent_1', choice_struct.get_stoic_str() + '/'
             + str(choice_struct.get_input_ref()) + '/' + str(choice_struct.get_struct_id()))
+        if random.random() < 0.3:
+            output.local_message("\n---- Second Mutation ----",replica)
+            choice_struct = new_struct
+            new_struct = mutation_module.main(choice_struct, replica)
+            if new_struct!=False and ui.all_geo():
+                output.local_message("Mutated geometry:\n"
+                + new_struct.get_geometry_atom_format(),replica)
+            if new_struct is False:
+                output.local_message('-- Mutation failure',replica)
+                return False
 
     #---- Orthogonalization ----#
     if ui.ortho():
