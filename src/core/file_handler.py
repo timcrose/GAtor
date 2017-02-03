@@ -39,18 +39,18 @@ def argument_opt():
                       dest='run_e',
                       default=True,
                       help='Disables the actual running of the GA')
-	parser.add_option('-i','--fill_ip',
+    parser.add_option('-i','--fill_ip',
                       action='store_true',
                       dest='fip_e',
                       default=False,
                       help='Enables reading initial pool from user defined directory')
-	parser.add_option('-t','--test',
+    parser.add_option('-t','--test',
                       action="store_true",
                       dest="test_e",
                       default=False,
-                      help="Enables testing and debugging mode and calls the testing 
+                      help="Enables testing and debugging mode and calls the testing\
                             procedure specified by test_and_debug.testing_procedure")
-	parser.add_option('--rn','--replica_name',
+    parser.add_option('--rn','--replica_name',
                       action='store',
                       type='string',
                       dest='replica',
