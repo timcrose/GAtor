@@ -1,8 +1,4 @@
-'''
-Created on Aug 5, 2013
-
-@author: newhouse
-'''
+import errno
 import errno
 import os,sys
 from shutil import rmtree
@@ -12,18 +8,55 @@ from hashlib import sha1
 from external_libs.filelock import FileLock
 
 cwd = os.getcwd()
+
 def argument_opt():
-        from optparse import OptionParser
-        parser=OptionParser()
-        parser.add_option('-c','--clean','-r','--reset',action='store_true',dest='reset',default=False,help='Enables resetting environment before run')
-        parser.add_option('-k',action='store_true',dest='kill',default=False,help='Terminates the GA')
-        parser.add_option('-f','--file',action='store',type='string',dest='user_input',default='ui.conf',help='User input file name (default="ui.conf"')
-        parser.add_option('-d','--data',action='store_true',dest='data',default=False,help='Enables datatools')
-        parser.add_option('-n','--dontrun',action='store_false',dest='run_e',default=True,help='Disables the actual running of the GA')
-	parser.add_option('-i','--fill_ip',action='store_true',dest='fip_e',default=False,help='Enables reading initial pool from user defined directory')
-	parser.add_option('-t','--test',action="store_true",dest="test_e",default=False,help="Enables testing and debugging mode and calls the testing procedure specified by test_and_debug.testing_procedure")
-	parser.add_option('--rn','--replica_name',action='store',type='string',dest='replica',default=None, help='Replica name for the run_GA; not used for master.py')
-        return parser.parse_args()
+    from optparse import OptionParser
+    parser=OptionParser()
+    parser.add_option('-c','--clean',
+                      '-r','--reset',
+                      action='store_true',
+                      dest='reset',
+                      default=False,
+                      help='Enables resetting environment before run')
+    parser.add_option('-k',
+                      action='store_true',
+                      dest='kill',
+                      default=False,
+                      help='Terminates the GA')
+    parser.add_option('-f','--file',
+                      action='store',
+                      type='string',
+                      dest='user_input',
+                      default='ui.conf',
+                      help='User input file name (default="ui.conf"')
+    parser.add_option('-d','--data',
+                      action='store_true',
+                      dest='data',
+                      default=False,
+                      help='Enables datatools')
+    parser.add_option('-n','--dontrun',
+                      action='store_false',
+                      dest='run_e',
+                      default=True,
+                      help='Disables the actual running of the GA')
+	parser.add_option('-i','--fill_ip',
+                      action='store_true',
+                      dest='fip_e',
+                      default=False,
+                      help='Enables reading initial pool from user defined directory')
+	parser.add_option('-t','--test',
+                      action="store_true",
+                      dest="test_e",
+                      default=False,
+                      help="Enables testing and debugging mode and calls the testing 
+                            procedure specified by test_and_debug.testing_procedure")
+	parser.add_option('--rn','--replica_name',
+                      action='store',
+                      type='string',
+                      dest='replica',
+                      default=None, 
+                      help='Replica name for the run_GA; not used for master.py')
+    return parser.parse_args()
 
 
 # source directories
@@ -49,13 +82,12 @@ structure_dir = os.path.join(cwd, 'structures')
 molecules_dir = os.path.join(cwd,"molecules")
 
 # database storage
-db_file = os.path.join(cwd, 'structures.sqlite')  # TODO: change par_dir to cwd
+db_file = os.path.join(cwd, 'structures.sqlite') 
 
 # useful files
 progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
 default_config = os.path.join(res_dir, 'default.conf')
 (options,argv)=argument_opt() #Retrieve the user_input from command line
-#ui_conf = os.path.join(cwd, options.user_input)
 ui_conf = os.path.abspath(sys.argv[-1])
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'GAtor.out')
@@ -157,7 +189,6 @@ def get_and_increment_index(index_path):
     retrieves the next valid index and increments the index in the shared file
     uses FileLock to avoid conflicts 
     '''
-    
     # create if does not exist
     if not os.path.exists(index_path):
         mkdir_p(os.path.abspath(os.path.join(index_path, os.pardir)))
