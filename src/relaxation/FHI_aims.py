@@ -178,31 +178,30 @@ def main(input_structure):
 		output.local_message("-- Energy extracted: "+str(energy)+ " eV")
 
 		#Update geometry if necessary
-		if extract_result == "relaxed": 
-			output.local_message("-- Updated geometry retrieved")
-			if ui.all_geo():
-				output.local_message(FHI.result_struct.\
-				get_geometry_atom_format())
-			input_structure.geometry = FHI.result_struct.geometry
-			properties = ["lattice_vector_a","lattice_vector_b",\
-		"lattice_vector_c","cell_vol","a","b","c","alpha","beta","gamma"]
-			for prop in properties:
-				if prop in FHI.result_struct.properties:
-					input_structure.properties[prop] = \
-					FHI.result_struct.properties[prop]
-		
-		if ui.get_boolean(sname,"save_successful_calc"):
-			path = os.path.abspath(os.path.join(fh.success_dir,
-			misc.get_random_index()))
-			shutil.copytree(working_dir,path)
-			output.time_log("Successful calc folder saved to "+path)
-			output.local_message("-- Successful calc folder saved to "+path)
+        if extract_result == "relaxed": 
+            output.local_message("-- Updated geometry retrieved")
+            if ui.all_geo():
+                output.local_message(FHI.result_struct.\
+                get_geometry_atom_format())
+            input_structure.geometry = FHI.result_struct.geometry
+            properties = ["lattice_vector_a","lattice_vector_b",\
+		                  "lattice_vector_c","cell_vol","a","b","c","alpha","beta","gamma"]
+            for prop in properties:
+                if prop in FHI.result_struct.properties:
+                    input_structure.properties[prop] = \
+                    FHI.result_struct.properties[prop]
 
-		if et!=None and energy >= et: #Rejected
-			output.local_message("-- Energy threshold not met; structure rejected")
-			return input_structure,"rejected"
-		else:
-			output.local_message("-- Energy threshold met")
+            if ui.get_boolean(sname,"save_successful_calc"):
+			    path = os.path.abspath(os.path.join(fh.success_dir,
+			    misc.get_random_index()))
+			    shutil.copytree(working_dir,path)
+			    output.time_log("Successful calc folder saved to "+path)
+			    output.local_message("-- Successful calc folder saved to "+path)
+        if et!=None and energy >= et: #Rejected
+            output.local_message("-- Energy threshold not met; structure rejected")
+            return input_structure,"rejected"
+        else:
+            output.local_message("-- Energy threshold met")
         output.local_message('\n|------------------------ End FHI-aims evaluation ------------------------|')			
 	return input_structure,"accepted"
 
