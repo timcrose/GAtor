@@ -113,7 +113,7 @@ def add_structure(struct, stoichiometry, input_ref):
         index = struct.struct_id
     # writes data for sharing and geometry for human readability
     mkdir_p(os.path.join(path, str(index)))
-    write_data(os.path.join(path, str(index)), 'data.json', struct.dumps())
+    write_data(os.path.join(path, str(index)), str(index)+'.json', struct.dumps())
     write_data(os.path.join(path, str(index)), 'geometry.in', struct.get_geometry_atom_format())
     return index
         
