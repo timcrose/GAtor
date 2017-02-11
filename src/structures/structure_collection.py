@@ -30,8 +30,7 @@ class StructureCollection(object):
         # a structure collection is unique to its stoichiometry and the input file common to each
         # structue. The input files are stored in the database.
         self.stoichiometry = stoichiometry
-	try: self.input_ref = int(input_ref)
-	except: self.input_ref = input_ref
+        self.input_ref = input_ref
         self.path = os.path.join(structure_dir, stoichiometry.get_string(), str(input_ref))
         if not os.path.exists(self.path): mkdir_p(self.path)
         # read allupdate_local_from_db data into local memory
@@ -59,7 +58,8 @@ class StructureCollection(object):
         dirs = [ name for name in os.listdir(self.path) \
                 if os.path.isdir(os.path.join(self.path, name)) ]
         # for new indicies, add information to local memory
-        for sdir in dirs: 
+        for sdir in dirs:
+            print sdir 
             struct_id = sdir
             if struct_id not in self.structures.keys():
                 counter = 0
@@ -78,7 +78,7 @@ class StructureCollection(object):
         """
         # TODO: may need to surround in try/except to catch when file is not fully written
         struct = Structure()
-        struct.loads(read_data(os.path.join(self.path, str(struct_id)), 'data.json'))
+        struct.loads(read_data(os.path.join(self.path, str(struct_id)), str(struct_id)+'.json'))
         self.structures[struct_id] = struct
 
     def get_unrelaxed_structure(self):
