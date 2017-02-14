@@ -136,7 +136,7 @@ def return_all_user_structures(initial_list):
     structure_supercoll = {}
     for struct in initial_list:
         stoic = struct.get_stoic()
-        struct.set_property('ID',0)
+        #struct.set_property('ID',0)
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
