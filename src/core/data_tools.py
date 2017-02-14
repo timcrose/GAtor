@@ -58,7 +58,9 @@ def get_energy_list(structure_coll):
     for index, structure in structure_coll:
         ID = structure.get_property('ID')
         replica = structure.get_property('replica')
-        energy = '{:.3f}'.format(structure.get_property(ui.get_property_to_optimize()))
+
+        try: energy = '{:.3f}'.format(structure.get_property(ui.get_property_to_optimize()))
+        except: energy = 0
         vol = '{:.1f}'.format(structure.get_unit_cell_volume())
         A, B, C = structure.get_lattice_magnitudes()
         a = '{:.2f}'.format(A)
