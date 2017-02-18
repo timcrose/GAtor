@@ -8,6 +8,9 @@ import time
 import datetime
 import numpy as np
 import shutil
+import sys
+sys.path.append("/lustre/project/nmarom/fcurtis/NEW_gator/latest_git/src")
+
 from core import user_input, output
 import core.file_handler as fh
 from core.activity import *
@@ -548,9 +551,9 @@ class FHIAimsRelaxation():
         while True:
             line = aims_out.readline()
             if not line: return False  # energy not converged
-            if '  | Total energy corrected        :' in line:
-                tokens = line.split()
-                energy = float(tokens[5])  # converts from SI string to float
+            if '| Total energy of the DFT / Hartree-Fock s.c.f. calculation      :' in line:
+                tokens = line.split() 
+                energy = float(tokens[11])  # converts from SI string to float
                 return energy
 
     def extract_lats(self):
@@ -689,3 +692,7 @@ class FHIAimsRelaxation():
 		time.sleep(sleeptime)
 
 
+if __name__ =="__main__":
+    import sys
+    sys.path.append("/lustre/project/nmarom/fcurtis/NEW_gator/latest_git/src")
+    extract_energy() 
