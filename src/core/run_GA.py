@@ -515,7 +515,8 @@ class RunGA():
 			return False
 
         #----- Make sure cell is lower triangular -----#
-		self.output("-- Ensuring cell is lower triangular")
+		self.output("-- Ensuring cell is lower triangular and orthogonal")
+        structure_handling.cell_modification(struct, napm,create_duplicate=False)
 		struct=structure_handling.cell_lower_triangular(struct,False)	
 		a=struct.get_property('lattice_vector_a')
 		b=struct.get_property('lattice_vector_b')
