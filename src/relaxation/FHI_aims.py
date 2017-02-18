@@ -288,7 +288,16 @@ class FHIAimsRelaxation():
 		if ui.has_option("parallel_settings","additional_arguments"):
 			arglist += ui.get_eval("parallel_settings","additional_arguments")
 		arglist += [self.bin]
-
+        if execute_command == "aprun":
+                #rglist = ["aprun","-wdir",self.working_dir]
+		arglist = ["aprun"]
+                #if ui.has_option("parallel_settings","allocated_nodes"):
+                #        arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
+                if ui.has_option("parallel_settings","processes_per_replica"):
+                        arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
+                if ui.has_option("parallel_settings","additional_arguments"):
+                        arglist += ui.get_eval("parallel_settings","additional_arguments")
+                arglist += [self.bin]
 
 	elif execute_command == "srun":
 		arglist = ["srun","-D",self.working_dir]
@@ -346,7 +355,7 @@ class FHIAimsRelaxation():
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
 		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
-		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
+		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile, cwd=self.working_dir)
 		p.wait()
 		end_of_execution_tasks()
 		return True
@@ -357,7 +366,8 @@ class FHIAimsRelaxation():
 		get_execute_clearance(request_folder=self.working_dir)
 		output.time_log("aims job execute clearance acquired",self.replica)
 		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
-		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
+		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile,cwd=self.working_dir)
+                #p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
 		time.sleep(1)
 		try:
 			status=p.poll()
@@ -367,7 +377,7 @@ class FHIAimsRelaxation():
 			os.chdir(original_dir)
 			return False
 			
-		time_limit=60
+		time_limit=90
 		for j in range (time_limit): #Allow 60 seconds for aims to start outputting
 			if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
 				break
@@ -419,6 +429,7 @@ class FHIAimsRelaxation():
 			pass
 	
 	end_of_execution_tasks()
+	return
 	
 
     def output(self, message): output.local_message(message, self.replica)
