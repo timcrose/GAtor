@@ -496,37 +496,38 @@ class RunGA():
             return False  # structure not acceptable start with new selection
 
     def structure_relax(self,struct):
-		'''
-		This routines takes a structure and relaxes it
-		Returns False if doesn't meet SPE criteria or relaxation fails
-		'''
-		mkdir_p_clean(self.working_dir) # make relaxation directory in tmp
+        '''
+        This routines takes a structure and relaxes it
+        Returns False if doesn't meet SPE criteria or relaxation fails
+        '''
+        mkdir_p_clean(self.working_dir) # make relaxation directory in tmp
 
-		sname = "save_structures"
-		if self.ui.get_boolean(sname,"pre-evaluation"):
-			self.add_structure(struct,"pre-evaluation")
-			
-		struct, stat = self.relaxation_module.main(struct)
-		if stat=="failed" and self.ui.get_boolean(sname,"evaluation_failed"):
-			self.add_structure(struct,"evaluation_failed")
-		if stat=="rejected" and self.ui.get_boolean(sname,"evaluation_rejected"):
-			self.add_structure(struct,"evaluation_rejected")
-		if stat=="failed" or stat=="rejected":
-			return False
+        sname = "save_structures"
+        if self.ui.get_boolean(sname,"pre-evaluation"):
+            self.add_structure(struct,"pre-evaluation")
+
+        struct, stat = self.relaxation_module.main(struct)
+        if stat=="failed" and self.ui.get_boolean(sname,"evaluation_failed"):
+            self.add_structure(struct,"evaluation_failed")
+        if stat=="rejected" and self.ui.get_boolean(sname,"evaluation_rejected"):
+            self.add_structure(struct,"evaluation_rejected")
+        if stat=="failed" or stat=="rejected":
+            return False
 
         #----- Make sure cell is lower triangular -----#
-		self.output("-- Ensuring cell is lower triangular")
-		struct=structure_handling.cell_lower_triangular(struct,False)	
-		a=struct.get_property('lattice_vector_a')
-		b=struct.get_property('lattice_vector_b')
-		c=struct.get_property('lattice_vector_c')		
-		struct.set_property('lattice_vector_a',list(a))
-		struct.set_property('lattice_vector_b',list(b))
-		struct.set_property('lattice_vector_c',list(c))
-		if self.ui.all_geo():
-			self.output("Final Structure's geometry:\n" +
-			struct.get_geometry_atom_format())
-		return struct
+        self.output("-- Ensuring cell is lower triangular and orthogonal")
+        structure_handling.cell_modification(struct, napm,create_duplicate=False)
+        struct=structure_handling.cell_lower_triangular(struct,False)	
+        a=struct.get_property('lattice_vector_a')
+        b=struct.get_property('lattice_vector_b')
+        c=struct.get_property('lattice_vector_c')
+        struct.set_property('lattice_vector_a',list(a))
+        struct.set_property('lattice_vector_b',list(b))
+        struct.set_property('lattice_vector_c',list(c))
+        if self.ui.all_geo():
+            self.output("Final Structure's geometry:\n" +
+            struct.get_geometry_atom_format())
+        return struct
 	
     def success_message(self, struct, struct_index):
         time = datetime.datetime.now()
