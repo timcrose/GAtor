@@ -516,7 +516,7 @@ class RunGA():
 
         #----- Make sure cell is lower triangular -----#
         self.output("-- Ensuring cell is lower triangular and orthogonal")
-        nmpc = ui.get_eval('unit_cell_settings','num_molecules')
+        nmpc = self.ui.get_eval('unit_cell_settings','num_molecules')
         napm = int(struct.get_n_atoms()/nmpc)
         structure_handling.cell_modification(struct, napm,create_duplicate=False)
         struct=structure_handling.cell_lower_triangular(struct,False)	
