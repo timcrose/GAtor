@@ -27,7 +27,8 @@ def main(list_of_structures, replica):
     output_parent_properties(parent_a, parent_b, replica)
     cross_obj = Crossover(parent_a, parent_b, num_mols, replica)
     child_struct = cross_obj.cross()
-    print child_struct.get_geometry_atom_format()
+    #print "child"
+    #print child_struct.get_geometry_atom_format()
     return child_struct
 
 class Crossover(object):
@@ -41,12 +42,14 @@ class Crossover(object):
         self.replica = replica
         self.parent_a = deepcopy(structure_handling.cell_lower_triangular(parent_a))
         self.parent_b = deepcopy(structure_handling.cell_lower_triangular(parent_b))
-        self.geometry_a = deepcopy(self.parent_a.get_geometry())
-        self.geometry_b = deepcopy(self.parent_b.get_geometry())
+        self.geometry_a = self.parent_a.geometry
+        self.geometry_b = self.parent_b.geometry
         self.latA = deepcopy(self.parent_a.get_lattice_vectors())
         self.latB = deepcopy(self.parent_b.get_lattice_vectors())
         self.num_mols = num_mols
-        self.num_atom_per_mol = int(len(self.geometry_a)/self.num_mols)
+        self.num_atom_per_mol = int(len(self.parent_a.geometry)/self.num_mols)
+        self.random_orientation(self.parent_a)
+        self.random_orientation(self.parent_b)
         self.orientation_info_a = []
         self.orientation_info_b = []
 
@@ -59,19 +62,10 @@ class Crossover(object):
         (molecule orientations) thetax, thety, thetaz
         '''
         #shell debugging
-        #print "crossover"
-        print "parent a \n"
-        print self.parent_a.get_geometry_atom_format()
-        print "parent b"
-        print self.parent_b.get_geometry_atom_format()
-      
-
-        self.random_orientation(self.parent_a)
-        self.random_orientation(self.parent_b)
-
-
-        #structure_handling.cell_transform_mat(self.parent_a,mat, create_duplicate=False)
-        
+        #print "parent a \n"
+        #print self.parent_a.get_geometry_atom_format()
+        #print "parent b"
+        #print self.parent_b.get_geometry_atom_format()
 
         # Get lattice information from each parent 
         A_a, B_a, C_a = self.parent_a.get_lattice_magnitudes()
@@ -82,18 +76,7 @@ class Crossover(object):
         lattice_info_b = [A_b, B_b, C_b, alpha_b, beta_b, gamma_b]
 
         #Molecule information for each parent
-        mol_list_a = self.get_mol_list(self.geometry_a)
-        mol_list_b = self.get_mol_list(self.geometry_b)
-        for mol in mol_list_a:
-            COM = self.get_COM_frac(mol, self.latA)
-            centered_mol, types = self.get_centered_molecule(mol)
-            z, y, x, aligned_mol = self.get_orientation_angles(centered_mol, types)
-            self.orientation_info_a.append([z, y, x, COM, aligned_mol])
-        for mol in mol_list_b:
-            COM = self.get_COM_frac(mol, self.latB)
-            centered_mol, types = self.get_centered_molecule(mol)
-            z, y, x, aligned_mol = self.get_orientation_angles(centered_mol, types)
-            self.orientation_info_b.append([z, y, x, COM, aligned_mol])
+        self.get_orientation_info()
 
         #Create Child From combining 'genes' of parents
         atom_types = [self.geometry_a[i][3] for i in range(len(self.geometry_a))]
@@ -104,11 +87,8 @@ class Crossover(object):
         lattice, child_coords = self.reconstruct_child(child_lattice_info, 
                                                        child_orientation_info)
         child_struct = self.create_child_struct(child_coords, 
-                                                       lattice, 
-                                                       atom_types)
-
-        #print "child"
-        #print child_struct.get_geometry_atom_format()
+                                                lattice, 
+                                                atom_types)
         return child_struct
 
 
@@ -145,6 +125,20 @@ class Crossover(object):
             centered_mol.append(list(site._coords))
         return centered_mol, types
 
+    def get_orientation_info(self):
+        mol_list_a = self.get_mol_list(self.geometry_a)
+        mol_list_b = self.get_mol_list(self.geometry_b)
+        for mol in mol_list_a:
+            COM = self.get_COM_frac(mol, self.latA)
+            centered_mol, types = self.get_centered_molecule(mol)
+            z, y, x, aligned_mol = self.get_orientation_angles(centered_mol, types)
+            self.orientation_info_a.append([z, y, x, COM, aligned_mol])
+        for mol in mol_list_b:
+            COM = self.get_COM_frac(mol, self.latB)
+            centered_mol, types = self.get_centered_molecule(mol)
+            z, y, x, aligned_mol = self.get_orientation_angles(centered_mol, types)
+            self.orientation_info_b.append([z, y, x, COM, aligned_mol])
+
     def get_orientation_angles(self, mol, types):
         ''' Computes the principal axes for each molecule and the corresponding
             rotation matrices.
@@ -174,7 +168,6 @@ class Crossover(object):
 
         #Construct rotation matrix and its inverse
         rot = np.column_stack((sort_eig[0][1], sort_eig[1][1], sort_eig[2][1]))
-        #rot_trans = np.transpose(np.array(rot))
         rot_trans = np.linalg.inv(np.array(rot))
 
         #Aligned geometry
@@ -229,30 +222,48 @@ class Crossover(object):
     def combine_orientation_info(self, orientation_info_a, orientation_info_b): 
         '''Returns child orientation info in the form
                             info = [z, y, x, COM, centered_mol]'''
-        self.output("Parent A orientation info: "+ str(orientation_info_a[0][:3]))
-        self.output("Parent B orientation info: "+ str(orientation_info_b[0][:3]))
+        self.output("Parent A orientation info: %s" % (orientation_info_a[0][:3]))
+        self.output("Parent B orientation info: %s" % (orientation_info_b[0][:3]))
     
-        orientation_info_child = []
-        rand_cut = random.uniform(0.1,0.9)
-
+        # Choose which Parent's COM the child will inherit
         COM_choice = random.random()
         if COM_choice < 0.5:
             parent_a_COM = True
         else: 
             parent_a_COM = False
 
-        for i in range(len(orientation_info_a)):
+        # Choose which Parent's conformer the child will inherit
+        mol_geo_choice = random.random()
+        if mol_geo_choice < 0.5:
+            parent_a_mol = True
+        else:
+            parent_a_mol = False
+
+        # Randomly permute indices of molecules paired for mating
+        n = len(orientation_info_a); a = range(n)
+        perm = [[a[i - j] for i in range(n)] for j in range(n)]
+        p_i = np.random.choice(a)
+
+        # Create child by combining Parents' orientation info
+        orientation_info_child = []
+        rand_cut = random.uniform(0.15,0.85)
+        j = 0
+        for i in perm[p_i]:
             child_z, child_y, child_x  = ( 
-                np.array(orientation_info_a[i][:3])*rand_cut + 
+                np.array(orientation_info_a[j][:3])*rand_cut + 
                 np.array(orientation_info_b[i][:3])*(1-rand_cut))
             if parent_a_COM: 
-                COM = orientation_info_a[i][3]
+                COM = orientation_info_a[j][3]
             else:
                 COM = orientation_info_b[i][3]
-          
-            centered_mol = orientation_info_a[i][4]
-            orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])    
-        self.output("Child orientation info: " + str(orientation_info_child[0][:3]))
+            if parent_a_mol:
+                centered_mol = orientation_info_a[j][4]
+            else:
+                centered_mol = orientation_info_b[i][4]
+            orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])   
+
+        # Return Childs orientation info 
+        self.output("Child orientation info: %s" % (orientation_info_child[0][:3]))
         return orientation_info_child
 
     def reconstruct_child(self, child_lattice_info, child_orientation_info):
@@ -277,50 +288,55 @@ class Crossover(object):
         lattice = [A, B, C]
         return lattice, np.array(child_coordinates)
 
+    def return_lattice_trans(self, a, b, c):
+        lattice_vectors = np.transpose([a,b,c])
+        latinv = np.linalg.inv(lattice_vectors)
+        return latinv
+
     def random_orientation(self, struct):
         rand = random.random()
-        if rand < 0.3:
+        a = struct.get_property("lattice_vector_a")
+        b = struct.get_property("lattice_vector_b")
+        c = struct.get_property("lattice_vector_c")
+        old_lattice = [a, b, c]
+        if rand < 0.25:
+            i = 0
             choice = np.random.choice(["bca","cab"])
-            if choice == "bca":
-                self.output( "bca orientation")
-                struct.set_property("lattice_vector_a", self.latA[1])
-                struct.set_property("lattice_vector_b", self.latA[2])
-                struct.set_property("lattice_vector_c", self.latA[0])
-                self.output(struct.get_geometry_atom_format())
-            elif choice == "cab":
-                self.output( "cab orientation")
-                struct.set_property("lattice_vector_a", self.latA[2])
-                struct.set_property("lattice_vector_b", self.latA[0])
-                struct.set_property("lattice_vector_c", self.latA[1])
-                self.output(struct.get_geometry_atom_format())
-        rand = random.random()
-        if rand < 0.3:
-            ang = np.random.choice([90, 180, 270])
-            direction = np.random.choice(['x','y','z'])
-            if direction =='x':
-                self.output("X rotation %s" %(ang))
-                rot_mat = rotation_matrix(ang, 0, 0)
-            if direction =='y':
-                self.output("Y rotation %s" %(ang))
-                rot_mat = rotation_matrix(0, ang, 0)
-            if direction =='z': 
-                self.output("Z rotation %s " %(ang))
-                rot_mat = rotation_matrix(0, 0, ang)
-            for atom in struct.geometry:
-                N = len(struct.geometry)
-                rsum = [0, 0, 0]
-                rsum[0] +=atom['x']
-                rsum[1] +=atom['y']
-                rsum[2] +=atom['z']
-                COM = np.array(rsum)/N
-            for atom in struct.geometry:
-                atom_vec = np.array([atom['x'], atom['y'], atom['z']])
-                rot_atom = np.dot(rot_mat, atom_vec - COM) + COM
-                atom['x'], atom['y'], atom['z'] = rot_atom.tolist()[0]
-            self.output("Rotated Parent")
-            structure_handling.move_molecule_in(struct, create_duplicate=False)     
-            self.output(struct.get_geometry_atom_format())
+            choice = "cab"
+            if choice == "cab":
+                new_lattice = [c, a, b]
+                trans_mat = np.dot(np.transpose(new_lattice),
+                                   np.linalg.inv(np.transpose(old_lattice)))
+                for atom in struct.geometry:
+                    frac = struct.get_frac_data()[0][i]
+                    new_frac = [frac[2], frac[0], frac[1]]
+                    new_atom = np.dot(new_frac, new_lattice)
+                    atom['x'], atom['y'], atom['z'] = new_atom
+                    i = i +1
 
+                struct.set_property("lattice_vector_a", c)
+                struct.set_property("lattice_vector_b", a)
+                struct.set_property("lattice_vector_c", b)
+                structure_handling.move_molecule_in(struct, create_duplicate=False)
+                self.output("-- cab orientation")
+                self.output(struct.get_geometry_atom_format())
+            elif choice == "bca":
+                new_lattice = [b, c, a]
+                trans_mat = np.dot(np.transpose(new_lattice),
+                                   np.linalg.inv(np.transpose(old_lattice)))
+                for atom in struct.geometry:
+                    frac = struct.get_frac_data()[0][i]
+                    new_frac = [frac[1], frac[2], frac[0]]
+                    new_atom = np.dot(new_frac, new_lattice)
+                    atom['x'], atom['y'], atom['z'] = new_atom
+                    i = i +1
+
+                struct.set_property("lattice_vector_a", b)
+                struct.set_property("lattice_vector_b", c)
+                struct.set_property("lattice_vector_c", a)
+                structure_handling.move_molecule_in(struct, create_duplicate=False)
+                self.output("-- bca orientation")
+                self.output(struct.get_geometry_atom_format())
  
     def create_child_struct(self, child_geometry, child_lattice, atom_types):
         ''' Creates a Structure() for the child to be added to the collection'''
