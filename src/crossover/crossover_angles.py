@@ -266,6 +266,41 @@ class Crossover(object):
         self.output("Child orientation info: %s" % (orientation_info_child[0][:3]))
         return orientation_info_child
 
+    def combine_orientation_info_dimers(self, orientation_info_a, orientation_info_b):
+        '''Returns child orientation info in the form
+                            info = [z, y, x, COM, centered_mol]'''
+        self.output("Parent A orientation info: "+ str(orientation_info_a[0][:3]))
+        self.output("Parent B orientation info: "+ str(orientation_info_b[0][:3]))
+
+
+        choice_a = random.sample(set(range(self.num_mols)), 2)
+        choice_b = random.sample(set(range(self.num_mols)), 2)
+
+        print choice_a
+        print choice_b
+
+        orientation_info_child = []
+        for i in range(len(orientation_info_a)):
+
+            if i == choice_a[0]:
+                child_z, child_y, child_x =(
+                np.array(orientation_info_b[choice_b[0]][:3]))
+                centered_mol = orientation_info_b[choice_b[0]][4]
+                COM = orientation_info_a[i][3]
+            elif i == choice_a[1]:
+                child_z, child_y, child_x =(
+                np.array(orientation_info_b[choice_b[1]][:3]))
+                centered_mol = orientation_info_b[choice_b[1]][4]
+                COM = orientation_info_a[i][3]
+            else:
+                child_z, child_y, child_x =(
+                np.array(orientation_info_a[i][:3]))
+                COM = orientation_info_a[i][3]
+                centered_mol = orientation_info_a[i][4]
+            orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])
+
+        self.output("Child orientation info: " + str(orientation_info_child[0][:3]))
+        return orientation_info_child
     def reconstruct_child(self, child_lattice_info, child_orientation_info):
         '''
         Reconstructs the child's atomic positions and lattice
