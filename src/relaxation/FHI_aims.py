@@ -309,7 +309,16 @@ class FHIAimsRelaxation():
 		if ui.has_option(sname,"additional_arguments"):
 			arglist += ui.get_eval(sname,"additional_arguments")
 		arglist += [self.bin]
-
+    elif execute_command == "aprun":
+        arglist = ["aprun","-wdir",self.working_dir]
+        #arglist = ["aprun"]
+        #if ui.has_option("parallel_settings","allocated_nodes"):
+        #        arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
+        if ui.has_option("parallel_settings","processes_per_replica"):
+                arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
+        if ui.has_option("parallel_settings","additional_arguments"):
+                arglist += ui.get_eval("parallel_settings","additional_arguments")
+        arglist += [self.bin]
 
 	elif execute_command == "runjob":
 		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
