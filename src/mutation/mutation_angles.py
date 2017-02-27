@@ -28,22 +28,14 @@ def main(struct, replica):
     mutation fails 
     '''
     input_struct = deepcopy(struct)
-    print "input"
-    print input_struct.get_geometry_atom_format()
     vol = struct.get_unit_cell_volume()
     output.local_message("Input Structure's Volume: %s" % (vol), replica)
-
     ui = user_input.get_config()
     num_mols = ui.get_eval('unit_cell_settings', 'num_molecules')
     try: mutation_list = ui.get_list('mutation', 'specific_mutations')
     except: mutation_list = None
-    print mutation_list
-    #napm = int(len(input_struct.geometry)/num_mols)
-    #tapc = napm*num_mols
     Mutate = select_mutator(input_struct, num_mols, replica, mutation_list)
     mutated_struct = Mutate.mutate()
-    print "muated structure"
-    print mutated_struct.get_geometry_atom_format()
     return mutated_struct
 
 
@@ -74,7 +66,7 @@ def select_mutator(input_struct, num_mols, replica, mutation_list):
     elif mut_choice == "Frame_rot":
         mutator = RandomRotationFrameMutation(input_struct, num_mols, replica)
     elif mut_choice == "Rand_rot":
-        mutator = RandomRotationMolMutation(input_struct, num_mols, replica)
+        mutator = RandomRotationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Pair_trans":
         mutator = PairTranslationMutation(input_struct, num_mols, replica)
     elif mut_choice == "Pair_rot":
@@ -439,7 +431,7 @@ class RandomRotationFrameMutation(object):
         struct.set_property('gamma', gamma)
         return struct
 
-class RandomRotationMolMutation(object):
+class RandomRotationMutation(object):
     ''' Gives a random rotation to the COM of the molecules in the unit cell.'''
 
     def __init__(self, input_struct, num_mols, replica):
@@ -893,14 +885,14 @@ class SwapReflectionMutation(object):
     def swap_ref_molecules_pair(self, mol_list, mol_list_COM, st_dev):
         ''' Randomly rotates each molecule within gaussian dist'''
         rot_geometry = []
-        ang = random.choice([0])
+        ang = 0
         ang = random.choice([ang, -ang])
         rots = ([ang, 0, 0],
                 [0, ang, 0],
                 [0, 0, ang])
         rot = random.choice(rots)
-        self.output("-- Rotation %s" % (rot))
-        self.output("-- Along " + str(rots))
+        #self.output("-- Rotation %s" % (rot))
+        #self.output("-- Along " + str(rots))
         mol_in = 0
         mol_info = []
         mol_combos = list(itertools.combinations(range(self.num_mols), 2))
