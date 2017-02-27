@@ -312,12 +312,10 @@ class FHIAimsRelaxation():
 			arglist += ["-n",np]
 			mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
 			arglist += ["--mem",str(mem)]
-
-		arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
-			
-		if ui.has_option(sname,"additional_arguments"):
-			arglist += ui.get_eval(sname,"additional_arguments")
-		arglist += [self.bin]
+        arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
+        if ui.has_option(sname,"additional_arguments"):
+            arglist += ui.get_eval(sname,"additional_arguments")
+        arglist += [self.bin]
     elif execute_command == "aprun":
         arglist = ["aprun","-wdir",self.working_dir]
         #arglist = ["aprun"]
