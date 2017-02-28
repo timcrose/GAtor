@@ -30,7 +30,16 @@ all_geo = ui.all_geo()
 nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 olm = output.local_message
 
-#def compute_RCD_vector(original_struct):
+def compute_bending_angle(original_struct, index1, index2, index3):
+    geo = original_struct.geometry
+    atom1 = geo[index1]
+    atom2 = geo[index2]
+    atom3 = geo[index3]
+    angle = angle(index1-index2, index3-index2)*180/np.pi
+    if angle > 180:
+        angle = 360-angle
+    return angle
+        
 
 
 
@@ -83,11 +92,6 @@ def compute_RDF_vector(original_struct):
         vector_all += g[:]
     RDF_vec = vector_all[1:]
     struct.set_property("RDF_vector", RDF_vec)
-#    print vector_all[1:]
-#    print "\n"
-#    print "orig"
-#    print struct.get_property('RDF_smooth_fr') 
-#    print struct.get_property('RDF_vector_description')
     return struct
 
 def all_interatomic_distances (struct, a1, a2, a1_range=None, a2_range=None):
