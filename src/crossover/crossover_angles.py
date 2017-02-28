@@ -207,7 +207,7 @@ class Crossover(object):
                                       + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
-                rand_scale = random.uniform(0.96, 1.04)
+                rand_scale = random.uniform(0.97, 1.03)
                 new_info = rand_scale * (rand_vec[i] * lattice_info_a[i] 
                                       + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
@@ -233,11 +233,11 @@ class Crossover(object):
             parent_a_COM = False
 
         # Choose which Parent's conformer the child will inherit
-        mol_geo_choice = random.random()
-        if mol_geo_choice < 0.5:
-            parent_a_mol = True
-        else:
-            parent_a_mol = False
+        #mol_geo_choice = random.random()
+        #if mol_geo_choice < 0.5:
+        #    parent_a_mol = True
+        #else:
+        #    parent_a_mol = False
 
         # Randomly permute indices of molecules paired for mating
         n = len(orientation_info_a); a = range(n)
@@ -256,10 +256,10 @@ class Crossover(object):
                 COM = orientation_info_a[j][3]
             else:
                 COM = orientation_info_b[i][3]
-            if parent_a_mol:
-                centered_mol = orientation_info_a[j][4]
-            else:
-                centered_mol = orientation_info_b[i][4]
+            #if parent_a_mol:
+            centered_mol = orientation_info_a[j][4]
+            #else:
+            #    centered_mol = orientation_info_b[i][4]
             orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])   
 
         # Return Childs orientation info 
