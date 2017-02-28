@@ -210,15 +210,16 @@ def main(input_structure):
 
 class FHIAimsRelaxation():
     '''
-    Creates an optimizer object using FHI-Aims to execute a geometry.
+    Creates an optimizer object using FHI-Aims to execute energy
+    evaluations and relaxations.
     
     This is an example of using a class to define a state, in this case the
     state of the relaxation process throughout setup, execution, and extraction
     '''
     def __init__(self , input_structure, working_dir, control_in_string, replica):
         '''
-	Creates the environment for the optimizer and constructs the input files.
-	In this case, FHI-aims will take a geometry.in file and an comtrol.in file.
+        Creates the environment for the optimizer and constructs the input files.
+        In this case, FHI-aims will take a geometry.in file and an comtrol.in file.
         '''
         # this gives easy access to retrieve preferences from the user_input file
         self.ui = user_input.get_config()
@@ -227,13 +228,16 @@ class FHIAimsRelaxation():
         self.input_structure = input_structure
         self.working_dir = working_dir
         self.control_in_string = control_in_string
-	fh.mkdir_p_clean(self.working_dir)
-	self.create_geometry_in()
-	self.create_control_in()
-	self.set_permission()
-    
-    def output(self, message): output.local_message(message, self.replica)   
-        
+        fh.mkdir_p_clean(self.working_dir)
+        self.create_geometry_in()
+        self.create_control_in()
+        self.set_permission()
+        self.bin=ui.get('FHI-aims','path_to_aims_executable')
+        self.execute_command = ui.get('FHI-aims','execute_command')
+        self.sname = "parallel_settings"
+
+    def output(self, message): output.local_message(message, self.replica)
+
     def create_geometry_in(self):
         '''
         Writes the geometry.in file called by FHI-aims. 
@@ -243,9 +247,9 @@ class FHIAimsRelaxation():
         geometry_file = open(os.path.join(self.working_dir, 'geometry.in'), 'w')
         geometry_file.write(self.input_structure.get_geometry_atom_format())
         geometry_file.close()
-	more_file = open(os.path.join(self.working_dir, "struct.json"),"w")
-	more_file.write(self.input_structure.dumps())
-	more_file.close()
+        more_file = open(os.path.join(self.working_dir, "struct.json"),"w")
+        more_file.write(self.input_structure.dumps())
+        more_file.close()
         
     def create_control_in(self):
         '''
@@ -256,190 +260,186 @@ class FHIAimsRelaxation():
         control_file.write(self.control_in_string)
         control_file.close()
 
+
+    def return_execution_arglist(self):
+        '''
+        Returns the system-specific commands for running the aims executable
+        '''
+        sname = self.sname
+        ui = self.ui
+        original_dir = os.getcwd()
+        execute_command = self.execute_command
+
+        if execute_command == "mpirun":
+            arglist = ["mpirun","-wdir",self.working_dir]
+            if ui.has_option("parallel_settings","allocated_nodes"):
+                arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
+            if ui.has_option("parallel_settings","processes_per_replica"):
+                arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
+            if ui.has_option("parallel_settings","additional_arguments"):
+                arglist += ui.get_eval("parallel_settings","additional_arguments")
+            arglist += [self.bin]
+
+        elif execute_command == "srun":
+            arglist = ["srun","-D",self.working_dir]
+            if ui.has_option("parallel_settings","allocated_nodes"):
+                arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
+                arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
+            if ui.has_option("parallel_settings","processes_per_replica"):
+                np = ui.get("parallel_settings","processes_per_replica")
+                arglist += ["-n",np]
+                mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
+                arglist += ["--mem",str(mem)]
+            arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
+            if ui.has_option(sname,"additional_arguments"):
+                arglist += ui.get_eval(sname,"additional_arguments")
+            arglist += [self.bin]
+
+        elif execute_command == "aprun":
+            arglist = ["aprun","-wdir",self.working_dir]
+            arglist = ["aprun"]
+            print "here"
+            if ui.has_option("parallel_settings","processes_per_replica"):
+                    arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
+            if ui.has_option("parallel_settings","additional_arguments"):
+                    arglist += ui.get_eval("parallel_settings","additional_arguments")
+            arglist += [self.bin]
+            print arglist
+        elif execute_command == "runjob":
+            block_size=ui.get_eval('parallel_settings','nodes_per_replica')
+            modes = ui.get_eval("parallel_settings","runjob_processes_per_node")
+            arglist = ["runjob","--np",str(modes*block_size),"-p",str(modes),"--cwd",self.working_dir,"--exe",self.bin]
+            if ui.has_option("parallel_settings","runjob_block"):
+                arglist += ["--block",ui.get("parallel_settings","runjob_block")]
+            if ui.has_option("parallel_settings","runjob_corner"):
+                arglist += ["--corner",ui.get("parallel_settings","runjob_corner")]
+            if ui.has_option("parallel_settings","runjob_shape"):
+                arglist += ["--shape",ui.get("parallel_settings","runjob_shape")]
+            if ui.has_option("parallel_settings","additional_arguments"):
+                arglist += ui.get_eval("parallel_settings","additional_arguments")
+
+        elif execute_command == "shell":
+            os.chdir(self.working_dir)
+            arglist = [self.bin]
+
+        else:
+            raise ValueError("Unknown execute command: %s; supporting mpirun, srun, runjob, and shell" % execute_command)
+        return arglist
+
+
     def execute(self,enable_monitor=False,update_poll_interval=None,update_poll_times=None):
         '''
-	Directly calls mpirun to run the aims executable        
-	'''
-	def end_of_execution_tasks():
-		outfile.close()
-		output.local_message("-- aims job exit status: "
-					+ str(p.poll()),self.replica)
-		output.time_log("aims job exited with status "
-				+ str(p.poll()),self.replica)
-		os.chdir(original_dir)
+        Run the aims executable with user-defined options
+        '''
+        execute_command = self.execute_command
+        original_dir = os.getcwd()
+        def end_of_execution_tasks():
+            outfile.close()
+            output.local_message("-- aims job exit status: "
+                        + str(p.poll()),self.replica)
+            output.time_log("aims job exited with status "
+                    + str(p.poll()),self.replica)
+            os.chdir(original_dir)
 
-	if enable_monitor and (update_poll_interval==None or update_poll_times==None):
-		raise ValueError("FHI-aims job monitoring enabled, but no poll interval or times specified")
-
-	out_location = str(self.working_dir)
-        ui=user_input.get_config()
-        bin=ui.get('FHI-aims','path_to_aims_executable')
-	self.bin=bin
-	execute_command = ui.get('FHI-aims','execute_command')
-
-#	output.local_message("Aims relaxation being called. out_location=%s" % (out_location),self.replica)
-#	output.local_message("Binary location is"+bin,self.replica)
-	sname = "parallel_settings"
-
-	original_dir = os.getcwd()
-	if execute_command == "mpirun":
-		arglist = ["mpirun","-wdir",self.working_dir]
-		if ui.has_option("parallel_settings","allocated_nodes"):
-			arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-		if ui.has_option("parallel_settings","processes_per_replica"):
-			arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]	
-		if ui.has_option("parallel_settings","additional_arguments"):
-			arglist += ui.get_eval("parallel_settings","additional_arguments")
-		arglist += [self.bin]
-        if execute_command == "aprun":
-                #rglist = ["aprun","-wdir",self.working_dir]
-		arglist = ["aprun"]
-                #if ui.has_option("parallel_settings","allocated_nodes"):
-                #        arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-                if ui.has_option("parallel_settings","processes_per_replica"):
-                        arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
-                if ui.has_option("parallel_settings","additional_arguments"):
-                        arglist += ui.get_eval("parallel_settings","additional_arguments")
-                arglist += [self.bin]
-
-	elif execute_command == "srun":
-		arglist = ["srun","-D",self.working_dir]
-		if ui.has_option("parallel_settings","allocated_nodes"):
-			arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-			arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
-		if ui.has_option("parallel_settings","processes_per_replica"):
-			np = ui.get("parallel_settings","processes_per_replica")
-			arglist += ["-n",np]
-			mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
-			arglist += ["--mem",str(mem)]
-        arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
-        if ui.has_option(sname,"additional_arguments"):
-            arglist += ui.get_eval(sname,"additional_arguments")
-        arglist += [self.bin]
-    elif execute_command == "aprun":
-        arglist = ["aprun","-wdir",self.working_dir]
-        #arglist = ["aprun"]
-        #if ui.has_option("parallel_settings","allocated_nodes"):
-        #        arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-        if ui.has_option("parallel_settings","processes_per_replica"):
-                arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
-        if ui.has_option("parallel_settings","additional_arguments"):
-                arglist += ui.get_eval("parallel_settings","additional_arguments")
-        arglist += [self.bin]
-
-	elif execute_command == "runjob":
-		block_size=ui.get_eval('parallel_settings','nodes_per_replica')
-		modes = ui.get_eval("parallel_settings","runjob_processes_per_node")
-		arglist = ["runjob","--np",str(modes*block_size),"-p",str(modes),"--cwd",self.working_dir,"--exe",self.bin]
-		if ui.has_option("parallel_settings","runjob_block"):
-			arglist += ["--block",ui.get("parallel_settings","runjob_block")]
-		if ui.has_option("parallel_settings","runjob_corner"):
-			arglist += ["--corner",ui.get("parallel_settings","runjob_corner")]
-		if ui.has_option("parallel_settings","runjob_shape"):
-			arglist += ["--shape",ui.get("parallel_settings","runjob_shape")]
-		if ui.has_option("parallel_settings","additional_arguments"):
-			arglist += ui.get_eval("parallel_settings","additional_arguments")
-
-	elif execute_command == "shell":
-		os.chdir(self.working_dir)
-		arglist = [self.bin]
-
-	else:
-		raise ValueError("Unknown execute command: %s; supporting mpirun, srun, runjob, and shell" % execute_command)
-
-	aimsout=os.path.join(self.working_dir,"aims.out")
-	aimserr=os.path.join(self.working_dir,"aims.err")
-
-	if execute_command == "srun":
-		#Requires special implementation
-		stat = parallel_run.srun_call(arglist,aimsout,aimserr,self.replica)
-		output.local_message("-- aims job exit status: "
-					+ str(stat),self.replica)
-		output.time_log("aims job exited with status "
-				+ str(stat),self.replica)
-		return stat
-
-	if not enable_monitor:
-		outfile = open(aimsout,"w")
-		errfile = open(aimserr,"w")
-		get_execute_clearance(request_folder=self.working_dir)
-		output.time_log("aims job execute clearance acquired",self.replica)
-		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
-		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile, cwd=self.working_dir)
-		p.wait()
-		end_of_execution_tasks()
-		return True
-
-	for i in range (10): #Allow 10 times for the job to successfully launch
-		outfile=open(aimsout,"w")
-		errfile = open(aimserr,"w")
-		get_execute_clearance(request_folder=self.working_dir)
-		output.time_log("aims job execute clearance acquired",self.replica)
-		output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
-		p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile,cwd=self.working_dir)
-                #p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
-		time.sleep(1)
-		try:
-			status=p.poll()
-		except: #OSError Errno 3 Process does not exist
-			output.time_log("Nodes failure ; replica will pass out from now on")
-			time.sleep(86400)
-			os.chdir(original_dir)
-			return False
-			
-		time_limit=90
-		for j in range (time_limit): #Allow 60 seconds for aims to start outputting
-			if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
-				break
-			write_active(self.working_dir)
-			self.set_permission()
-			time.sleep(1)
-		if (os.stat(aimsout).st_size>512):
-			output.time_log("aims.out begins output", self.replica)
-			break
-		outfile.close()
-		output.time_log("aims job launch failure",self.replica)
-		try:
-			p.send_signal(2)
-		except:
-			output.time_log("Unable to kill process ; possible node failures", self.replica)
-			time.sleep(86400)
-		active_sleep(60,self.working_dir)
-		try:
-			self.set_permission()
-		except:
-			pass
+        if enable_monitor and (update_poll_interval==None or update_poll_times==None):
+            raise ValueError("FHI-aims job monitoddDring enabled, but no poll interval or times specified")
 
 
-		if i==9:
-			output.time_log("WARNING: Repeated launch failure ; exiting",self.replica)
-			os.chdir(original_dir)
-			return False
-	counter=0; last=os.stat(aimsout).st_size
-	while counter<update_poll_times and p.poll()==None: #The output file needs to update at least once in every 5 minutes
-		write_active(self.working_dir)
-		self.set_permission()
-		time.sleep(update_poll_interval)
-		if os.stat(aimsout).st_size>last:
-			last=os.stat(aimsout).st_size
-			counter=0
-		else:
-			counter+=1
-	if counter==60:
-		output.time_log("aims job hung",self.replica)
-		try:
-			p.send_signal(2)
-		except:
-			output.time_log("Unable to kill process ; possible node failures", self.replica)
-			time.sleep(86400)
-		active_sleep(60,self.working_dir)
-		try:
-			self.set_permission()
-		except:
-			pass
-	
-	end_of_execution_tasks()
-	return
+        arglist = self.return_execution_arglist()
+        print arglist
+        aimsout=os.path.join(self.working_dir,"aims.out")
+        aimserr=os.path.join(self.working_dir,"aims.err")
+
+        if execute_command == "srun":
+            #Requires special implementation
+            stat = parallel_run.srun_call(arglist,aimsout,aimserr,self.replica)
+            output.local_message("-- aims job exit status: "
+                        + str(stat),self.replica)
+            output.time_log("aims job exited with status "
+                    + str(stat),self.replica)
+            return stat
+
+        if not enable_monitor:
+            outfile = open(aimsout,"w")
+            errfile = open(aimserr,"w")
+            get_execute_clearance(request_folder=self.working_dir)
+            output.time_log("aims job execute clearance acquired",self.replica)
+            output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
+            p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile, cwd=self.working_dir)
+            p.wait()
+            end_of_execution_tasks()
+            return True
+
+        for i in range (10): #Allow 10 times for the job to successfully launch
+            outfile=open(aimsout,"w")
+            errfile = open(aimserr,"w")
+            get_execute_clearance(request_folder=self.working_dir)
+            output.time_log("aims job execute clearance acquired",self.replica)
+            output.time_log("Aims execution with arguments: "+" ".join(map(str,arglist)),self.replica)
+            p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile,cwd=self.working_dir)
+                    #p=subprocess.Popen(arglist,stdout=outfile,stderr=errfile)
+            time.sleep(1)
+            try:
+                status=p.poll()
+            except: #OSError Errno 3 Process does not exist
+                output.time_log("Nodes failure ; replica will pass out from now on")
+                time.sleep(86400)
+                os.chdir(original_dir)
+                return False
+                
+            time_limit=90
+            for j in range (time_limit): #Allow 60 seconds for aims to start outputting
+                if (p.poll()!=None) or (os.stat(aimsout).st_size>512):
+                    break
+                write_active(self.working_dir)
+                self.set_permission()
+                time.sleep(1)
+            if (os.stat(aimsout).st_size>512):
+                output.time_log("aims.out begins output", self.replica)
+                break
+            outfile.close()
+            output.time_log("aims job launch failure",self.replica)
+            try:
+                p.send_signal(2)
+            except:
+                output.time_log("Unable to kill process ; possible node failures", self.replica)
+                time.sleep(86400)
+            active_sleep(60,self.working_dir)
+            try:
+                self.set_permission()
+            except:
+                pass
+
+
+            if i==9:
+                output.time_log("WARNING: Repeated launch failure ; exiting",self.replica)
+                os.chdir(original_dir)
+                return False
+        counter=0; last=os.stat(aimsout).st_size
+        while counter<update_poll_times and p.poll()==None: #The output file needs to update at least once in every 5 minutes
+            write_active(self.working_dir)
+            self.set_permission()
+            time.sleep(update_poll_interval)
+            if os.stat(aimsout).st_size>last:
+                last=os.stat(aimsout).st_size
+                counter=0
+            else:
+                counter+=1
+        if counter==60:
+            output.time_log("aims job hung",self.replica)
+            try:
+                p.send_signal(2)
+            except:
+                output.time_log("Unable to kill process ; possible node failures", self.replica)
+                time.sleep(86400)
+            active_sleep(60,self.working_dir)
+            try:
+                self.set_permission()
+            except:
+                pass
+        
+        end_of_execution_tasks()
+        return
 	
 
     def output(self, message): output.local_message(message, self.replica)
