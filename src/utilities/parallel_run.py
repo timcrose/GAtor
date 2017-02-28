@@ -34,6 +34,8 @@ def launch_parallel():
 		launch_parallel_mpirun()
     elif spawn_method == "srun":
 		launch_parallel_mpirun(use_srun=True)
+    elif spawn_method == "aprun":
+        launch_parallel_aprun()
     else:
         raise ValueError("Unknown parallelization method: "+spawn_method)
 
@@ -272,6 +274,76 @@ def launch_bundled_bgq():
 	for p in processes:
 		p.wait()
 
+def launch_parallel_aprun():
+    sname = "parallel_settings"
+    output.time_log("aprun parallelization method is called")
+
+    all_processes = get_all_processes("aprun")
+    all_nodes = list(set(all_processes))
+
+    output.time_log("All nodes: "+", ".join(map(str,all_nodes)))
+    nop = len(all_processes) #Number of processes
+    non = len(all_nodes) #Number of nodes
+    ppn = int(nop/non) #Processes per node
+    npr = [] #Nodes per replica
+    ppr = [] #Processes per replica
+    nor = 0 #Number of replicas
+
+    if ui.has_option(sname,"processes_per_replica"):
+        ppr = ui.get_eval(sname,"processes_per_replica")
+        if ppr >= ppn:
+            npr = int(math.ceil(ppr/(ppn+0.0)))
+            if ui.has_option(sname,"number_of_replicas"):
+                nor = ui.get_eval(sname,"number_of_replicas")
+            else:
+                nor = non/npr
+            npr = [npr]*nor
+            ppr = [ppr]*nor
+        else:
+            rpn = ppn/ppr
+            if ui.has_option(sname,"number_of_replicas"):
+                nor = ui.get_eval(sname,"number_of_replicas")
+            else:
+                nor = non*rpn
+            npr = [int(0+(x%3)==0) for x in range(1,nor+1)]
+            ppr = [ppr]*nor
+    else:
+        message = "aprun parallelization method requires the setting "
+        message += "setting the following parameter within parallel_settings: "
+        message += "nodes_per_replica, processes_per_replica"
+        raise KeyError(message)
+
+
+    # Setup individual ui.conf for each replica
+    processes = []
+    new_ui = deepcopy(ui)
+    new_ui.set(sname,"parallelization_method","serial")
+    if not ui.has_option(sname,"processes_per_node"):
+        new_ui.set(sname,"processes_per_node",str(ppn))
+    python_command = ui.get(sname,"python_command")
+    new_ui.set(sname,"im_not_master_process","TRUE")
+
+    # Main loop to launch parallel replicas
+    node_count = 0
+
+    for i in range(nor):
+        if node_count == non:
+            node_count = 0
+        new_ui.set(sname,"replica_name",misc.get_random_index())
+        new_ui.set(sname,"processes_per_replica",str(ppr[i]))
+        new_ui.set(sname,"allocated_nodes","['"+str(all_nodes[node_count])+"']")
+        conf_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".conf")
+        exe_path = os.path.join(fh.conf_tmp_dir,new_ui.get(sname,"replica_name")+".exe")
+        f = open(conf_path,"w")
+        new_ui.write(f)
+        f.close()
+        arglist = [python_command,fh.GAtor_master_path,conf_path]
+        output.time_log("Running: "+" ".join(map(str,arglist)))
+        p = subprocess.Popen(arglist)
+        processes.append(p)
+        node_count +=1
+    for p in processes:
+        p.wait()
 
 def launch_parallel_mpirun(use_srun=False):
     sname = "parallel_settings"
@@ -427,38 +499,48 @@ def launch_parallel_mpirun(use_srun=False):
 
 
 def get_all_processes(command,hostlist=None):
-	'''
-	This function returns all the processors available for the current job
-	Specify hostlist if only wishes to access certain nodes
-	'''
-	if command!="mpirun" and command!="srun":
-		raise ValueError("Unsupported command for get_all_hosts; only supporting mpirun and srun")
-	arglist = [command]
-	if hostlist!=None:
-		if command == "mpirun":
-			arglist += ["--host",",".join(map(str,hostlist))]
-		elif command == "srun":
-			arglist += ["-w",",".join(map(str,hostlist))]
-	
-	arglist += ["python",os.path.join(fh.src_dir,"utilities","print_host.py")]
-	output.time_log("Acquiring all available processes using this command: "+" ".join(map(str,arglist)))
+    '''
+    This function returns all the processors available for the current job
+    Specify hostlist if only wishes to access certain nodes
+    '''
+    if command!="mpirun" and command!="srun" and command!="aprun":
+        raise ValueError("Unsupported command for get_all_hosts; only supporting mpirun and srun")
+    arglist = [command]
+    if hostlist!=None:
+        if command == "mpirun":
+            arglist += ["--host",",".join(map(str,hostlist))]
+        elif command == "srun":
+            arglist += ["-w",",".join(map(str,hostlist))]
+    elif command == "aprun":
+        sname = "parallel_settings"
+        npr = ui.get_eval(sname,"number_of_replicas")
+        ppr = ui.get_eval(sname,"processes_per_replica")
+        total_processes = npr*ppr
+        arglist += ["-n",str(total_processes)]
+        print "HERE"
 
-	p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
-	time.sleep(2)
-	p.wait()
-#	try:
-#		p.kill()
-#	except:
-#		pass
-	out , err = p.communicate()
-	try:
-		out = str(out,"utf-8") #Python 3
-	except:
-		pass
-	hosts = out.split("\n")
-	hosts.pop() #Last line empty
-	output.time_log("Number of processes acquired: "+str(len(hosts)))
-	return hosts
+    arglist += ["python",os.path.join(fh.src_dir,"utilities","print_host.py")]
+    output.time_log("Acquiring all available processes using this command: "+" ".join(map(str,arglist)))
+    p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
+    time.sleep(2)
+    p.wait()
+    out , err = p.communicate()
+    try:
+        out = str(out,"utf-8") #Python 3
+    except:
+        pass
+    if command == "aprun":
+        hosts = out.split("\n")
+        hosts = hosts[:-2]
+    else:
+        hosts = out.split("\n")
+        hosts.pop() #Last line empty
+    output.time_log("hosts \n" + str(hosts))
+
+    output.time_log("Number of processes acquired: "+str(len(hosts)))
+
+
+    return hosts
 
 def monitor_srun(processes):
 	'''
