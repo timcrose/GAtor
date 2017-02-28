@@ -59,7 +59,6 @@ class StructureCollection(object):
                 if os.path.isdir(os.path.join(self.path, name)) ]
         # for new indicies, add information to local memory
         for sdir in dirs:
-            print sdir 
             struct_id = sdir
             if struct_id not in self.structures.keys():
                 counter = 0
