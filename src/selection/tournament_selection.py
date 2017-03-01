@@ -51,6 +51,8 @@ class StructureSelection():
             message += "supporing maximize and minimize"
             raise ValueError(message)
 
+    def output(self, message): output.local_message(message, self.replica)
+
     def get_structures(self):
         structure_coll = self.structure_supercoll.get((self.replica_stoic, self.index))
         a, b = self.select_structures(structure_coll)
@@ -97,7 +99,7 @@ class StructureSelection():
                 ID = structure.struct_id
                 prop = self.prop
                 message = "Structure %s missing the property: %s" % (ID, prop)
-                output.local_message(message, self.replica)
+                self.output(message)
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
         min_prop = prop_list[0][0]
         max_prop = prop_list[-1][0] 
