@@ -37,8 +37,8 @@ def main(structure_coll, replica):
     elif cluster_type == "AffinityPropagationRCD":
         ClusterColl = AffinityPropagationClusteringRCD(structure_coll, replica)
         clustered_coll = ClusterColl.return_clusters()
-    elif cluster_type == "AffinityPropagationBendAngle":
-        ClusterColl = AffinityPropagationClusteringBendAngle(structure_coll, replica)
+    elif cluster_type == "AffinityPropagationAngleLat":
+        ClusterColl = AffinityPropagationClusteringAngleLat(structure_coll, replica)
         clustered_coll = ClusterColl.return_clusters()
 
     end = time()
@@ -189,7 +189,7 @@ class AffinityPropagationClusteringRDF():
         self.output("-- Number of clusters %s" % (len(info)))
         self.output("-- Distribution of clusters %s" % (sorted_info))
 
-class AffinityPropagationClusteringBendAngle():
+class AffinityPropagationClusteringAngleLat():
     '''
     This class performs K means clustering for a fixed number of 
     user-defined clusters on previously defined RDF vectors in each
@@ -203,8 +203,8 @@ class AffinityPropagationClusteringBendAngle():
 
 
     def return_clusters(self):
-        feature_list = np.array(self.return_RDF_list())
-
+        feature_list = np.array(self.return_descriptor_list())
+        print feature_list
         af = AffinityPropagation().fit(feature_list)
         cluster_centers_indices = af.cluster_centers_indices_
         clustered_data = af.labels_
@@ -224,16 +224,16 @@ class AffinityPropagationClusteringBendAngle():
         output.local_message(message, self.replica)
 
     def return_descriptor_list(self):
-        RDFs = []
+        angle_lats = []
         for index, struct in self.struct_coll:
-            RDF = struct.get_property(self.feature_type)
-            if RDF is not None:
-                RDFs.append(RDF)
-            elif RDF is None:
-                struct = structure_handling.compute_RDF_vector(struct)
-                RDF = struct.get_property(self.feature_type)
-                RDFs.append(RDF)
-        return RDFs
+            angle_lat = struct.get_property(self.feature_type)
+            if angle_lat is not None:
+                angle_lats.append(angle_lat)
+            elif angle_lat is None:
+                struct = structure_handling.compute_bending_angle(struct, 9, 3, 13)
+                angle_lat = struct.get_property(self.feature_type)
+                angle_lats.append(angle_lat)
+        return angle_lats
 
     def cluster_coll(self, clustered_data):
         ''' 
