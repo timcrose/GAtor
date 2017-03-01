@@ -43,19 +43,9 @@ def compute_bending_angle(original_struct, index1, index2, index3):
     if bend > 180:
         bend = 360 - bend
     des = [a, b, c, bend]
-    #print des 
-    print des, original_struct.struct_id
     original_struct.set_property('angle_lat_descriptor', des)
-    print original_struct.get_property('angle_lat_descriptor')
     return original_struct
         
-
-
-
-
-
-
-
 def compute_RDF_vector(original_struct):
     atomic_pairs = [['C', 'N'],['S', 'N'],['S','S']]
     #atomic_pairs = [['C', 'N'],['S', 'N']]

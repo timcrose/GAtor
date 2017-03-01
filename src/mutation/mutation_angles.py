@@ -59,8 +59,7 @@ def select_mutator(input_struct, num_mols, replica, mutation_list):
         mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
     message = "-- Mutation Choice: %s" % (mut_choice)
     output.local_message(message, replica)
-    print mut_choice
-    #mut_choice == "Pair_rot_mol"
+
     if mut_choice == "Rand_trans":
         mutator = RandomTranslationFrameMutation(input_struct, num_mols, replica)
     elif mut_choice == "Frame_rot":
@@ -918,7 +917,6 @@ class SwapReflectionMutation(object):
             i+=1
 
         choice = np.random.choice([0,1,2])
-        print choice
         i = 0
         for mol in mol_list:
             if mol_combo[0] == i:
@@ -1094,7 +1092,6 @@ class PermutationMutation(object):
         permuted_geometry = []
         permute = [i for i in range(1, len(mol_list)-1)]
         choice = random.choice(permute)    
-        print choice
         for i in range(len(mol_list)):
             mol = mol_list[i]
             for atom in mol:

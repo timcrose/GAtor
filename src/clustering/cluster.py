@@ -136,7 +136,6 @@ class AffinityPropagationClusteringRDF():
         clustered_data = af.labels_
           
         n_clusters_ = len(cluster_centers_indices)
-        print "here"
         print('Estimated number of clusters: %d' % n_clusters_)
         print("Silhouette Coefficient: %0.3f"
             % metrics.silhouette_score(feature_list, clustered_data, metric='sqeuclidean'))
@@ -204,18 +203,14 @@ class AffinityPropagationClusteringAngleLat():
 
     def return_clusters(self):
         feature_list = np.array(self.return_descriptor_list())
-        print feature_list
         af = AffinityPropagation().fit(feature_list)
         cluster_centers_indices = af.cluster_centers_indices_
         clustered_data = af.labels_
 
         n_clusters_ = len(cluster_centers_indices)
-        print "here"
         print('Estimated number of clusters: %d' % n_clusters_)
         print("Silhouette Coefficient: %0.3f"
             % metrics.silhouette_score(feature_list, clustered_data, metric='sqeuclidean'))
-
-
 
         clustered_coll = self.cluster_coll(clustered_data)
         return self.struct_coll
@@ -256,7 +251,6 @@ class AffinityPropagationClusteringAngleLat():
 
                 if label == j[0]:
                     struct.set_property('cluster_members', j[1])
-        print info
 
         # Output info
         self.output("-- Clustering Feature vector %s" % (self.feature_type))
