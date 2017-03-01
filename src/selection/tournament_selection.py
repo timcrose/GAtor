@@ -70,11 +70,13 @@ class StructureSelection():
         else:
             if self.ui.get_boolean("clustering","cluster_pool"):
                 print "shared fitness"
+                self.output("-- Using shared fitness scheme")
                 fitness_dict = self.get_shared_fitness(structure_coll)
                 return self.select_best_from_fitness(fitness_dict)
             else:
                 fitness_dict = self.get_fitness(structure_coll)
                 print "normal"
+                self.output("-- Using normal fitness scheme")
                 return self.select_best_from_fitness(fitness_dict) 
 
     def get_fitness(self, structure_coll):
