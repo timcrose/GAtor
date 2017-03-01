@@ -12,12 +12,11 @@ def main(struct):
     ''' 
     Args: Structure() from the GA
     Returns: Structure with approx spacegroup attached a property
-	'''
-	structp = get_pymatgen_structure(struct.get_frac_data())
-	SG = return_spacegroup(structp)
-	struct.set_property("space_group",SG)
-	print struct.struct_id
-	return struct
+    '''
+    structp = get_pymatgen_structure(struct.get_frac_data())
+    SG = return_spacegroup(structp)
+    struct.set_property("space_group",SG)
+    return struct
 
 def get_pymatgen_structure(frac_data):
     '''
