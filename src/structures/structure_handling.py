@@ -31,14 +31,23 @@ nmpc = ui.get_eval('unit_cell_settings','num_molecules')
 olm = output.local_message
 
 def compute_bending_angle(original_struct, index1, index2, index3):
+    a = original_struct.get_property('a')
+    b = original_struct.get_property('b')
+    c = original_struct.get_property('c')
     geo = original_struct.geometry
-    atom1 = geo[index1]
-    atom2 = geo[index2]
-    atom3 = geo[index3]
-    angle = angle(index1-index2, index3-index2)*180/np.pi
-    if angle > 180:
-        angle = 360-angle
-    return angle
+    atom1 = [geo[index1]['x'], geo[index1]['y'], geo[index1]['z']]
+    atom2 = [geo[index2]['x'], geo[index2]['y'], geo[index2]['z']]
+    atom3 = [geo[index3]['x'], geo[index3]['y'], geo[index3]['z']]
+    bend = angle(np.array(atom1) - np.array(atom2),
+                np.array(atom3) - np.array(atom2))*180/np.pi
+    if bend > 180:
+        bend = 360 - bend
+    des = [a, b, c, bend]
+    #print des 
+    print des, original_struct.struct_id
+    original_struct.set_property('angle_lat_descriptor', des)
+    print original_struct.get_property('angle_lat_descriptor')
+    return original_struct
         
 
 
@@ -544,8 +553,8 @@ def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 						struct.geometry[k][l]-=kk*vec[l]
 	return struct
 
-def angle(l1,l2):
-	return (np.rad2deg(np.arccos(np.dot(l1,l2)/(np.linalg.norm(l1)*np.linalg.norm(l2)))))
+#def angle(l1,l2):
+#	return (np.rad2deg(np.arccos(np.dot(l1,l2)/(np.linalg.norm(l1)*np.linalg.norm(l2)))))
 
 def cell_modification_test(struct,napm=None,create_duplicate=True):
     '''
