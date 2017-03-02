@@ -334,7 +334,7 @@ class Crossover(object):
         b = struct.get_property("lattice_vector_b")
         c = struct.get_property("lattice_vector_c")
         old_lattice = [a, b, c]
-        if rand < 0.25:
+        if rand < 0.5:
             i = 0
             choice = np.random.choice(["bca","cab"])
             choice = "cab"
