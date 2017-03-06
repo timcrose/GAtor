@@ -353,6 +353,7 @@ class Crossover(object):
                 struct.set_property("lattice_vector_b", a)
                 struct.set_property("lattice_vector_c", b)
                 structure_handling.move_molecule_in(struct, create_duplicate=False)
+                struct = structure_handling.cell_lower_triangular(struct)
                 self.output("-- cab orientation")
                 self.output(struct.get_geometry_atom_format())
             elif choice == "bca":
@@ -370,6 +371,7 @@ class Crossover(object):
                 struct.set_property("lattice_vector_b", c)
                 struct.set_property("lattice_vector_c", a)
                 structure_handling.move_molecule_in(struct, create_duplicate=False)
+                struct = structure_handling.cell_lower_triangular(struct)
                 self.output("-- bca orientation")
                 self.output(struct.get_geometry_atom_format())
  
