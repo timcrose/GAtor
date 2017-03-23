@@ -589,7 +589,7 @@ def get_all_processes(command,hostlist=None):
         ppr = ui.get_eval(sname,"processes_per_replica")
         total_processes = npr*ppr
         arglist = []   
-        arglist += [/opt/cray/elogin/eproxy/2.0.14-4.3/bin/aprun,"-n",str(total_processes)]
+        arglist += ["/opt/cray/elogin/eproxy/2.0.14-4.3/bin/aprun","-n",str(total_processes)]
         print "HERE"
 
     arglist += ["/home/fcurtis/soft/anaconda2/bin/python",os.path.join(fh.src_dir,"utilities","print_host.py")]
