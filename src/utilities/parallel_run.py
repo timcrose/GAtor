@@ -592,6 +592,7 @@ def get_all_processes(command,hostlist=None):
         print "HERE"
 
     arglist += ["python",os.path.join(fh.src_dir,"utilities","print_host.py")]
+    print arglist
     output.time_log("Acquiring all available processes using this command: "+" ".join(map(str,arglist)))
     p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
     time.sleep(2)
