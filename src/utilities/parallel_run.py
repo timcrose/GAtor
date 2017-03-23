@@ -588,10 +588,11 @@ def get_all_processes(command,hostlist=None):
         npr = ui.get_eval(sname,"number_of_replicas")
         ppr = ui.get_eval(sname,"processes_per_replica")
         total_processes = npr*ppr
-        arglist += ["-n",str(total_processes)]
+        arglist = []   
+        arglist += [/opt/cray/elogin/eproxy/2.0.14-4.3/bin/aprun,"-n",str(total_processes)]
         print "HERE"
 
-    arglist += ["python",os.path.join(fh.src_dir,"utilities","print_host.py")]
+    arglist += ["/home/fcurtis/soft/anaconda2/bin/python",os.path.join(fh.src_dir,"utilities","print_host.py")]
     print arglist
     output.time_log("Acquiring all available processes using this command: "+" ".join(map(str,arglist)))
     p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
