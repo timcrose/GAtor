@@ -18,7 +18,6 @@ except:
 		pass #Python 2
 
 def main():
-#	main_process = GAtor(sys.argv[-1])
 	src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 	sys.path.append(src_dir)
 	main_process = GAtor()
@@ -61,9 +60,6 @@ class GAtor():
 
 	def testing_mode(self):
 		from utilities import test_and_debug
-		if not self.ui.has_option("test_and_debug","testing_procedure"):
-			raise ValueError("testing mode is enabled, but testing_procedure parameter is missing from test_and_debug section")
-
 		test_procedure = self.ui.get("test_and_debug","testing_procedure")
 		if self.ui.is_master_process():
 			output.time_log("Testing and debugging mode enabled")
@@ -84,14 +80,14 @@ class GAtor():
 
 	def clean_folder(self):
 		sname = "clean_folder"
-		output.time_log("Cleaning folder is activied; pending user confirmation",sname)
-		user_answer = user_input.keyboard_input("Are you sure you want to clean the working directory (y/n):",allowed_answers=["y","n"],time_out=30)
+		output.time_log("Cleaning folder is activated; pending user confirmation", sname)
+		user_answer = user_input.keyboard_input("Are you sure you want to clean the working directory (y/n):",
+                                                allowed_answers=["y","n"],time_out=30)
 		if user_answer=="y":
 			output.time_log("User confirmation received. Begins cleaning.",sname)
 			clean()
-			#output.time_log("Cleaning completed.",sname)
 		else:
-			output.time_log("User denied cleaning or no user response is received within 30 s.",sname)
+			output.time_log("User denied cleaning",sname)
 			output.time_log("Moving on",sname)
 
 	def run_ga(self):
