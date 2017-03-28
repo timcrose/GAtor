@@ -105,6 +105,10 @@ def convert_to_structures(files_to_add):
         struct.build_geo_from_json_file(file)
         struct.set_property('file_path', file)
         struct.set_property('replica', 'init_pool')
+        try:
+            en_fr = struct.get_property('energy_fr')
+            struct.set_property('energy', en_fr)
+        except: pass
         if ui.ortho():
             napm = int(struct.get_n_atoms()/ui.get_nmpc())
             struct = structure_handling.cell_modification(struct,
