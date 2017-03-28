@@ -16,6 +16,7 @@ import multiprocessing
 ui = user_input.get_config()
 
 def launch_parallel():
+    import multiprocessing
     # Get user-defined parallization method
     sname = "parallel_settings"
     spawn_method = ui.get(sname,"parallelization_method")
