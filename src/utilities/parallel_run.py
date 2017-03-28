@@ -12,6 +12,7 @@ from utilities import misc
 from external_libs import bgqtools
 from external_libs.filelock import FileLock
 import time
+import multiprocessing
 ui = user_input.get_config()
 
 def launch_parallel():
