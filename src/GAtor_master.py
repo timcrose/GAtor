@@ -7,6 +7,7 @@ Created on June 26th, 2016
 import os, subprocess, shutil
 import sys,socket
 import core.file_handler as fh
+import time
 from core import user_input, kill, output
 from utilities import parallel_run,stoic_model, misc
 try:
@@ -93,6 +94,7 @@ class GAtor():
 	def run_ga(self):
 		from core import run_GA
 		sname = "parallel_settings"
+        time.sleep(20)
 		if self.ui.get(sname,"parallelization_method") != "serial":
 		#Launch parallelism
 			parallel_run.launch_parallel()
