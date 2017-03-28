@@ -108,7 +108,11 @@ def convert_to_structures(files_to_add):
         try:
             en_fr = struct.get_property('energy_fr')
             struct.set_property('energy', en_fr)
-        except: pass
+        except:
+            try:
+                en_fr = struct.get_property('energy_tier_1_fr_1e-2')
+                struct.set_property('energy', en_fr)
+            except: pass
         if ui.ortho():
             napm = int(struct.get_n_atoms()/ui.get_nmpc())
             struct = structure_handling.cell_modification(struct,
