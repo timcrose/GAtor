@@ -300,7 +300,8 @@ class FHIAimsRelaxation():
             arglist = ["aprun"]
             print "here"
             if ui.has_option("parallel_settings","processes_per_replica"):
-                    arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
+                    arglist += ["-n",ui.get("parallel_settings","aims_processes_per_replica")]
+            arglist+=["OMP_NUM_THREADS=1"] 
             if ui.has_option("parallel_settings","additional_arguments"):
                     arglist += ui.get_eval("parallel_settings","additional_arguments")
             arglist += [self.bin]
