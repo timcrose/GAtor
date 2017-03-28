@@ -349,13 +349,20 @@ def launch_parallel_aprun():
 
 def launch_parallel_theta():
     import multiprocessing
+    import socket, sys
+    sys.path.append("/home/richp/rpm/BUILD/cobalt-1.0.1/build/lib")
+    from Cobalt.Util import expand_num_list
+
+
     print multiprocesssing.cpu_count()
+    nodelist = " ".join([str(i) for i in sorted(set(expand_num_list(",".join(sys.argv[1:]))))])
+    #global nodelist
 
     sname = "parallel_settings"
     output.time_log("aprun parallelization method is called")
 
     all_processes = get_all_processes("aprun")
-    all_nodes = list(set(all_processes))
+    all_nodes = list(nodelist)
 
     output.time_log("All nodes: "+", ".join(map(str,all_nodes)))
     nop = len(all_processes) #Number of processes
@@ -413,13 +420,18 @@ def launch_parallel_theta():
         f = open(conf_path,"w")
         new_ui.write(f)
         f.close()
-        arglist = [python_command,fh.GAtor_master_path,conf_path]
-        output.time_log("Running: "+" ".join(map(str,arglist)))
-        p = subprocess.Popen(arglist)
+
+        p = subprocess.Popen(["aprun","-n","1","-L",all_nodes[1],python_command,fh.GAtor_master_path,conf_path])
         processes.append(p)
-        node_count +=1
+
+        #arglist = [python_command,fh.GAtor_master_path,conf_path]
+        output.time_log("Running: "+" ".join(map(str,arglist)))
+        #p = subprocess.Popen(arglist)
+        #processes.append(p)
+        #node_count +=1
     for p in processes:
         p.wait()
+
 def launch_parallel_mpirun(use_srun=False):
     sname = "parallel_settings"
     output.time_log("mpirun/srun parallelization method is called")
