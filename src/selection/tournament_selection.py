@@ -46,6 +46,7 @@ class StructureSelection():
                         'percent_best_structs_to_select'))
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")
+        self.tournament_size = self.ui.get("selection", "tournament_size")
         if self.op_style!="maximize" and self.op_style!="minimize":
             message = "Unknown type of optimization style in run_settings; "
             message += "supporing maximize and minimize"
@@ -223,7 +224,8 @@ class StructureSelection():
         fitness = self.normalized_fitness(fitness)
         #for struct, fit in fitness:
         #    print struct.struct_id, fit
-        tournament_participants = random.sample(list(fitness), 6)
+        size = int(self.tournament_size)
+        tournament_participants = random.sample(list(fitness), size)
         tournament_participants .sort(key=lambda x: x[1])
 
         winner = tournament_participants[-1]
