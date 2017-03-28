@@ -602,6 +602,7 @@ def get_all_processes(command,hostlist=None):
             arglist += ["-w",",".join(map(str,hostlist))]
     elif command == "aprun":
         sname = "parallel_settings"
+        arglist = []
         #npr = ui.get_eval(sname,"number_of_replicas")
         #ppr = ui.get_eval(sname,"processes_per_replica")
         #total_processes = npr*ppr   
