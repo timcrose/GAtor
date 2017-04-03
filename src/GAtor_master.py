@@ -85,7 +85,7 @@ class GAtor():
     def run_ga(self):
         from core import run_GA
         sname = "parallel_settings"
-        time.sleep(20)
+        time.sleep(5)
         if self.ui.get(sname,"parallelization_method") != "serial":
             #Launch parallelism
             parallel_run.launch_parallel()

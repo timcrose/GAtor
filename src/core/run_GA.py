@@ -586,7 +586,6 @@ def structure_create_for_multiprocessing(args):
     except: pass
     mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
     struct_coll = structure_collection.get_collection(stoic, 0)
-    print mut_choice
  
     #---- Get structures of selected parent ID's ----#
     struct_coll.update_local()
