@@ -413,8 +413,6 @@ class RunGA():
         return struct
 
     def generate_trial_structure(self):
-        count = 0
-        struct = False
         sname = "run_settings"
         begin_time = time.time()
         structure_supercoll = {}
@@ -424,7 +422,9 @@ class RunGA():
         selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
         
         # Select ID's of two parents chosen for selection
-        parent_a_ID, parent_b_ID = selection_module.main(structure_supercoll, self.replica_stoic, self.replica)
+        parent_a_ID, parent_b_ID = selection_module.main(structure_supercoll, 
+                                                         self.replica_stoic, 
+                                                         self.replica)
         
         # Choose probability of crossover, mutation, and symmetric crossover
         rand_cross = np.random.random()
@@ -432,15 +432,21 @@ class RunGA():
         try: sym_cross_prob = self.ui.get_eval('crossover', 'symmetric_crossover_probability')
         except: sym_cross_prob = 0.0
         mut_prob = 1.0 - float(cross_prob) - float(sym_cross_prob)
+        mutation_list = self.ui.get_list('mutation','specific_mutations')
+        mutation_choice = np.random.choice(mutation_list) 
 
         # Setup structure either in serial or mutliprocessing
+        count = 0
+        struct = False
         while count < total_attempts and struct == False:
             if self.processes == 1: #Serial
-                struct = structure_create_for_multiprocessing((self.replica, self.replica_stoic, \
-                parent_a_ID, parent_b_ID, rand_cross, cross_prob, sym_cross_prob))
+                struct = structure_create_for_multiprocessing((self.replica, self.replica_stoic, 
+                                                               parent_a_ID, parent_b_ID, 
+                                                               rand_cross, cross_prob, 
+                                                               sym_cross_prob, mutation_choice))
             else:
                 arglist = [(self.replica+"_"+str(x), self.replica_stoic, parent_a_ID, parent_b_ID,\
-                rand_cross, cross_prob, sym_cross_prob) for x in range (self.processes)]
+                rand_cross, cross_prob, sym_cross_prob, mutation_choice) for x in range (self.processes)]
                 results = self.worker_pool.map(structure_create_for_multiprocessing, arglist)
 
                 for i in range (self.processes): #Find a success
@@ -573,14 +579,15 @@ def structure_create_for_multiprocessing(args):
     '''
     ui = user_input.get_config()
     nmpc = ui.get_eval('unit_cell_settings','num_molecules')
-    replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, sym_cross_prob = args
+    replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, sym_cross_prob, mut_choice= args
     output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
     crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
     try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
     except: pass
     mutation_module = my_import(ui.get('modules', 'mutation_module'), package='mutation')
     struct_coll = structure_collection.get_collection(stoic, 0)
-    
+    print mut_choice
+ 
     #---- Get structures of selected parent ID's ----#
     struct_coll.update_local()
     parent_a = struct_coll.get_struct(parent_a_id)
@@ -640,7 +647,7 @@ def structure_create_for_multiprocessing(args):
         if ui.all_geo():
             output.local_message("Single Parent geometry:\n"
             + choice_struct.get_geometry_atom_format(),replica)
-        new_struct = mutation_module.main(choice_struct, replica)
+        new_struct = mutation_module.main(choice_struct, replica, mut_choice)
         if new_struct!=False and ui.all_geo():
             output.local_message("Mutated geometry:\n"
             + new_struct.get_geometry_atom_format(),replica)
@@ -649,7 +656,7 @@ def structure_create_for_multiprocessing(args):
             return False
         new_struct.set_property('parent_1', choice_struct.get_stoic_str() + '/'
             + str(choice_struct.get_input_ref()) + '/' + str(choice_struct.get_struct_id()))
-        if random.random() < 0.3:
+        if random.random() < 0.0:
             output.local_message("\n---- Second Mutation ----",replica)
             choice_struct = new_struct
             new_struct = mutation_module.main(choice_struct, replica)

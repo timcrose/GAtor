@@ -32,6 +32,7 @@ def main():
     user_structures_dir = os.path.join(cwd, ui.get('initial_pool', 'user_structures_dir'))
     added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
     num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
+    energy_name = ui.get('initial_pool', 'stored_energy_name')
     files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
     ui.grant_permission(added_user_structures)
     st = ' ------------------------------------------------------------------------'
@@ -40,7 +41,7 @@ def main():
     output.local_message(gst, replica)
     output.local_message(st, replica)
     output.local_message("Initial pool: %s" % (user_structures_dir), replica)
-    initial_list = convert_to_structures(files_to_add)
+    initial_list = convert_to_structures(files_to_add, energy_name)
     if len(initial_list) == 0:
         output.time_log("Initial pool already filled")
         output.local_message("Initial pool already filled",replica)
@@ -93,7 +94,7 @@ def file_lock_structures(user_structures_dir, added_user_structures):
 		ffile.close()	
 	return files_to_add
 
-def convert_to_structures(files_to_add):
+def convert_to_structures(files_to_add, energy_name="energy"):
     '''
     Args: List of files to add to collection
     Returns: List of Structures(), 
@@ -104,21 +105,19 @@ def convert_to_structures(files_to_add):
         struct = Structure()
         struct.build_geo_from_json_file(file)
         struct.set_property('file_path', file)
-        struct.set_property('replica', 'init_pool')
-        try:
-            en_fr = struct.get_property('energy_fr')
-            struct.set_property('energy', en_fr)
-        except: pass
-        try:
-            en_fr = struct.get_property('energy_tier_1_fr_1e-2')
-            struct.set_property('energy', en_fr)
-        except: pass
-        if ui.ortho():
-            napm = int(struct.get_n_atoms()/ui.get_nmpc())
-            struct = structure_handling.cell_modification(struct,
+        struct.set_property('replica', 'init_pool') 
+        en = struct.get_property(energy_name)
+        if en is not None:
+            struct.set_property('energy', en)
+            if ui.ortho():
+                napm = int(struct.get_n_atoms()/ui.get_nmpc())
+                struct = structure_handling.cell_modification(struct,
 							     napm,
 							     create_duplicate=True)
             initial_list.append(struct)
+        else:
+            raise ValueError('Energy name %s not found for  %s' % \
+                             (en, file))
     return initial_list
 
 def set_IP_structure_matcher(ui):

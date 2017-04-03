@@ -20,7 +20,7 @@ from pymatgen import Molecule
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer as pga
 
 
-def main(struct, replica):
+def main(struct, replica, mut_choice):
     '''
     Args: Single Structure() to mutate, the replica name running the 
     crossover instance.
@@ -32,31 +32,31 @@ def main(struct, replica):
     output.local_message("Input Structure's Volume: %s" % (vol), replica)
     ui = user_input.get_config()
     num_mols = ui.get_eval('unit_cell_settings', 'num_molecules')
-    try: mutation_list = ui.get_list('mutation', 'specific_mutations')
-    except: mutation_list = None
-    Mutate = select_mutator(input_struct, num_mols, replica, mutation_list)
+    #try: mutation_list = ui.get_list('mutation', 'specific_mutations')
+    #except: mutation_list = None
+    Mutate = select_mutator(input_struct, num_mols, replica, mut_choice)
     mutated_struct = Mutate.mutate()
     return mutated_struct
 
 
-def select_mutator(input_struct, num_mols, replica, mutation_list):
+def select_mutator(input_struct, num_mols, replica, mut_choice):
     '''
     In this mutation implementation, there are several classes, each performing a 
     different mutation. This method selecting which mutation to employ
     Expects: Structure, number of molecules per cell, replica name
     Returns: Mutation Class
     '''
-    if mutation_list == None:
-        mutation_list = (["Rand_trans", "Pair_trans", 
-                          "Rand_strain","Sym_strain", "Vol_strain",
-                          "Frame_rot", "Pair_rot", "Rand_rot",  
-                          "Swap_mol", "Permute_mol",
-                           "Swap_rot", "Swap_ref"])
+    #if mutation_list == None:
+    #    mutation_list = (["Rand_trans", "Pair_trans", 
+    #                      "Rand_strain","Sym_strain", "Vol_strain",
+    #                      "Frame_rot", "Pair_rot", "Rand_rot",  
+    #                      "Swap_mol", "Permute_mol",
+    #                       "Swap_rot", "Swap_ref"])
 
-    try:
-        mut_choice = np.random.choice(mutation_list)
-    except:
-        mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
+    #try:
+    #    mut_choice = np.random.choice(mutation_list)
+    #except:
+    #    mut_choice = mutation_list[int(np.random.random()*len(mutation_list))]
     message = "-- Mutation Choice: %s" % (mut_choice)
     output.local_message(message, replica)
 

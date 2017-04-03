@@ -279,8 +279,8 @@ class AffinityPropagationClusteringLatVol():
         clustered_data = af.labels_
 
         n_clusters_ = len(cluster_centers_indices)
-        print('Estimated number of clusters: %d' % n_clusters_)
-        print("Silhouette Coefficient: %0.3f"
+        self.output('Estimated number of clusters: %d' % n_clusters_)
+        self.output("Silhouette Coefficient: %0.3f"
             % metrics.silhouette_score(feature_list, clustered_data, metric='sqeuclidean'))
 
         clustered_coll = self.cluster_coll(clustered_data)
@@ -292,18 +292,18 @@ class AffinityPropagationClusteringLatVol():
     def return_descriptor_list(self):
         lat_vols = []
         for index, struct in self.struct_coll:
-            lat_vol = struct.get_property(self.feature_type)
-            if lat_vol is not None:
-                lat_vols.append(lat_vol)
-            elif lat_vol is None:
-                a = np.linalg.norm(struct.get_property('lattice_vector_a'))
-                b = np.linalg.norm(struct.get_property('lattice_vector_b'))
-                c = np.linalg.norm(struct.get_property('lattice_vector_c'))
-                vol = struct.get_unit_cell_volume()
-                vol = np.cbrt(vol)
-                lat_vol = [a/vol, b/vol, c/vol]
-                struct.set_property(self.feature_type, lat_vol)
-                lat_vols.append(lat_vol)
+            #lat_vol = struct.get_property(self.feature_type)
+            #if lat_vol is not None:
+            #    lat_vols.append(lat_vol)
+            #elif lat_vol is None:
+            a = np.linalg.norm(struct.get_property('lattice_vector_a'))
+            b = np.linalg.norm(struct.get_property('lattice_vector_b'))
+            c = np.linalg.norm(struct.get_property('lattice_vector_c'))
+            vol = struct.get_unit_cell_volume()
+            vol = np.cbrt(vol)
+            lat_vol = [a/vol, b/vol, c/vol]
+            struct.set_property(self.feature_type, lat_vol)
+            lat_vols.append(lat_vol)
         return lat_vols
 
     def cluster_coll(self, clustered_data):
@@ -324,7 +324,6 @@ class AffinityPropagationClusteringLatVol():
             struct.set_property("cluster_label", label)
             i += 1
             for j in info:
-
                 if label == j[0]:
                     struct.set_property('cluster_members', j[1])
 

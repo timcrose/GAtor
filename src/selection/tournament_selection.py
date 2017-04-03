@@ -142,7 +142,7 @@ class StructureSelection():
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
         min_prop = prop_list[0][0]
         max_prop = prop_list[-1][0]
-
+        self.output(str(prop_list))
         # Compute relative fitness for all structs
         fitness = {}
         for index, struct in structure_coll:
@@ -150,6 +150,8 @@ class StructureSelection():
             if self.op_style=="maximize":
                 prop = -prop
             clust_mem = struct.get_property('cluster_members')
+            output.local_message(str(clust_mem), self.replica)
+            output.local_message(str(prop), self.replica)
             prop_clus = prop/clust_mem
             rho = (max_prop - prop_clus) / (max_prop - min_prop)
             if reverse: rho = 1 - rho
