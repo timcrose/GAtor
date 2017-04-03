@@ -348,7 +348,6 @@ class Crossover(object):
                     new_atom = np.dot(new_frac, new_lattice)
                     atom['x'], atom['y'], atom['z'] = new_atom
                     i = i +1
-
                 struct.set_property("lattice_vector_a", c)
                 struct.set_property("lattice_vector_b", a)
                 struct.set_property("lattice_vector_c", b)
@@ -366,7 +365,6 @@ class Crossover(object):
                     new_atom = np.dot(new_frac, new_lattice)
                     atom['x'], atom['y'], atom['z'] = new_atom
                     i = i +1
-
                 struct.set_property("lattice_vector_a", b)
                 struct.set_property("lattice_vector_b", c)
                 struct.set_property("lattice_vector_c", a)

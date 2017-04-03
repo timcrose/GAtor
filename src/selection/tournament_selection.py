@@ -142,7 +142,7 @@ class StructureSelection():
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
         min_prop = prop_list[0][0]
         max_prop = prop_list[-1][0]
-        self.output(str(prop_list))
+        #self.output(str(prop_list))
         # Compute relative fitness for all structs
         fitness = {}
         for index, struct in structure_coll:
@@ -150,8 +150,6 @@ class StructureSelection():
             if self.op_style=="maximize":
                 prop = -prop
             clust_mem = struct.get_property('cluster_members')
-            output.local_message(str(clust_mem), self.replica)
-            output.local_message(str(prop), self.replica)
             prop_clus = prop/clust_mem
             rho = (max_prop - prop_clus) / (max_prop - min_prop)
             if reverse: rho = 1 - rho
@@ -224,16 +222,35 @@ class StructureSelection():
     def select_best_from_fitness(self, fitness_dict):
         fitness = self.sorted_fitness(fitness_dict)
         fitness = self.normalized_fitness(fitness)
-        #for struct, fit in fitness:
-        #    print struct.struct_id, fit
+
         size = int(self.tournament_size)
         tournament_participants = random.sample(list(fitness), size)
-        tournament_participants .sort(key=lambda x: x[1])
+        tournament_participants.sort(key=lambda x: x[1])
+        all_participants = list(fitness)
+        all_participants.sort(key=lambda x: x[1])
 
         winner = tournament_participants[-1]
         runner_up = tournament_participants[-2]
+        if self.ui.get_boolean('selection','select_in_cluster'):
+            win_group = winner[0].get_property('cluster_label')
+            run_group = runner_up[0].get_property('cluster_label')
+            if win_group == run_group:
+                self.output("-- Winner group: %s" % (win_group))
+                self.output("-- Runner up group equal to winner group")
+                pass    
+            elif win_group != run_group:
+                self.output("-- Runner up group NOT equal to winner group")
+                self.output("-- Selecting another structure with same group")
+                for structfit in all_participants:
+                    if structfit[0] != winner[0]:
+                        group = structfit[0].get_property('cluster_label')
+                        if group == win_group:
+                            runner_up = structfit
+                            self.output("-- Selected ID: %s" %(runner_up[0].struct_id))
+                            break    
+                    
 
-        print ("Best fitness: %s" % fitness[-1][0].struct_id)
-        print ("Worst fitness: %s" % fitness[0][0].struct_id)
+        #print ("Best fitness: %s" % fitness[-1][0].struct_id)
+        #print ("Worst fitness: %s" % fitness[0][0].struct_id)
         return winner, runner_up
     

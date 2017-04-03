@@ -624,7 +624,6 @@ class PairRotationMutation(object):
     For example, for Z=4 it may rotate molecules 1 & 2 the same amount, leaving
     3 & 4 alone
     '''
-
     def __init__(self, input_struct, num_mols, replica):
         self.input_struct = input_struct
         self.num_mols = num_mols
@@ -1409,7 +1408,7 @@ class CellAngleMutation(object):
         atom_type_list = [temp_geo[i][3] for i in range(len(temp_geo))]
         lat_mat = set_lat_mat(self.A, self.B, self.C)
         lat_mat_f = np.linalg.inv(lat_mat)
-
+        
         count = 0
         while True:
             selection = np.random.choice(['alpha','beta','gamma'])
@@ -1436,8 +1435,6 @@ class CellAngleMutation(object):
                 cz = (self.c**2 - cx**2 - cy**2)**0.5
                 strain_C = [cx, cy, cz]
                 break
-            
-
         mol_list = [temp_geo[x:x+num_atom_per_mol] for x in range(0, len(temp_geo), num_atom_per_mol)]
         mol_list_COM = get_COM_mol_list(mol_list)
         mol_list_COM_f = get_COM_mol_list_f(lat_mat_f, np.array(mol_list_COM))
