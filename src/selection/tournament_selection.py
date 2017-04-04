@@ -131,6 +131,8 @@ class StructureSelection():
                 if self.op_style=="maximize":
                     prop = -prop
                 clust_mem = structure.get_property('cluster_members')
+                if clust_mem == None:
+                    clust_mem = 1
                 prop_clus = prop/clust_mem
                 prop_list = np.append(prop_clus,prop_list)
             except KeyError:

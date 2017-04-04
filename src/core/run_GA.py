@@ -613,7 +613,7 @@ def structure_create_for_multiprocessing(args):
             structures_to_cross[1].get_geometry_atom_format(), replica)
             output.local_message("-- Child's geometry --\n" +
             new_struct.get_geometry_atom_format(),replica)
-        new_struct.set_property('mutation_type', 'no_mutation')
+        new_struct.set_property('mutation_type', 'No_mutation')
         for i in range(len(structures_to_cross)):
             par_st = structures_to_cross[i]
             new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
@@ -633,7 +633,7 @@ def structure_create_for_multiprocessing(args):
             structures_to_cross[1].get_geometry_atom_format(), replica)
             output.local_message("-- Child's geometry --\n" +
             new_struct.get_geometry_atom_format(),replica)
-        new_struct.set_property('mutation_type', 'no_mutation')
+        new_struct.set_property('mutation_type', 'No_mutation')
         for i in range(len(structures_to_cross)):
             par_st = structures_to_cross[i]
             new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
