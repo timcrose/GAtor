@@ -152,6 +152,8 @@ class StructureSelection():
             if self.op_style=="maximize":
                 prop = -prop
             clust_mem = struct.get_property('cluster_members')
+            if clust_mem == None:
+                clust_mem = 1
             prop_clus = prop/clust_mem
             rho = (max_prop - prop_clus) / (max_prop - min_prop)
             if reverse: rho = 1 - rho
