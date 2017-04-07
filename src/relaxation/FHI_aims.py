@@ -9,6 +9,7 @@ import datetime
 import numpy as np
 import shutil
 import sys
+import json
 sys.path.append("/lustre/project/nmarom/fcurtis/NEW_gator/latest_git/src")
 
 from core import user_input, output
@@ -200,6 +201,15 @@ def main(input_structure):
 			    shutil.copytree(working_dir,path)
 			    output.time_log("Successful calc folder saved to "+path)
 			    output.local_message("-- Successful calc folder saved to "+path)
+            try: 
+                list_of_Properties_to_get = ui.get_list(sname, "save_output_data")
+		#aims_out is the path of the aims output file
+                aims_out = os.path.join(working_dir, "aims.out")
+                po = ParseOutput(list_of_Properties_to_get)
+		po.parseFile(aims_out)
+	    #if no parameters are requested to be saved: pass
+            except: pass
+
         if et!=None and energy >= et: #Rejected
             output.local_message("-- Energy threshold not met; structure rejected")
             return input_structure,"rejected"
@@ -207,6 +217,261 @@ def main(input_structure):
             output.local_message("-- Energy threshold met")
         output.local_message('\n|------------------------ End FHI-aims evaluation ------------------------|')			
 	return input_structure,"accepted"
+
+class ParseOutput:
+    #This class contains all the methods required to extract the data specified
+    # from "aims.out" and write the data to json files. See documentation for
+    # a description of each method and its parameters.
+    def resetVars(self):
+        #This method resets many of the data variables to their initial values
+        # for use in the next self-consistent convergence cycle.
+        
+        #data is a dict to easily keep track of all data being parsed and to
+        # easily write the data to the json file.
+        self.data = {}
+        self.data['geometry'] = []
+        self.data['forces'] = []
+        self.data['hirshfeld Vol'] = []
+        self.hirshfeldVols = []
+        self.converged = False
+    #endFunc resetVars
+    
+    def __init__(self, list_of_Properties_to_get):
+        #This method retrieves the kinds of values the user wanted to save
+        # and initializes variables.
+        
+        #The possible flags in the config file that would be included if the
+        # user wanted to keep the data for that property
+        list_of_Possible_Properties = ['geometry','totEnergy','vdWCorrection',\
+                                       'forces','hirshfeldVol']
+        #store True for properties the user wants to save and False otherwise
+        propertyBools = []
+        
+        for prop in list_of_Possible_Properties:
+            if prop in list_of_Properties_to_get:
+                propertyBools.append(True)
+            else:
+                propertyBools.append(False)
+                
+        [self.bAtomicCoordinates, self.bTotEnergy, self.bVdWCorrection,\
+        self.bForces, self.bHirshVol] = propertyBools
+        
+        self.convergenceCycleNum = 0
+        self.resetVars()
+        
+    def incrementLineNumAndReturnSplitLine(self):
+        #This method splits the next line in the file into strings in a list
+        # e.g.
+        # atom        -4.21034890        5.31230613       -3.50454216  S
+        # becomes
+        # ['atom','-4.21034890','5.31230613','-3.50454216','S']
+        self.lineNum+=1
+        line = self.lines[self.lineNum]
+        return line.split()
+    #endFunc incrementLineNumAndReturnSplitLine
+        
+    def getToLineOfDesiredValue(self, subStrInDesiredLine, indexOfSubStrInSplitLine):
+        #The target value may be a few lines down from the search string used 
+        # to find the value. This method searches from the line of the search
+        # string line-by-line until the lines containing the target value is
+        # reached.
+        splitLine = self.incrementLineNumAndReturnSplitLine()
+    
+        while self.lineNum < len(self.lines):
+            try:
+                bLineFound = subStrInDesiredLine == splitLine[indexOfSubStrInSplitLine]
+            except IndexError:
+                #IndexError here means line is an empty line ('').
+                splitLine = self.incrementLineNumAndReturnSplitLine()
+                continue
+            if bLineFound:
+                break
+            else:
+                splitLine = self.incrementLineNumAndReturnSplitLine()
+                
+        #exit if reached EOF
+        if self.lineNum == len(self.lines):
+            exit
+    #endFunc getToLineOfDesiredValue
+        
+    def getAtomList(self):
+        #This method populates atomList with a list of atomic symbols in the 
+        # molecule being evaluated.
+        
+        try:
+            #return if atomList is already populated
+            return self.atomList
+        except:
+            #atomList isn't defined so this is the first find of 'geometry.in'
+            pass
+        #first set of coordinates has 'atom' as a substring in position 0 in 
+        # the split line
+        self.getToLineOfDesiredValue('atom', 0)
+            
+        self.atomList = []
+        line = self.lines[self.lineNum]
+        splitLine = line.split()
+        
+        #Because the lines with atomic forces will contain the atom #, this 
+        # goes for all atoms dynamically
+        while splitLine != []:
+            #write one entry of x,y,z coordinate data per atom
+            self.atomList.append(splitLine[4])
+            splitLine = self.incrementLineNumAndReturnSplitLine()
+    #endFun getAtomList
+    
+    def getXYZ(self, line, valueToGet):
+        #This func optionally returns the x,y,z coordinates of an atom or
+        # the forces acting in the x, y, and z directions on an atom
+        
+        if valueToGet == 'atomicPositions':
+            #_ is a place holder. See template.
+            _,x,y,z,_ = line.split()
+            
+        elif valueToGet == 'forces':
+            _,_,x,y,z = line.split()
+        else:
+            return []
+                      
+        return [x, y, z]
+    #endFunc getXYZ
+    
+    def HirshfeldVol(self, line):
+        #This func adds a hirshfeld volume of an atom to a list
+        
+        lineSplit = line.split()
+        self.hirshfeldVols.append(lineSplit[4])
+        
+        #only write hirshfeld volume data when data for all atoms has been
+        # included
+        if len(self.hirshfeldVols) != len(self.atomList):
+            return
+            
+        for atomNum, volSet in enumerate(self.hirshfeldVols):
+            self.data['hirshfeld Vol'].append([volSet] + [self.atomList[atomNum]])
+    #endFunc HirshfeldVol
+    
+    def vdWCorrection(self, line):
+        #This func gets the vdWaals correction value
+        
+        #save the vdW energy correction value
+        splitLine = line.split()
+        self.vdWCorrectionValue = splitLine[7]
+        self.data['vdWCorrectionValue'] = self.vdWCorrectionValue
+    #endFunc vdWCorrection
+    
+    def totEnergy(self, line):
+        #This func gets the total energy
+            
+        #save the Total energy value
+        splitLine = line.split()
+        totEnergyValue = splitLine[6]
+        #include the Total energy
+        self.data['totEnergyValue'] = totEnergyValue
+    #endFunc totEnergy
+    
+    def newAtomicStructure(self):
+        #This writes the cartesian atomic coordinates of all atoms to data
+            
+        atomNum = 0
+        
+        self.getToLineOfDesiredValue('atom', 0)
+        
+        line = self.lines[self.lineNum]
+        splitLine = line.split()
+        
+        #Because the lines with atomic forces will contain the atom #, this 
+        # goes for all atoms dynamically
+        while splitLine[0] == 'atom':
+            #write one entry of x,y,z coordinate data per atom
+            self.data['geometry'].append(self.getXYZ(line, 'atomicPositions') + [self.atomList[atomNum]])
+            atomNum+=1
+            splitLine = self.incrementLineNumAndReturnSplitLine()
+            if len(splitLine) == 0:
+                break
+    #endFunc newAtomicStructure
+    
+    def totForces(self):
+        #This writes the forces in the x,y,and z directions on all atoms to data
+        
+        splitLine = self.incrementLineNumAndReturnSplitLine()
+        line = self.lines[self.lineNum]
+            
+        atomNum = 0
+        
+        #Because the lines with atomic forces will contain the atom #, this 
+        # goes for all atoms dynamically
+        while int(splitLine[1]) == atomNum+1:
+            self.data['forces'].append(self.getXYZ(line, 'forces') + [self.atomList[atomNum]])
+            atomNum+=1
+            splitLine = self.incrementLineNumAndReturnSplitLine()
+    
+            # a blank line will have len = 0 (which occurs in the line after
+            # the forces list)
+            if len(splitLine) == 0:
+                break
+    #endFunc totForces
+    
+    def writeData(self):
+        #write data to JSON file
+        with open('data_for_convergence_cycle_'+str(self.convergenceCycleNum)+'.json', 'w') as outfile:  
+            json.dump(self.data, outfile)
+        
+        #A new self-consistency cycle begins...
+        self.convergenceCycleNum += 1
+        self.resetVars()
+    #endFunc writeData
+    
+    def switchCase(self, line):
+        #This func searches the given line for the presence a search string and 
+        # executes the corresponding function when the substr is found in the
+        # converged data and if the user wanted to save the corresponding value.
+        
+        searchStrings = ['geometry.in',\
+                         'Self-consistency cycle converged',\
+                         '|   Hirshfeld volume        :',\
+                         '| vdW energy correction         :',\
+                         '| Total energy                  :',\
+                         'Total atomic forces (unitary forces cleaned) [eV/Ang]:',\
+                         'Updated atomic structure:',\
+                         'Begin self-consistency loop'\
+                         ]
+        
+        for strNum, searchStr in enumerate(searchStrings):
+            if searchStr in line:
+                if strNum == 0:
+                    self.getAtomList()
+                if strNum == 1:
+                    self.converged = True
+                if strNum == 2 and self.converged and self.bHirshVol:
+                    self.HirshfeldVol(line)
+                elif strNum == 3 and self.converged and self.bVdWCorrection:
+                    self.vdWCorrection(line)
+                elif strNum == 4 and self.converged and self.bTotEnergy:
+                    self.totEnergy(line)
+                elif strNum == 5 and self.converged and self.bForces:
+                    self.totForces()
+                elif strNum == 6 and self.converged and self.bAtomicCoordinates:
+                    self.newAtomicStructure()
+                elif strNum == 7 and self.converged:
+                    self.writeData()
+    #endFunc switchCase
+    
+    def parseFile(self, sFilePath):
+        #This func iterates through each line in the file and passes each line
+        # to switchCase
+        
+        with open(sFilePath, 'r') as f:
+            self.lines = f.readlines()
+            
+            self.lineNum = 0
+            while self.lineNum < len(self.lines):
+                line = self.lines[self.lineNum]
+                self.switchCase(line)
+                self.lineNum += 1
+    #endFunc parseFile
+    
+#endClass ParseOutput
 
 class FHIAimsRelaxation():
     '''
@@ -300,8 +565,7 @@ class FHIAimsRelaxation():
             arglist = ["aprun"]
             print "here"
             if ui.has_option("parallel_settings","processes_per_replica"):
-                    arglist += ["-n",ui.get("parallel_settings","aims_processes_per_replica")]
-            arglist+=["-e","OMP_NUM_THREADS=1"] 
+                    arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
             if ui.has_option("parallel_settings","additional_arguments"):
                     arglist += ui.get_eval("parallel_settings","additional_arguments")
             arglist += [self.bin]
