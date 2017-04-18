@@ -10,6 +10,7 @@ import numpy as np
 import shutil
 import sys
 import json
+import glob
 sys.path.append("/lustre/project/nmarom/fcurtis/NEW_gator/latest_git/src")
 
 from core import user_input, output
@@ -205,7 +206,7 @@ def main(input_structure):
                 list_of_Properties_to_get = ui.get_list(sname, "save_output_data")
 		#aims_out is the path of the aims output file
                 aims_out = os.path.join(working_dir, "aims.out")
-                po = ParseOutput(list_of_Properties_to_get)
+                po = ParseOutput(list_of_Properties_to_get, working_dir)
 		po.parseFile(aims_out)
 	    #if no parameters are requested to be saved: pass
             except: pass
@@ -236,11 +237,17 @@ class ParseOutput:
         self.Hirshfeld_volume = []
         self.converged = False
     #endFunc resetVars
+
+    def getInitCycleNum(self):
+	dataDir = os.path.join(self.working_dir, "data_for_convergence_cycle_*")
+	dataFileNames = glob.glob(dataDir)
+	return len(dataFileNames)
+    #endFun getInitCycleNum
     
-    def __init__(self, list_of_Properties_to_get):
+    def __init__(self, list_of_Properties_to_get, working_dir):
         #This method retrieves the kinds of values the user wanted to save
         # and initializes variables.
-        
+        self.working_dir = working_dir
         #The possible flags in the config file that would be included if the
         # user wanted to keep the data for that property
         list_of_Possible_Properties = ['cartesian_atomic_coordinates',\
@@ -263,7 +270,7 @@ class ParseOutput:
          self.bafter_each_convergence_cycle\
          ] = propertyBools
         
-        self.convergenceCycleNum = 0
+        self.convergenceCycleNum = self.getInitCycleNum()
         self.lastOne = False
         
         self.resetVars()
@@ -501,8 +508,9 @@ class ParseOutput:
     
     def writeData(self):
         #write data to JSON file
-        with open('data_for_convergence_cycle_'+str(self.convergenceCycleNum)+\
-        '.json', 'w') as outfile:
+	fileName = os.path.join(self.working_dir, "data_for_convergence_cycle_"+\
+	str(self.convergenceCycleNum)+".json")
+        with open(fileName, 'w') as outfile:
             
             json.dump(self.data, outfile, indent=4)
         
