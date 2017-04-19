@@ -195,6 +195,15 @@ def main(input_structure):
                 if prop in FHI.result_struct.properties:
                     input_structure.properties[prop] = \
                     FHI.result_struct.properties[prop]
+            try:
+                list_of_Properties_to_get = ui.get_list(sname, "save_output_data")
+                #aims_out is the path of the aims output file
+                aims_out = os.path.join(working_dir, "aims.out")
+                po = ParseOutput(list_of_Properties_to_get, working_dir)
+                po.parseFile(aims_out)
+                #if no parameters are requested to be saved: pass
+            except:
+                pass
 
             if ui.get_boolean(sname,"save_successful_calc"):
 			    path = os.path.abspath(os.path.join(fh.success_dir,
@@ -202,14 +211,6 @@ def main(input_structure):
 			    shutil.copytree(working_dir,path)
 			    output.time_log("Successful calc folder saved to "+path)
 			    output.local_message("-- Successful calc folder saved to "+path)
-            try: 
-                list_of_Properties_to_get = ui.get_list(sname, "save_output_data")
-		#aims_out is the path of the aims output file
-                aims_out = os.path.join(working_dir, "aims.out")
-                po = ParseOutput(list_of_Properties_to_get, working_dir)
-		po.parseFile(aims_out)
-	    #if no parameters are requested to be saved: pass
-            except: pass
 
         if et!=None and energy >= et: #Rejected
             output.local_message("-- Energy threshold not met; structure rejected")
@@ -239,9 +240,9 @@ class ParseOutput:
     #endFunc resetVars
 
     def getInitCycleNum(self):
-	dataDir = os.path.join(self.working_dir, "data_for_convergence_cycle_*")
-	dataFileNames = glob.glob(dataDir)
-	return len(dataFileNames)
+	    dataDir = os.path.join(self.working_dir, "data_for_convergence_cycle_*")
+	    dataFileNames = glob.glob(dataDir)
+	    return len(dataFileNames)
     #endFun getInitCycleNum
     
     def __init__(self, list_of_Properties_to_get, working_dir):
