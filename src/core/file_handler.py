@@ -71,9 +71,9 @@ conf_tmp_dir = os.path.join(tmp_dir,'conf_tmp/')
 out_tmp_dir = os.path.join(cwd,'replica_out/')
 
 #back-up directory
-fail_dir = os.path.join(cwd, 'save_calc_failed')  
-success_dir = os.path.join(cwd,"save_calc_success")
-scavenge_dir = os.path.join(cwd,"save_calc_scavenged")
+fail_dir = os.path.join(tmp_dir, 'save_calc_failed')  
+success_dir = os.path.join(tmp_dir,"save_calc_success")
+scavenge_dir = os.path.join(tmp_dir,"save_calc_scavenged")
 
 # filesystem storage
 structure_dir = os.path.join(cwd, 'structures')

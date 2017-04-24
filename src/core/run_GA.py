@@ -17,6 +17,7 @@ from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
 from utilities.stoic_model import determine_stoic
+from utilities.parse_aims_output import ParseOutput
 from utilities import misc
 from utilities import space_group_utils as sgu
 from selection import structure_selection
@@ -143,10 +144,15 @@ class RunGA():
             self.check_global_optimization(struct,top_prop_list)
 
             #----- Add Structure to collection -----#
-            struct_index = self.add_to_collection(struct, ref_label)
+            self.struct_index = self.add_to_collection(struct, ref_label)
 
+            #----- Optionally Save Output Data -----#
+            self.save_original_geometry()
+            self.save_relaxation_data()
+            self.save_aims_output()
+            self.save_replica_output()
             #----- Success Message -----#
-            self.success_message(struct, struct_index)
+            self.success_message()
 
             #----- Optional Clustering ----#
             if self.ui.get_boolean("clustering","cluster_pool"):
@@ -157,6 +163,51 @@ class RunGA():
             #----- End of Iteration Data Tasks -----#
             restart_count += 1
             convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
+
+
+    def save_replica_output(self):
+        input_ref = "0"
+        out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                       input_ref, self.struct_index, "creation.out")
+        replica_out_path = os.path.join(out_tmp_dir, self.replica + ".out")
+        shutil.copyfile(replica_out_path, out_path)
+        self.output("-- Saving replica output")
+
+    def save_original_geometry(self):
+        input_ref = "0"
+        geo_orig = "geometry.orig"
+        out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                       input_ref, self.struct_index)
+        geo_orig_path = os.path.join(self.working_dir, geo_orig)
+        shutil.copyfile(geo_orig_path, os.path.join(out_path, geo_orig))
+        self.output("-- Saving original child geometry") 
+
+    def save_relaxation_data(self):
+        try:
+            input_ref = "0" 
+            list_of_Properties_to_get = self.ui.get_list("FHI-aims", "save_relaxation_data")
+            aims_out = os.path.join(self.working_dir, "aims.out")
+            po = ParseOutput(list_of_Properties_to_get, self.working_dir)
+            po.parseFile(aims_out)
+            save_path = os.path.join(tmp_dir, self.replica, "relaxation_data")
+            out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                       input_ref, self.struct_index, "relaxation_data")
+            shutil.copytree(save_path, out_path)
+            self.output("-- Saving relaxation data")
+        except: pass
+
+    def save_aims_output(self):
+        try:
+            input_ref = "0"
+            path = os.path.join(tmp_dir, self.replica)
+            files = [i for i in os.listdir(path) if 'aims' in i]
+            out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                       input_ref, self.struct_index)
+            for file in files:
+                save_path = os.path.join(tmp_dir, self.replica, file)
+                shutil.copyfile(save_path, os.path.join(out_path,file))
+            self.output("-- Saving full aims relaxation ouput")
+        except: pass
 
     def GA_module_init(self):
         '''This routine reads in the modules defined in ui.conf'''
@@ -455,8 +506,8 @@ class RunGA():
                         break
                 if struct != False: #Found a success
                     output.move_to_shared_output(self.replica+"_"+str(i), os.path.join(out_tmp_dir,self.replica+".out"))
-                else:
-                    output.local_message("-- "+str(self.processes)+" attempts have failed to create a new structure")
+                #else:
+                    #output.local_message("-- "+str(self.processes)+" attempts have failed to create a new structure")
                 for i in range (self.processes):
                     try:
                         os.remove(os.path.join(out_tmp_dir, self.replica+"_"+str(i)+".out"))
@@ -537,12 +588,12 @@ class RunGA():
             struct.get_geometry_atom_format())
         return struct
 	
-    def success_message(self, struct, struct_index):
+    def success_message(self):
         time = datetime.datetime.now()
         message = ""
         message += "---- Structure Successfully Added to Common Pool! ----"
         message += "\n-- Time: %s " % (time)
-        message += "\n-- Structure's index: %s " % (struct_index)
+        message += "\n-- Structure's index: %s " % (self.struct_index)
         message += "\n-- Added from replica: %s " % (self.replica)
         self.output(message)
 
