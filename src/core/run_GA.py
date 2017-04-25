@@ -199,14 +199,15 @@ class RunGA():
     def save_aims_output(self):
         try:
             input_ref = "0"
-            path = os.path.join(tmp_dir, self.replica)
-            files = [i for i in os.listdir(path) if 'aims' in i]
-            out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
-                       input_ref, self.struct_index)
-            for file in files:
-                save_path = os.path.join(tmp_dir, self.replica, file)
-                shutil.copyfile(save_path, os.path.join(out_path,file))
-            self.output("-- Saving full aims relaxation ouput")
+            if ui.get_boolean(sname,"save_aims_output"):
+                path = os.path.join(tmp_dir, self.replica)
+                files = [i for i in os.listdir(path) if 'aims' in i]
+                out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                           input_ref, self.struct_index)
+                for file in files:
+                    save_path = os.path.join(tmp_dir, self.replica, file)
+                    shutil.copyfile(save_path, os.path.join(out_path,file))
+                self.output("-- Saving full aims relaxation ouput")
         except: pass
 
     def GA_module_init(self):
