@@ -199,7 +199,7 @@ class RunGA():
     def save_aims_output(self):
         try:
             input_ref = "0"
-            if ui.get_boolean("FHI-ams","save_aims_output"):
+            if ui.get_boolean("FHI-aims","save_aims_output"):
                 path = os.path.join(tmp_dir, self.replica)
                 files = [i for i in os.listdir(path) if 'aims' in i]
                 out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
