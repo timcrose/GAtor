@@ -155,15 +155,18 @@ class ParseOutput(object):
         
         #Because the lines with atomic forces will contain the atom #, this 
         #goes for all atoms dynamically
-        #while splitLine != [] and splitLine[0] == 'atom':
-        while splitLine != []:
+        while splitLine != [] and splitLine[0] == 'atom':
             #write one entry of x,y,z coordinate data per atom
             self.atomList.append(splitLine[4])
+            #write one entry of x,y,z coordinate data per atom
+            if self.bcartesian_atomic_coordinates:
+                self.data['cartesian_atomic_coordinates'].append(self.getXYZ(line, \
+                'cartesian_atomic_coordinates') + [self.atomList[-1]])
+            
             splitLine, line = self.incrementLineNumAndReturnSplitLine()
         self.lineNum = lineNum
-        #self.lineNum -= len(self.atomList)
-        #self.lineNum -= 1
-    
+        if self.blattice_vector:
+            self.latticeVectors() 
     def getXYZ(self, line, valueToGet):
         '''
         This func optionally returns the x,y,z coordinates of an atom or
@@ -368,7 +371,7 @@ class ParseOutput(object):
             if searchStr in line:
                 if strNum == 0:
                     self.getAtomList()
-                    self.getGeometry()
+                    #self.getGeometry()
                
                 if strNum == 1:
                     self.converged = True
