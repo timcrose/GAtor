@@ -288,8 +288,8 @@ class FHIAimsRelaxation():
             if ui.has_option("parallel_settings","allocated_nodes"):
                 arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
                 arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
-            if ui.has_option("parallel_settings","processes_per_replica"):
-                np = ui.get("parallel_settings","processes_per_replica")
+            if ui.has_option("parallel_settings","aims_processes_per_replica"):
+                np = ui.get("parallel_settings","aims_processes_per_replica")
                 arglist += ["-n",np]
                 mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
                 arglist += ["--mem",str(mem)]

@@ -148,7 +148,7 @@ class RunGA():
 
             #----- Optionally Save Output Data -----#
             try:
-                self.save_original_geometry()
+                self.save_unrelaxed_geometry()
                 self.save_relaxation_data()
                 self.save_aims_output()
                 self.save_replica_output()
@@ -175,14 +175,14 @@ class RunGA():
         shutil.copyfile(replica_out_path, out_path)
         self.output("-- Saving replica output")
 
-    def save_original_geometry(self):
+    def save_unrelaxed_geometry(self):
         input_ref = "0"
-        geo_orig = "geometry.orig"
+        geo_orig = "geometry.unrelaxed"
         out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
                        input_ref, self.struct_index)
         geo_orig_path = os.path.join(self.working_dir, "geometry.in")
         shutil.copyfile(geo_orig_path, os.path.join(out_path, geo_orig))
-        self.output("-- Saving original child geometry") 
+        self.output("-- Saving original/unrelaxed child geometry") 
 
     def save_relaxation_data(self):
         input_ref = "0" 
