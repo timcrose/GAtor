@@ -248,7 +248,7 @@ class FHIAimsRelaxation():
         more_file.close()
 
     def create_geometry_orig(self):
-        orig_path = os.path.join(self.working_dir, 'geometry.orig')
+        orig_path = os.path.join(self.working_dir, 'geometry.unrelaxed')
         if not os.path.isfile(orig_path):
             geometry_file = open(orig_path, 'w')
             geometry_file.write(self.input_structure.get_geometry_atom_format())

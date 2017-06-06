@@ -513,11 +513,12 @@ def launch_parallel_mpirun(use_srun=False):
         raise KeyError(message)    
 
     # Time Log outputs for Nodes
-    message = " Number of parallel replicas: %s \n" % (nor)   
-    message += "Nodes assigned to each replica: %s \n" % (npr)
-    message += "(0 indicates that a replica is assigned a fraction of a node) \n"               
-    message += "Processes assigned to each replica: %s \n" %(ppr)
-    message += "Total available nodes: %i; assigned nodes: %s" % (non,sum(npr))
+    tab = "                             "
+    message = "Number of parallel replicas: %s \n" % (nor)   
+    message += tab + "Nodes assigned to each replica: %s \n" % (npr)
+    message += tab + "(0 indicates that a replica is assigned a fraction of a node) \n"               
+    message += tab + "Processes assigned to each replica: %s \n" %(ppr)
+    message += tab + "Total available nodes: %i; assigned nodes: %s" % (non,sum(npr))
     output.time_log(message)
 
     # Check for Oversubscription or underutilization
@@ -634,93 +635,89 @@ def get_all_processes(command,hostlist=None):
     return hosts
 
 def monitor_srun(processes):
-	'''
-	Takes all the currently running replicas
-	Monitors the srun command file that submits the srun job
-	Until all the processes exits
-	'''
-	sname = "parallel_settings"
-	cfile = ui.get(sname, "srun_command_file")
-	fname = os.path.basename(cfile)
-	fdir = os.path.dirname(cfile)
-	sfile = ui.get(sname,"srun_submitted_file")
-	ssname = os.path.basename(sfile)
-	sdir = os.path.dirname(sfile)
-	rfile = ui.get(sname,"srun_completed_file")
-	rname = os.path.basename(rfile)
-	rdir = os.path.dirname(rfile)
-	calls = []
-	runtime = ui.get_eval(sname,"srun_max_runtime")
-	otl = output.time_log
-	received_id = []
-	while True:
-		if os.path.exists(cfile):
-			with FileLock(fname,fdir):
-				f = open(cfile,"r")
-				commands = f.read()
-				f.close()
-				os.remove(cfile)
-			commands = commands.split("\n")
-			for command in commands:
-				if len(command)==0:
-					continue
-
-				k = command.split("  ")
-				arglist = eval(k[0])
-				stdout = k[1]
-				stderr = k[2]
-				replica = k[3]
-				job_id = k[4]
-				if job_id in received_id:
-				#Job already submitted
-					continue
-
-				otl("Execution with arguments: " + 
+    '''
+    Takes all the currently running replicas
+    Monitors the srun command file that submits the srun job
+    Until all the processes exits
+    '''
+    sname = "parallel_settings"
+    cfile = ui.get(sname, "srun_command_file")
+    fname = os.path.basename(cfile)
+    fdir = os.path.dirname(cfile)
+    sfile = ui.get(sname,"srun_submitted_file")
+    ssname = os.path.basename(sfile)
+    sdir = os.path.dirname(sfile)
+    rfile = ui.get(sname,"srun_completed_file")
+    rname = os.path.basename(rfile)
+    rdir = os.path.dirname(rfile)
+    calls = []
+    runtime = ui.get_eval(sname,"srun_max_runtime")
+    otl = output.time_log
+    received_id = []
+    while True:
+        if os.path.exists(cfile):
+            with FileLock(fname,fdir):
+                f = open(cfile,"r")
+                commands = f.read()
+                f.close()
+                os.remove(cfile)
+            commands = commands.split("\n")
+            for command in commands:
+                if len(command)==0:
+                    continue
+                k = command.split("  ")
+                arglist = eval(k[0])
+                stdout = k[1]
+                stderr = k[2]
+                replica = k[3]
+                job_id = k[4]
+                if job_id in received_id:
+                    #Job already submitted
+                    continue
+                otl("Execution with arguments: " + 
 				    " ".join(map(str,arglist)),
 				    replica)
-
-				with FileLock(ssname,sdir,timeout=60):
+                with FileLock(ssname,sdir,timeout=60):
 				#Record that this job is received
 					f = open(sfile,"a")
 					f.write(job_id+"\n")
 					f.close()
 
-				outfile = open(stdout,"w")
-				errfile = open(stderr,"w")
-				p = subprocess.Popen(arglist,
+                # Run aims subprocess
+                dir = os.path.dirname(stdout)
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+                outfile = open(stdout,"w")
+                errfile = open(stderr,"w")
+                p = subprocess.Popen(arglist,
 						     stdout=outfile,
 						     stderr=errfile)
-				calls.append([p,time.time(),job_id])
-				received_id.append(job_id)
+                calls.append([p,time.time(),job_id])
+                received_id.append(job_id)
+        completed = []
+        for call in calls:
+            p = call[0]
+            if p.poll()!=None: #Job completed
+                with FileLock(rname,rdir):
+                    f = open(rfile,"a")
+                    f.write(call[2] + " " + str(p.poll())+"\n")
+                    f.close()
+                completed.append(calls.index(call))
+            if (time.time()-call[1]) > runtime:
+                try:
+                    p.send_signal(2)
+                except: pass
 
-		completed = []
-		for call in calls:
-			p = call[0]
-			if p.poll()!=None: #Job completed
-				with FileLock(rname,rdir):
-					f = open(rfile,"a")
-					f.write(call[2] + " " + str(p.poll())+"\n")
-					f.close()
-				completed.append(calls.index(call))
-			
-			if (time.time()-call[1]) > runtime:
-				try:
-					p.send_signal(2)
-				except:
-					pass
+        calls = [call for call in calls if calls.index(call) not in completed]
 
-		calls = [call for call in calls if calls.index(call) not in completed]
-		
-
-		still_running = False
-		for process in processes:
-			if process.poll()==None:
-				still_running = True
-				break
-		if not still_running: #All replicas exited
-			break
-				
-		time.sleep(5)
+        still_running = False
+        for process in processes:
+            if process.poll()==None:
+                still_running = True
+                break
+        if not still_running: #all replicas exited
+            break
+        time.sleep(5)
 				
 
 def srun_call (arglist,stdout,stderr,replica):

@@ -180,7 +180,7 @@ class RunGA():
         geo_orig = "geometry.unrelaxed"
         out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
                        input_ref, self.struct_index)
-        geo_orig_path = os.path.join(self.working_dir, "geometry.in")
+        geo_orig_path = os.path.join(self.working_dir, geo_orig)
         shutil.copyfile(geo_orig_path, os.path.join(out_path, geo_orig))
         self.output("-- Saving original/unrelaxed child geometry") 
 
