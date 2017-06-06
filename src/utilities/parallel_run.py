@@ -626,7 +626,7 @@ def get_all_processes(command,hostlist=None):
     else:
         hosts = out.split("\n")
         hosts.pop() #Last line empty
-    output.time_log("hosts \n" + str(hosts))
+    #output.time_log("hosts \n" + str(hosts))
 
     output.time_log("Number of processes acquired: "+str(len(hosts)))
 
