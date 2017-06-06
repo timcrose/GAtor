@@ -93,7 +93,7 @@ replica_file = os.path.join(tmp_dir, 'replica_index.dat')
 output_file = os.path.join(cwd, 'GAtor.out')
 error_file = os.path.join(cwd,'GAtor.err')
 sys.stderr = open(error_file,"a")
-log_file = os.path.join(cwd,"run_GAtor.log")
+log_file = os.path.join(cwd,"GAtor.log")
 restart_relaxation_file = os.path.join(cwd, 'restart_relaxations.dat')
 restart_replica_file = os.path.join(cwd, 'restart_replicas.dat')
 # constants
