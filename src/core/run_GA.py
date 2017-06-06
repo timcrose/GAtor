@@ -147,10 +147,12 @@ class RunGA():
             self.struct_index = self.add_to_collection(struct, ref_label)
 
             #----- Optionally Save Output Data -----#
-            self.save_original_geometry()
-            self.save_relaxation_data()
-            self.save_aims_output()
-            self.save_replica_output()
+            try:
+                self.save_original_geometry()
+                self.save_relaxation_data()
+                self.save_aims_output()
+                self.save_replica_output()
+            except: pass
             #----- Success Message -----#
             self.success_message()
 
@@ -178,37 +180,33 @@ class RunGA():
         geo_orig = "geometry.orig"
         out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
                        input_ref, self.struct_index)
-        geo_orig_path = os.path.join(self.working_dir, geo_orig)
+        geo_orig_path = os.path.join(self.working_dir, "geometry.in")
         shutil.copyfile(geo_orig_path, os.path.join(out_path, geo_orig))
         self.output("-- Saving original child geometry") 
 
     def save_relaxation_data(self):
-        try:
-            input_ref = "0" 
-            list_of_Properties_to_get = self.ui.get_list("FHI-aims", "save_relaxation_data")
-            aims_out = os.path.join(self.working_dir, "aims.out")
-            po = ParseOutput(list_of_Properties_to_get, self.working_dir)
-            po.parseFile(aims_out)
-            save_path = os.path.join(tmp_dir, self.replica, "relaxation_data")
-            out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
-                       input_ref, self.struct_index, "relaxation_data")
-            shutil.copytree(save_path, out_path)
-            self.output("-- Saving relaxation data")
-        except: pass
+        input_ref = "0" 
+        list_of_Properties_to_get = self.ui.get_list("FHI-aims", "save_relaxation_data")
+        aims_out = os.path.join(self.working_dir, "aims.out")
+        po = ParseOutput(list_of_Properties_to_get, self.working_dir)
+        po.parseFile(aims_out)
+        save_path = os.path.join(tmp_dir, self.replica, "relaxation_data")
+        out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                   input_ref, self.struct_index, "relaxation_data")
+        shutil.copytree(save_path, out_path)
+        self.output("-- Saving relaxation data")
 
     def save_aims_output(self):
-        try:
-            input_ref = "0"
-            if ui.get_boolean("FHI-aims","save_aims_output"):
-                path = os.path.join(tmp_dir, self.replica)
-                files = [i for i in os.listdir(path) if 'aims' in i]
-                out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
-                           input_ref, self.struct_index)
-                for file in files:
-                    save_path = os.path.join(tmp_dir, self.replica, file)
-                    shutil.copyfile(save_path, os.path.join(out_path,file))
-                self.output("-- Saving full aims relaxation ouput")
-        except: pass
+        input_ref = "0"
+        if self.ui.get_boolean("FHI-aims","save_aims_output"):
+            path = os.path.join(tmp_dir, self.replica)
+            files = [i for i in os.listdir(path) if 'aims' in i]
+            out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
+                       input_ref, self.struct_index)
+            for file in files:
+                save_path = os.path.join(tmp_dir, self.replica, file)
+                shutil.copyfile(save_path, os.path.join(out_path,file))
+            self.output("-- Saving full aims relaxation ouput")
 
     def GA_module_init(self):
         '''This routine reads in the modules defined in ui.conf'''
