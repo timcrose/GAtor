@@ -205,6 +205,7 @@ class AffinityPropagationClusteringAngleLat():
 
     def return_clusters(self):
         feature_list = np.array(self.return_descriptor_list())
+        print feature_list
         af = AffinityPropagation().fit(feature_list)
         cluster_centers_indices = af.cluster_centers_indices_
         clustered_data = af.labels_
@@ -274,7 +275,7 @@ class AffinityPropagationClusteringLatVol():
 
     def return_clusters(self):
         feature_list = np.array(self.return_descriptor_list())
-        af = AffinityPropagation().fit(feature_list)
+        af = AffinityPropagation(damping=0.75,convergence_iter=150).fit(feature_list)
         cluster_centers_indices = af.cluster_centers_indices_
         clustered_data = af.labels_
 
@@ -303,6 +304,7 @@ class AffinityPropagationClusteringLatVol():
             vol = np.cbrt(vol)
             lat_vol = [a/vol, b/vol, c/vol]
             struct.set_property(self.feature_type, lat_vol)
+            print lat_vol
             lat_vols.append(lat_vol)
         return lat_vols
 
