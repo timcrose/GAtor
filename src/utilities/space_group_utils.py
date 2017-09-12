@@ -32,55 +32,53 @@ def return_spacegroup(structp):
 
 
 def reduce_by_symmetry(struct,create_duplicate=True):
-	'''
-	Reduce a strucutre with multiple molecules to single molecules
-	'''
-	if create_duplicate:
-		struct = copy.deepcopy(struct)
-	structp = struct.get_pymatgen_structure()
-	
-	sga = SGA(structp, symprec=1.0)
+    '''
+    Reduce a strucutre with multiple molecules to single molecules
+    '''
+    if create_duplicate:
+        struct = copy.deepcopy(struct)
+    structp = struct.get_pymatgen_structure()
+    sga = SGA(structp, symprec=1.0)
 
 	#Generate unqiue index for each element
-	elements = set([geo[3] for geo in struct.geometry])
-	edict = {} 
-	i = 0
-	for element in elements:
-		i += 1
-		edict[element] = i
-	
-	cell = structp.lattice.matrix,structp.frac_coords,\
-		[0 for x in range(len(structp))]
-	info = spglib.get_symmetry_dataset(cell,symprec=sga._symprec)
+    elements = set([geo[3] for geo in struct.geometry])
+    edict = {} 
+    i = 0
+    for element in elements:
+        i += 1
+        edict[element] = i
+    cell = structp.lattice.matrix,structp.frac_coords,\
+        [0 for x in range(len(structp))]
+    info = spglib.get_symmetry_dataset(cell,symprec=sga._symprec)
+    if info is None:
+        return False
+    sg = [] #Store symmetry operation for reconstruction
+    for rot, trans in zip(info["rotations"],info["translations"]):
+        sg.append([np.ndarray.tolist(rot),np.ndarray.tolist(trans)])
 
-	sg = [] #Store symmetry operation for reconstruction
-	for rot, trans in zip(info["rotations"],info["translations"]):
-		sg.append([np.ndarray.tolist(rot),np.ndarray.tolist(trans)])
-	
-	new_geo = None
-	symst = sga.get_symmetrized_structure()
-	nstruc = structure.Structure()
-	for sites in symst.equivalent_sites:
-		site = sites[0] #Select only 1 site among the equivalent
-		k = structp.index(site)
-		nstruc.build_geo_by_atom(site.coords[0],
-					 site.coords[1],
-					 site.coords[2],
-					 site.specie,
-					 struct.geometry[k]["spin"],
-					 struct.geometry[k]["charge"],
-					 struct.geometry[k]["fixed"])
+    new_geo = None
+    symst = sga.get_symmetrized_structure()
+    nstruc = structure.Structure()
+    for sites in symst.equivalent_sites:
+        site = sites[0] #Select only 1 site among the equivalent
+        k = structp.index(site)
+        nstruc.build_geo_by_atom(site.coords[0],
+        site.coords[1],
+        site.coords[2],
+        site.specie,
+        struct.geometry[k]["spin"],
+        struct.geometry[k]["charge"],
+        struct.geometry[k]["fixed"])
 
-	#Update the geometry of the old structure
-	struct.geometry = copy.deepcopy(nstruc.geometry)
-	new_lat = symst.equivalent_sites[0][0].lattice.matrix
-	struct.properties["lattice_vector_a"] = new_lat[0]
-	struct.properties["lattice_vector_b"] = new_lat[1]
-	struct.properties["lattice_vector_c"] = new_lat[2]
-	structure_handling.cell_lower_triangular(struct,False)
-	struct.properties["symmetry_operations"] = sg
-	
-	return struct
+    #Update the geometry of the old structure
+    struct.geometry = copy.deepcopy(nstruc.geometry)
+    new_lat = symst.equivalent_sites[0][0].lattice.matrix
+    struct.properties["lattice_vector_a"] = new_lat[0]
+    struct.properties["lattice_vector_b"] = new_lat[1]
+    struct.properties["lattice_vector_c"] = new_lat[2]
+    structure_handling.cell_lower_triangular(struct,False)
+    struct.properties["symmetry_operations"] = sg
+    return struct
 
 def get_orbit(self, p, tol=1e-3):
 	"""
