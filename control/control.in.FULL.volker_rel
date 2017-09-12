@@ -6,8 +6,7 @@
 #  Physical model
   xc                 pbe
   spin               none
-  relativistic       none 
-  override_relativity .true.
+  relativistic atomic_zora scalar
   charge             0.
 
 #################################
@@ -36,11 +35,11 @@
   sc_accuracy_eev    1E-2
   sc_accuracy_etot   1E-6
   sc_iter_limit      500
-#  load_balancing .true.    
+#  load_balancing .true. 	
   check_cpu_consistency .true.
 
 #  Eigenvalue solution
-  KS_method      scalapack_fast
+  KS_method	     scalapack_fast
     empty_states       6
     basis_threshold    1.e-5
 
@@ -48,6 +47,7 @@
     relax_geometry trm 1.e-2
     relax_unit_cell full 
     hessian_to_restart_geometry .false
+    max_relaxation_steps 30
     # relax_unit_cell fixed_angles #uncomment for unit cell relaxation with fixed angles
     # restart_relaxations .true.
     harmonic_length_scale 0.01 #uncomment in case of relaxation errors
