@@ -800,12 +800,12 @@ def cell_check(struct,replica):
 
 		if ucv > upper_volume or ucv < lower_volume:
 			if verbose: 
-				output.local_message("-- Failed volume check\n",replica)
+				output.local_message("-- Failed volume check",replica)
 			return False
 		elif verbose:
-			output.local_message("-- Passed volume check\n",replica)
+			output.local_message("-- Passed volume check",replica)
 	elif verbose:
-		output.local_message("##No volume check is called##",replica)
+		output.local_message("-- No volume check is called",replica)
 
 
 	#Lattice vector principal component check
@@ -838,12 +838,12 @@ def cell_check(struct,replica):
 			if struct.properties[lv[i]][i] > upper_bound\
 			or struct.properties[lv[i]][i] < lower_bound:
 				if verbose:
-					output.local_message("-- %s failed principal component check\n" % lv[i],replica)
+					output.local_message("-- %s failed principal component check" % lv[i],replica)
 					return False
 		if verbose:
-			output.local_message("-- Passed principal component check\n", replica)
+			output.local_message("-- Passed principal component check", replica)
 	elif verbose:
-		output.local_message("##No lattice principal component check is called##", replica)
+		output.local_message("-- No lattice principal component check is called", replica)
 
 
 	#Now enters a series of closeness checks
@@ -856,22 +856,22 @@ def cell_check(struct,replica):
 						% lowerbound,replica)
 		if COM_distance_check(struct,nmpc,lowerbound):
 			if verbose:
-				output.local_message("-- Passed COM distance check\n",replica)
+				output.local_message("-- Passed COM distance check",replica)
 		else:
 			if verbose:
-				output.local_message("-- Failed COM distance check\n",replica)
+				output.local_message("-- Failed COM distance check",replica)
 			return False
 	elif verbose:
-		output.local_message("##No COM distance check is called##",replica)
+		output.local_message("-- No COM distance check is called",replica)
 
 	if verbose:
-		output.local_message("Combined interatomic distance check:",replica)
+		output.local_message("-- Combined interatomic distance check:",replica)
 	if combined_distance_check(struct,replica):
 		if verbose:
-			output.local_message("-- Passed all atomic distance check(s)\n",replica)
+			output.local_message("-- Passed all atomic distance check(s)",replica)
 	else:
 		if verbose:
-			output.local_message("-- Failed atomic distance check\n",replica)
+			output.local_message("-- Failed atomic distance check, selecting new parents",replica)
 		return False
 
 
