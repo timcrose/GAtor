@@ -1,0 +1,61 @@
+****************************************
+        GAtor code README
+****************************************
+            .-._   _ _ _ _ _ _ _ _
+ .-''-.__.-'00  '-' ' ' ' ' ' ' ' '-.
+'.___ '    .   .--_'-' '-' '-' _'-' '._
+ VV V 'vv-'   '_   '.       .'  _..' '.'.
+   '=.____.=_.--'   :_.__.__:_   '.   : :
+           (((____.-'        '-.  /   : :
+                             (((-'\ .' /
+                           _____..'  .'
+                          '-._____.-'
+
+****************************************
+
+Welcome to the GAtor genetic algorithm for molecular
+crystal structure prediction
+
+GAtor uses python 2.7 and numpy >1.9. Additionally it requires
+the following python packages:
+
+1) pymatgen
+2) sci-kit learn
+3) spglib
+
+These can be installed simply using pip.
+
+The source code is split into modules located in ./src
+
+Control files for FHI-aims (not necessary if no DFT evaluations) 
+are located in ./control
+
+An example calculation folder with further instructions for running the code
+is located in ./example_run
+
+*******************************************
+
+Developer details
+
+The master script which runs GAtor is located at ./src/GAtor_master.py.
+This mainly deals with the parallelization and runs ./core/run_GA.py
+for each parallel replica
+
+The main script which controls the GA tasks of each parallel replica 
+is located at ./core/run_GA.py
+
+The main class which constructs GA structure objects (geometry and
+additional properties) is located at ./src/structures/structure.py
+
+The main modules which generate new structures are located in 
+./src/mutation and ./src/crossover and can be swapped out depending 
+on the desired functionality
+
+
+
+
+
+
+
+
+
