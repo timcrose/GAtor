@@ -98,7 +98,7 @@ class ListSafeConfigParser(SafeConfigParser):
 		return self.get("run_settings","property_to_optimize")
 
 	def get_nmpc(self):
-		return self.get_eval("unit_cell_settings","num_molecules")
+		return self.get_eval("run_settings","num_molecules")
 
 	def get_multiprocessing_processes(self):
 		sname = "parallel_settings"
@@ -118,7 +118,7 @@ class ListSafeConfigParser(SafeConfigParser):
 		return self.get_boolean("run_settings","output_all_geometries")
 	
 	def ortho(self):
-		return self.get_boolean("unit_cell_settings","orthogonalize_unit_cell")
+		return self.get_boolean("run_settings","orthogonalize_unit_cell")
 
 	def is_master_process(self):
 		return not self.get_boolean("parallel_settings","im_not_master_process")

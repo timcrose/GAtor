@@ -25,28 +25,48 @@ def main(structure_coll, replica):
     Returns: a StructureCollection labeled with cluster indices
     '''
     start = time()
-
+    
+    # Get and check clustering algorithm and feature vector
     ui = user_input.get_config()
+    feature_vector = ui.get("clustering", "feature_vector")
     cluster_type = ui.get("clustering","clustering_algorithm")
-    if cluster_type == "KMeansRDF":
-        ClusterColl = KMeansClusteringRDF(structure_coll, replica)
-        clustered_coll = ClusterColl.return_clusters()
-    elif cluster_type == "AffinityPropagationRDF":
-        ClusterColl = AffinityPropagationClusteringRDF(structure_coll, replica)
-        clustered_coll = ClusterColl.return_clusters()
-    elif cluster_type == "AffinityPropagationRCD":
-        ClusterColl = AffinityPropagationClusteringRCD(structure_coll, replica)
-        clustered_coll = ClusterColl.return_clusters()
-    elif cluster_type == "AffinityPropagationAngleLat":
-        ClusterColl = AffinityPropagationClusteringAngleLat(structure_coll, replica)
-        clustered_coll = ClusterColl.return_clusters()
-    elif cluster_type == "AffinityPropagationLatVol":
-        ClusterColl = AffinityPropagationClusteringLatVol(structure_coll, replica)
-        clustered_coll = ClusterColl.return_clusters()
+    if feature_vector is None:
+        message = "Clustering algorithm called but feature vector is not"+\
+                  "defined in ui.conf"
+        raise ValueError(message)
+    if cluster_type is None:
+        message = "Clustering algorithm called but feature vector is not"+\
+                  "defined in ui.conf"
+        raise ValueError(message)
+
+    # Cluster structure collection using defined method
+    if cluster_type == "AffinityPropagation":
+        if feature_vector == "RDF_vector":
+            ClusterColl = AffinityPropagationClusteringRDF(structure_coll, replica)
+            clustered_coll = ClusterColl.return_clusters()
+        elif feature_vector == "RCD_vector":
+            ClusterColl = AffinityPropagationClusteringRCD(structure_coll, replica)
+            clustered_coll = ClusterColl.return_clusters()
+        elif feature_vector == "Lat_vol":
+            ClusterColl = AffinityPropagationClusteringLatVol(structure_coll, replica)
+            clustered_coll = ClusterColl.return_clusters()
+        elif feature_vector == "Angle_lat":
+            ClusterColl = AffinityPropagationClusteringAngleLat(structure_coll, replica)
+            clustered_coll = ClusterColl.return_clusters()
+        else:
+            message = "Affinity Propagation not implemented for %s" % (feature_vector)
+            raise RuntimeError(message)
+    elif cluster_type == "Kmeans":
+        if feature_vector == "RDF_vector":
+            ClusterColl = KMeansClusteringRDF(structure_coll, replica)
+            clustered_coll = ClusterColl.return_clusters()
+        else:
+            message = "K-means clustering not implemented for %s" % (feature_vector)
+            raise RuntimeError(message)
+
     end = time()
     message = "-- Time for clustering: %s seconds" % (end-start)
     output.local_message(message, replica)
-    print "Time %s" %(end-start)
     return clustered_coll
 
 
@@ -124,7 +144,6 @@ class AffinityPropagationClusteringRDF():
     '''
     def __init__(self, structure_coll, replica):
         self.ui = user_input.get_config()
-        self.num_clusters = self.ui.get_eval("clustering", "num_clusters")
         self.replica = replica
         self.struct_coll = structure_coll
         self.feature_type = self.ui.get("clustering", "feature_vector")
@@ -342,7 +361,6 @@ class AffinityPropagationClusteringRCD():
     '''
     def __init__(self, structure_coll, replica):
         self.ui = user_input.get_config()
-        self.num_clusters = self.ui.get_eval("clustering", "num_clusters")
         self.replica = replica
         self.struct_coll = structure_coll
         self.feature_type = self.ui.get("clustering", "feature_vector")

@@ -1,12 +1,8 @@
 '''
-@author Farren
+@author Farren Curtis
 '''
 from __future__ import division
-from collections import defaultdict
-from compiler.ast import Print
-import math
 import numpy as np
-from random import choice
 import random
 import time
 import os
@@ -59,8 +55,8 @@ class StructureSelection():
         a, b = self.select_structures(structure_coll)
         struct_a = a[0]
         struct_b = b[0]
-        print "selected a", struct_a.struct_id, a[1]
-        print "selected b", struct_b.struct_id, b[1]
+        #print "selected a", struct_a.struct_id, a[1]
+        #print "selected b", struct_b.struct_id, b[1]
         return [struct_a, struct_b]
 
     def select_structures(self, structure_coll):
@@ -72,13 +68,13 @@ class StructureSelection():
             return (structure_coll.get_struct(0), 0)
         else:
             if self.ui.get_boolean("clustering","cluster_pool"):
-                print "shared fitness"
+                #print "shared fitness"
                 self.output("-- Using shared fitness scheme")
                 fitness_dict = self.get_shared_fitness(structure_coll)
                 return self.select_best_from_fitness(fitness_dict)
             else:
                 fitness_dict = self.get_fitness(structure_coll)
-                print "normal"
+                #print "normal"
                 self.output("-- Using normal fitness scheme")
                 return self.select_best_from_fitness(fitness_dict) 
 
@@ -113,7 +109,7 @@ class StructureSelection():
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
+                fitness[struct] = np.exp(-self.ui.get('selection', 'alpha') * rho)
         return fitness
 
     def get_shared_fitness(self, structure_coll):
@@ -161,7 +157,7 @@ class StructureSelection():
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 alpha = float(self.ui.get('selection', 'alpha'))
-                fitness[struct] = math.exp(-alpha * rho)
+                fitness[struct] = np.exp(-alpha * rho)
 
         return fitness
  
@@ -192,7 +188,7 @@ class StructureSelection():
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
+                fitness[struct] = np.exp(-self.ui.get('selection', 'alpha') * rho)
             #print rho
         return fitness
         

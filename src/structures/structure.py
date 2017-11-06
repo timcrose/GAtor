@@ -163,6 +163,21 @@ class Structure(object):
     def get_geometry(self): return self.geometry
     def pack_geometry(self): return adapt_array(self.geometry)
     def get_n_atoms(self): return self.geometry.size
+
+    def get_n_atoms_per_mol(self, num_mols): return self.geometry.size/num_mols
+
+    def get_atom_types(self):
+        element_list = []
+        for i in range(self.geometry.size):
+            element_list.append(self.geometry[i]['element'])
+        return element_list
+
+    def get_molecules(self, num_mols):
+        num_atoms_per_mol = self.get_n_atoms_per_mol(num_mols)
+        mol_list = [self.geometry[i:i+num_atoms_per_mol]
+                   for i in range(0, self.geometry.size, num_atoms_per_mol)]
+        return mol_list
+
     def get_input_ref(self): return  self.input_ref
     def get_struct_id(self): return self.struct_id
     def get_stoic(self): return  calc_stoic(self.geometry)

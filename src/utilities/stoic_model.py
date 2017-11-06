@@ -6,25 +6,44 @@ Created on Nov 12, 2013
 from ConfigParser import ConfigParser
 from StringIO import StringIO
 import time
+import os
 
 from core.file_handler import read_data, ui_conf
 from structures.structure import Structure, StoicDict
+from core.file_handler import structure_dir
 
-
-def determine_stoic(stoic_path=None):
-    if stoic_path == None: stoic_path = ui_conf
-    try: 
-        stoic_string = read_data(stoic_path)
-        try: return ini_to_stoic(stoic_string)
-        except: pass
-        try: return atom_to_stoic(stoic_string)
-        except: pass
-        try: return smile_to_stoic(stoic_string)
-        except:pass
-        # nothing works
-        raise Exception
-    except: print 'could not determine stoichiometry from input file' 
+#def determine_stoic(stoic_path=None):
+#    if stoic_path == None: stoic_path = ui_conf
+#    try: 
+#        stoic_string = read_data(stoic_path)
+#        try: return ini_to_stoic(stoic_string)
+#        except: pass
+#        try: return atom_to_stoic(stoic_string)
+#        except: pass
+#        try: return smile_to_stoic(stoic_string)
+#        except:pass
+#        # nothing works
+#        raise Exception
+#    except: print 'could not determine stoichiometry from input file' 
     # if all else fails
+
+def determine_stoic():
+    list_of_stoics = [name for name in os.listdir(structure_dir) \
+                    if os.path.isdir(os.path.join(structure_dir, name))]
+    if len(list_of_stoics) == 1:
+        return string_to_stoic(list_of_stoics[0])
+    else:
+        raise Exception 
+
+def string_to_stoic(stoic_string):
+    '''
+    Takes a string in the form Mg:2_O:5 and returns the StoicDict representation
+    '''
+    stoic_dict = StoicDict(int)
+    for item in stoic_string.split('_'):
+        [key, val] = item.split(':')
+        stoic_dict[key] = int(val)
+    return stoic_dict
 
 def is_stoic_ini(stoic_string):
     ''' checks if stoic configuration is in normal format'''

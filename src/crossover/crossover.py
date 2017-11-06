@@ -17,7 +17,7 @@ def main(list_of_structures, replica):
     Returns: A single Structure() if crossover is successful or False if crossover fails 
     '''
 
-    num_mols = user_input.get_config().get_eval('unit_cell_settings', 'num_molecules')
+    num_mols = user_input.get_config().get_eval('run_settings', 'num_molecules')
     parent_a = list_of_structures[0]
     parent_b = list_of_structures[1]
 

@@ -20,7 +20,6 @@ from utilities.stoic_model import determine_stoic
 from utilities.parse_aims_output import ParseOutput
 from utilities import misc
 from utilities import space_group_utils as sgu
-from selection import structure_selection
 import copy, shutil, multiprocessing
 
 
@@ -65,7 +64,6 @@ class RunGA():
         data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
         structure_collection.update_supercollection(self.structure_supercoll)
         self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
-        #sname = "parallel_settings"
         self.processes = self.ui.get_multiprocessing_processes()
         if self.processes > 1:
             self.worker_pool = multiprocessing.Pool(processes=self.processes)
@@ -210,7 +208,7 @@ class RunGA():
 
     def GA_module_init(self):
         '''This routine reads in the modules defined in ui.conf'''
-        self.relaxation_module = my_import(self.ui.get('modules', 'relaxation_module'), package='relaxation')
+        self.optimization_module = my_import(self.ui.get('modules', 'optimization_module'), package='optimization')
         self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
         try: self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
         except: pass
@@ -562,7 +560,12 @@ class RunGA():
         if self.ui.get_boolean(sname,"pre-evaluation"):
             self.add_structure(struct,"pre-evaluation")
 
-        struct, stat = self.relaxation_module.main(struct)
+        mut = struct.get_property('mutation_type')
+        crosstype = struct.get_property('crossover_type')
+        parent0 = struct.get_property('parent_0')
+        parent1 = struct.get_property('parent_1')
+
+        struct, stat = self.optimization_module.main(struct)
         if stat=="failed" and self.ui.get_boolean(sname,"evaluation_failed"):
             self.add_structure(struct,"evaluation_failed")
         if stat=="rejected" and self.ui.get_boolean(sname,"evaluation_rejected"):
@@ -572,7 +575,7 @@ class RunGA():
 
         #----- Make sure cell is lower triangular -----#
         self.output("-- Ensuring cell is lower triangular and orthogonal")
-        nmpc = self.ui.get_eval('unit_cell_settings','num_molecules')
+        nmpc = self.ui.get_eval('run_settings','num_molecules')
         napm = int(struct.get_n_atoms()/nmpc)
         structure_handling.cell_modification(struct, napm,create_duplicate=False)
         struct=structure_handling.cell_lower_triangular(struct,False)	
@@ -582,6 +585,10 @@ class RunGA():
         struct.set_property('lattice_vector_a',list(a))
         struct.set_property('lattice_vector_b',list(b))
         struct.set_property('lattice_vector_c',list(c))
+        struct.set_property('mutation_type', mut)
+        struct.set_property('crossover_type', crosstype)
+        struct.set_property('parent_0', parent0)
+        struct.set_property('parent_1', parent1)
         if self.ui.all_geo():
             self.output("Final Structure's geometry:\n" +
             struct.get_geometry_atom_format())
@@ -628,7 +635,7 @@ def structure_create_for_multiprocessing(args):
     This is a function for structure creation reading straight from the ui.conf file
     '''
     ui = user_input.get_config()
-    nmpc = ui.get_eval('unit_cell_settings','num_molecules')
+    nmpc = ui.get_eval('run_settings','num_molecules')
     replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, sym_cross_prob, mut_choice= args
     output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
     crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
@@ -755,11 +762,10 @@ if __name__ == '__main__':
 	it will execute the main() method. This allows for a single replica to join 
 	a current genetic algorithm search.
 	'''
-	(options,argv)=argument_opt()
-	replica=options.replica
-	if replica==None:
-		replica=get_random_index()
-	print "This is the replica received: "+ str(replica)
+	(options,argv) = argument_opt()
+	replica = options.replica
+	if replica is None:
+		replica = get_random_index()
 	stoic = determine_stoic()
 	if stoic == None: raise Exception
 	main(replica,stoic)

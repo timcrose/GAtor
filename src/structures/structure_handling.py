@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -
 """
 Created on Fri May 29 16:09:38 2015
 
-@author: Patrick Kilecdi
+@authors: Patrick Kilecdi, Farren Curtis
 
 Basic modification of crystal structures
 Funtions that read in a struct() and necessary arguments, and return a struct()
 """
-import sys # for debuging!
-sys.path.append("/lustre/project/nmarom/gator_shared_duplicate/gator/src/") #for debuging!
-
 import numpy as np
 import math
 from structures import structure
@@ -27,7 +24,7 @@ lat_interp = {0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
 ui = user_input.get_config()
 verbose = ui.verbose()
 all_geo = ui.all_geo()
-nmpc = ui.get_eval('unit_cell_settings','num_molecules')
+nmpc = ui.get_eval('run_settings','num_molecules')
 olm = output.local_message
 
 def compute_bending_angle(original_struct, index1, index2, index3):
@@ -50,11 +47,20 @@ def compute_RDF_vector(original_struct):
     atomic_pairs = [['C', 'N'],['S', 'N'],['S','S']]
     #atomic_pairs = [['C', 'N'],['S', 'N']]
     dist = [2., 3., 4., 5., 6., 7., 8.]
+
+
+   # atomic_pairs = ui.get_list('clustering','interatomic_distance_pairs')
+  #  atomic_distance_range = ui.get_list('clustering','interatomic_distance_range')
+ #   atomic_distance_increment = ui.get_eval('clustering','interatomic_distance_increment')
+
+#    print atomic_pairs, atomic_distance_range,atomic_distance_increment
+
+
     smoothing_parameter = 1 
     a = smoothing_parameter
-    n_factor = [4*np.pi*(0.25*(np.pi/a**3)**0.5+\
-                0.5*r**2*(np.pi/a)**0.5+3*r/a*math.exp(-a*r**2)+\
-                (0.25*(np.pi/a**3)**0.5+0.5*r**2*(np.pi/a)**0.5)*\
+    n_factor = [4 * np.pi * (0.25 * (np.pi/a**3)**0.5 + \
+                0.5 *r**2 * (np.pi/a)**0.5 + 3*r/a * math.exp(-a*r**2) + \
+                (0.25 * (np.pi/a**3)**0.5 + 0.5*r**2*(np.pi/a)**0.5)*\
                 math.erf(r*a**0.5)) \
                 for r in dist]
     struct = deepcopy(original_struct)
@@ -304,16 +310,16 @@ def cell_extension_input(struct, extension, create_duplicate=True):
 def cell_populate_molecules(struct,mole_info_list):
 	'''
 	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; 
-        requires the mole_info_list to be comprehensive and matching with the number of molecules specified in unit_cell_settings
+        requires the mole_info_list to be comprehensive and matching with the number of molecules specified in [run_settings]
 	mole_info_list should be a list of tuples defined as:
 	[COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle]
 	'''
 	ui=user_input.get_config()
-	if len(mole_info_list)!=ui.get_eval("unit_cell_settings","num_molecules"):
+	if len(mole_info_list)!=ui.get_eval("run_settings","num_molecules"):
 		raise RuntimeError("In structure_handling.cell_populate_molecules, the number of molecules to be populated does not match")
 		return False
 	count=-1
-	mole_list=ui.get_eval("unit_cell_settings","molecule_list")
+	mole_list=ui.get_eval("run_settings","molecule_list")
 	llist=[]
 	for (molename,napm,occurance) in mole_list:
 		geo=file_handler.get_molecule_geo(molename)
@@ -380,7 +386,7 @@ def mole_recognize(struct):
 	the orientation is determined according to the standard geometry
 	found in run_calcs/molecules
 	'''
-	molecules=ui.get_eval('unit_cell_settings','molecule_list')
+	molecules=ui.get_eval('run_settings','molecule_list')
 	sum=0;count=-1
 	result=[]
 	struct=copy.deepcopy(struct)
@@ -608,7 +614,7 @@ def cell_modification(struct,napm=None,create_duplicate=True):
     lats = struct.get_lattice_vectors()
     from spglib import niggli_reduce
     reduced_lats =  niggli_reduce(lats)
-    if reduced_lats == None:
+    if reduced_lats is None:
         return False
     del(struct.properties["lattice_vector_a"])
     del(struct.properties["lattice_vector_b"])
@@ -947,8 +953,7 @@ def combined_distance_check(struct,replica):
 			for k in range (j+1,(i+1)*napm):
 				if struct.get_atom_distance(j,k) < min_dist:
 					if verbose:
-						olm("-- Atoms %i and %i too close"
-						% (j,k) ,replica)
+						olm("-- Atoms %i and %i too close" % (j,k) ,replica)
 					return False
 
 	if min_dist_2!=None:
@@ -967,8 +972,7 @@ def combined_distance_check(struct,replica):
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
 				dist = np.linalg.norm(diff)
 				if dist < min_dist and verbose:
-					olm("-- Atoms %i and %i too close"
-					% (a1,a2), replica)
+					olm("-- Atoms %i and %i too close" % (a1,a2), replica)
 					olm("-- Distance: "+str(dist),replica)
 	
 				if dist<min_dist:
@@ -979,8 +983,7 @@ def combined_distance_check(struct,replica):
 				if (sr!=None and a1_s in radius and a2_s in radius 
 				and dist<(radius[a1_s]+radius[a2_s])*sr):
 					if verbose:
-						olm("-- Atoms %i and %i too close"\
-						% (a1,a2),replica)
+						olm("-- Atoms %i and %i too close" % (a1,a2),replica)
 						olm("-- Specific radius proportion: %f" % (dist/radius[a1_s]/radius[a2_s]),replica)
 					return False
 	
@@ -1002,8 +1005,7 @@ def combined_distance_check(struct,replica):
 				dist = np.linalg.norm(diff)
 
 				if dist < min_dist and verbose:
-					olm("-- Atoms %i and %i too close"
-					% (a1,a2), replica)
+					olm("-- Atoms %i and %i too close" % (a1,a2), replica)
 					olm("-- Distance: "+str(dist),replica)
 
 				if dist < min_dist:
@@ -1014,8 +1016,7 @@ def combined_distance_check(struct,replica):
 				if (sr!=None and a1_s in radius and a2_s in radius 
 				and dist<(radius[a1_s]+radius[a2_s])*sr):
 					if verbose:
-						olm("-- Atoms %i and %i too close",\
-						replica)
+						olm("-- Atoms %i and %i too close" % (a1, a2) ,replica)
 						olm("-- Specific radius proportion: %f" % (dist/radius[a1_s]/radius[a2_s]),replica)
 	
 					return False

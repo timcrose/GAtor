@@ -84,7 +84,7 @@ class Symmetric_Crossover(object):
 		self.replica = replica
 		self.verbose = self.ui.verbose()
 		self.all_geo = self.ui.all_geo()
-		self.num_mol = self.ui.get_eval("unit_cell_settings","num_molecules")
+		self.num_mol = self.ui.get_eval("run_settings","num_molecules")
 		self.napm = int(len(parent_a.geometry)/self.num_mol)
 
 

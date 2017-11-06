@@ -52,12 +52,10 @@ class StructureSelection():
         banned = []
         structure_coll = self.structure_supercoll.get((self.replica_stoic, self.index))
         struct_a, fit_a = self.select_structure(structure_coll)
-        print "selected a", struct_a.struct_id, fit_a
         while True: 
             struct_b, fit_b = self.select_structure(structure_coll)
-            print "selected b", struct_b.struct_id, fit_b
             if not struct_a == struct_b: break  # remove this to allow double-selection
-        print struct_a.struct_id, struct_b.struct_id
+        struct_a.struct_id, struct_b.struct_id
         return [struct_a, struct_b]
 
     def select_structure(self, structure_coll):
@@ -101,7 +99,6 @@ class StructureSelection():
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
-            #print "normalized fitness: %s  %s" %(rho, index)
         return fitness
     
     def get_energy_fitness(self, structure_coll):
@@ -130,7 +127,6 @@ class StructureSelection():
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
-            #print rho
         return fitness
         
     def sorted_fitness(self, fitness_dict):
@@ -156,20 +152,18 @@ class StructureSelection():
         for index, t_fitness in tmp: 
             normalized_fit.append((index, t_fitness + total))
             total = t_fitness + total
-        print normalized_fit[0][0].struct_id, normalized_fit[0][1]
-        print normalized_fit[-1][0].struct_id, normalized_fit[-1][1]
+        #print normalized_fit[0][0].struct_id, normalized_fit[0][1]
+        #print normalized_fit[-1][0].struct_id, normalized_fit[-1][1]
         return normalized_fit
     
     def select_best_from_fitness(self, fitness_dict):
         fitness = self.sorted_fitness(fitness_dict)
         fitness = self.normalized_fitness(fitness)
-        for struct, fit in fitness:
-            print struct.struct_id, fit
-        #print fitness
+        #for struct, fit in fitness:
+            #print struct.struct_id, fit
         dec = float(self.percent*0.01)
         dec_comp = 1-dec
         random_num = np.random.uniform(dec_comp,1.0)
-        print random_num
         # selects first element to be greater than random number
         return list(filter((lambda x : x[1] > random_num), fitness))[0]
     
