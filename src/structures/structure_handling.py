@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -
 """
 Created on Fri May 29 16:09:38 2015
 
@@ -34,7 +33,7 @@ def compute_RDF_vector(original_struct):
     atomic_pairs = list(ui.get_atom_pair_list('clustering','interatomic_pairs'))
     atomic_distance_range = ui.get_list('clustering','interatomic_distance_range')
     atomic_distance_increment = ui.get_eval('clustering','interatomic_distance_increment')
-    smoothing_parameter = float(ui.get_eval('clustering', 'smoothing_parameter'))
+    smoothing_parameter = float(ui.get_eval('clustering','smoothing_parameter'))
     dist = np.arange(float(atomic_distance_range[0]), 
                      float(atomic_distance_range[1]),
                      float(atomic_distance_increment))
@@ -63,6 +62,7 @@ def compute_RDF_vector(original_struct):
 
     # Compute interatomic distances and build g vector
     vector_all = [struct.struct_id]
+
     for pair in atomic_pairs:
         ref_atom_type = pair.split()[0][2]
         target_atom_type = pair.split()[0][6]
@@ -651,119 +651,6 @@ def lattice_from_info_2(lattice_info):
     a, b, c = lattice._lengths
     alpha, beta, gamma = lattice._angles
     return lattice.matrix
-
-def cell_modification_old (struct,replica=ui.get_replica_name(),create_duplicate=True):#Replica name is passed in for verbose output
-	'''
-	Method found in the 2011 Lonie paper
-	Make the skewed angle correct
-	'''
-	napm=int(len(struct.geometry)/nmpc)
-	if create_duplicate:
-		struct=copy.deepcopy(struct)
-	test=True
-	run=0
-	count=0
-	try: #Updates the missing struct information
-		gamma=struct.properties['gamma']
-		a=struct.properties['a']
-	except:
-		struct.properties.update(lattice_parameters(struct))
-
-	while test and run<10:
-		test=False
-		run+=1
-		if (struct.properties['gamma']>120) or (struct.properties['gamma']<60):
-			count+=1
-		if count==1:
-#			before=print_aims(struct)
-			test=True
-			if struct.properties['a']>=struct.properties['b']:
-				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(np.linalg.norm(struct.properties["lattice_vector_b"])**2)
-				#c=np.ceil(abs(frac))*np.sign(frac)
-				c=np.round(frac)
-				for j in range (3):
-					struct.properties["lattice_vector_a"][j]-=c*struct.properties["lattice_vector_b"][j]
-				struct.properties['a']=np.linalg.norm(struct.properties['lattice_vector_a'])
-			else:
-				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/(np.linalg.norm(struct.properties["lattice_vector_a"])**2)
-				#c=np.ceil(abs(frac))*np.sign(frac)
-				c=np.round(frac)
-				for j in range (3):
-					struct.properties["lattice_vector_b"][j]-=c*struct.properties["lattice_vector_a"][j]
-				struct.properties['b']=np.linalg.norm(struct.properties['lattice_vector_b'])
-			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
-			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
-			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
-
-		if (struct.properties['beta']>120) or (struct.properties['beta']<60):
-			count+=1
-
-		if count==1:
-#			before=print_aims(struct)
-			test=True
-			if struct.properties['a']>=struct.properties['c']:
-				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_c"])**2)
-				#c=np.ceil(abs(frac))*np.sign(frac)
-				c=np.round(frac)
-				for j in range (3):
-					struct.properties["lattice_vector_a"][j]-=c*struct.properties["lattice_vector_c"][j]
-				struct.properties['a']=np.linalg.norm(struct.properties['lattice_vector_a'])
-			else:
-				frac=np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_a"])**2)
-				#c=np.ceil(abs(frac))*np.sign(frac)
-				c=np.round(frac)
-				for j in range (3):
-					struct.properties["lattice_vector_c"][j]-=c*struct.properties["lattice_vector_a"][j]
-				struct.properties['c']=np.linalg.norm(struct.properties['lattice_vector_c'])
-			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
-			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
-			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
-
-		if (struct.properties['alpha']>120) or (struct.properties['alpha']<60):
-			count+=1
-
-		if count==1:
-#			before=print_aims(struct)
-			test=True
-			#d=struct.properties
-			if struct.properties['b']>=struct.properties['c']:
-				frac=np.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_c"])**2)
-				c=np.round(frac)                
-				#c=np.ceil(abs(frac))*np.sign(frac)
-				for j in range (3):
-					struct.properties["lattice_vector_b"][j]-=c*struct.properties["lattice_vector_c"][j]
-				struct.properties['b']=np.linalg.norm(struct.properties['lattice_vector_b'])
-			else:
-				frac=np.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/(np.linalg.norm(struct.properties["lattice_vector_b"])**2)
-				#c=np.round(frac)                
-				c=np.ceil(abs(frac))*np.sign(frac)
-				for j in range (3):
-					struct.properties["lattice_vector_c"][j]-=c*struct.properties["lattice_vector_b"][j]
-				struct.properties['c']=np.linalg.norm(struct.properties['lattice_vector_c'])
-			struct.properties['alpha']=angle(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])
-			struct.properties['beta']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])
-			struct.properties['gamma']=angle(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])
-
-	struct=move_molecule_in(struct,create_duplicate=False)
-	struct=cell_lower_triangular(struct,False)
-
-	if count>0 and verbose:
-		st="-- Cell modification required for structure " 
-		if struct.struct_id!=None:
-			st += str(struct.struct_id)
-		else:
-			st += "\n"
-		
-#		if all_geo: 
-#			st += "Geometry after modification:\n"
-#			st += print_aims(struct)
-		output.local_message(st,replica)
-	if count==0 and verbose:
-		st = "-- Cell modification uncessary for structure "
-		if struct.struct_id!=None:
-			st += str(struct.struct_id)
-		output.local_message(st,replica)
-	return struct
 
 def cell_check(struct,replica):
 	'''

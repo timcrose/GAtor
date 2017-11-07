@@ -947,7 +947,8 @@ class RandomStrainMutation(object):
     def rand_strain(self, lat_mat):
         strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
-        self.output("-- Strain_mat" + str(strain_mat))
+        self.output("-- Strain parameters: %s \n" %(strain_list))
+        self.output("-- Strain_mat: %s \n"  %(strain_mat))
         strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
         return strain[0], strain[1], strain[2]
 

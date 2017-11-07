@@ -11,7 +11,7 @@ from utilities import misc
     
 
 def AP_distance_matrix(coll, dist_mat, affinity_type=["exponential",1],
-                       damping=0.5, convergence_iter=25, max_iter=200,
+                       damping=0.5, convergence_iter=75, max_iter=200,
                        preference=None, stored_property_key="AP_cluster"):
     '''
     Given a collection of structures and their distance matrix
@@ -24,7 +24,7 @@ def AP_distance_matrix(coll, dist_mat, affinity_type=["exponential",1],
                               stored_property_key=stored_property_key)
 
 
-def AP_affinity_matrix(coll, affinity_mat, damping=0.5, convergence_iter=25,
+def AP_affinity_matrix(coll, affinity_mat, damping=0.5, convergence_iter=75,
                        max_iter=200, preference=None, stored_property_key="AP_cluster"):
     '''
     Given a collection of structure and their affinity matrix

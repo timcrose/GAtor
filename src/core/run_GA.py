@@ -46,7 +46,7 @@ class RunGA():
         self.replica_stoic = stoic
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.GA_module_init()
-        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
+#        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
         self.verbose = self.ui.verbose()
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")
@@ -61,9 +61,9 @@ class RunGA():
         structure_collection.get_collection(self.replica_stoic, 0)
         self.structure_supercoll[(self.replica_stoic, 'duplicates')] = \
         structure_collection.get_collection(self.replica_stoic, 'duplicates')
-        data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
         structure_collection.update_supercollection(self.structure_supercoll)
         self.structure_coll = structure_collection.stored_collections[(self.replica_stoic, 0)]
+        data_tools.write_energy_hierarchy(self.structure_supercoll[(self.replica_stoic,0)])
         self.processes = self.ui.get_multiprocessing_processes()
         if self.processes > 1:
             self.worker_pool = multiprocessing.Pool(processes=self.processes)
@@ -90,6 +90,7 @@ class RunGA():
             struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
             self.clustering_module.main(struct_coll, self.replica)
             data_tools.write_energy_hierarchy(struct_coll)
+
         # Update Supercollection of Structures
         structure_collection.update_supercollection(self.structure_supercoll)
 
@@ -141,6 +142,10 @@ class RunGA():
             top_prop_list = self.return_property_array(coll)
             self.check_global_optimization(struct,top_prop_list)
 
+            #----- Optional store feature vector  ----#
+            if self.ui.get_boolean("clustering","cluster_pool"):
+                struct = self.compute_feature_vector(struct)
+
             #----- Add Structure to collection -----#
             self.struct_index = self.add_to_collection(struct, ref_label)
 
@@ -154,7 +159,7 @@ class RunGA():
             #----- Success Message -----#
             self.success_message()
 
-            #----- Optional Clustering ----#
+            #----- Optional Clustering on updated collection----#
             if self.ui.get_boolean("clustering","cluster_pool"):
                 struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
                 self.clustering_module.main(struct_coll, self.replica)
@@ -164,6 +169,13 @@ class RunGA():
             restart_count += 1
             convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
 
+    def compute_feature_vector(self, struct):
+        feature_vector = self.ui.get("clustering", "feature_vector")
+        if feature_vector == "RDF_vector":
+            struct = structure_handling.compute_RDF_vector(struct)
+            return struct 
+        else:
+            raise ValueError("Feature vector not devloped in runGA compute_feature_vector yet")
 
     def save_replica_output(self):
         input_ref = "0"
@@ -283,7 +295,7 @@ class RunGA():
         end = False
         IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
         try: number_of_IP = open(IP_dat).read()
-        except: raise ValueError("Initial pool has not been filled")
+        except: raise ValueError("Initial pool has not been filled properly")
         struct_coll = structure_collection.get_collection(self.replica_stoic, 0)
         struct_coll.update_local()
         size_of_common = len(struct_coll.structures)
@@ -578,9 +590,9 @@ class RunGA():
         napm = int(struct.get_n_atoms()/nmpc)
         structure_handling.cell_modification(struct, napm,create_duplicate=False)
         struct=structure_handling.cell_lower_triangular(struct,False)	
-        a=struct.get_property('lattice_vector_a')
-        b=struct.get_property('lattice_vector_b')
-        c=struct.get_property('lattice_vector_c')
+        a = struct.get_property('lattice_vector_a')
+        b = struct.get_property('lattice_vector_b')
+        c = struct.get_property('lattice_vector_c')
         struct.set_property('lattice_vector_a',list(a))
         struct.set_property('lattice_vector_b',list(b))
         struct.set_property('lattice_vector_c',list(c))

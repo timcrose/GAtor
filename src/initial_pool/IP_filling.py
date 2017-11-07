@@ -48,11 +48,11 @@ def main():
     if ui.get_boolean('initial_pool', 'duplicate_check'):
         output.time_log("Checking initial pool for duplicates")
         output.local_message("---- Checking initial pool for duplicates ----",replica)
-        ip_count = return_non_duplicates(initial_list, replica)
+        ip_count = return_non_duplicates(initial_list, replica, ui)
         output.time_log("Final initial pool count: %i" % ip_count)
         output.local_message("Final initial pool count: %i" % ip_count,replica)
     else:
-		ip_count = return_all_user_structures(initial_list)
+		ip_count = return_all_user_structures(initial_list, replica, ui)
 		output.time_log("Final initial pool count: %i" % ip_count)
 		output.local_message("Final initial pool count: %i" % ip_count,replica)
     output.move_to_shared_output(replica="init_pool")
@@ -131,7 +131,7 @@ def set_IP_structure_matcher(ui):
                           scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
 	return sm
 
-def return_all_user_structures(initial_list):
+def return_all_user_structures(initial_list, replica, ui):
     '''
 	Called when no duplicate check is required. Adds all user-defined structures into common (0) storage
 	Args: The initial list of Structures() from the user-defined folder
@@ -139,17 +139,46 @@ def return_all_user_structures(initial_list):
 	'''
     ip_count = 0
     structure_supercoll = {}
+
+    if ui.get_boolean("clustering","cluster_pool"):
+        message = "Clustering is requested."  
+        output.local_message(message,replica)
     for struct in initial_list:
         stoic = struct.get_stoic()
         struct.set_property('ID',0)
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
+        if ui.get_boolean("clustering","cluster_pool"):
+           struct = compute_feature_vector(struct, ui) 
         structure_collection.add_structure(struct, stoic, 0)
         ip_count += 1
     return ip_count
 
-def return_non_duplicates(initial_list, replica):
+
+def compute_feature_vector(struct, ui):
+    feature_vector = ui.get("clustering", "feature_vector")
+    if struct.get_property('feature_vector') is not None:
+        return struct
+    if feature_vector == "RDF_vector":
+        struct = structure_handling.compute_RDF_vector(struct)
+        print struct.get_property("RDF_vector")
+        return struct
+
+
+ #           ClusterColl = AffinityPropagationClusteringRDF(structure_coll, replica)
+ #           clustered_coll = ClusterColl.return_clusters()
+ #       elif feature_vector == "RCD_vector":
+#            ClusterColl = AffinityPropagationClusteringRCD(structure_coll, replica)
+#            clustered_coll = ClusterColl.return_clusters()
+#        elif feature_vector == "Lat_vol":
+#
+#                else:
+#            message = "Affinity Propagation not implemented for %s" % (feature_vector)
+#            raise RuntimeError(message)
+
+
+def return_non_duplicates(initial_list, replica, ui):
     '''
     Called when duplicate check is required. 
     Uses RDF and pymatgen similarity comparison
@@ -160,6 +189,9 @@ def return_non_duplicates(initial_list, replica):
     remove_list = []
     structure_supercoll = {}
     dup_pairs = return_duplicate_pairs(initial_list, ui, replica)
+    if ui.get_boolean("clustering","cluster_pool"):
+        message = "Clustering is requested."
+        output.local_message(message,replica)
     for path, path_dup in dup_pairs:
         remove_list.append(path_dup)
     for struct in initial_list:
@@ -171,6 +203,8 @@ def return_non_duplicates(initial_list, replica):
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
+        if ui.get_boolean("clustering","cluster_pool"):
+           struct = compute_feature_vector(struct, ui)        
         structure_collection.add_structure(struct, stoic, 0)
     if len(initial_list)!=0:
         struct_coll = StructureCollection(stoic, 0)

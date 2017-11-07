@@ -50,9 +50,6 @@ def main(structure_coll, replica):
         elif feature_vector == "Lat_vol":
             ClusterColl = AffinityPropagationClusteringLatVol(structure_coll, replica)
             clustered_coll = ClusterColl.return_clusters()
-        elif feature_vector == "Angle_lat":
-            ClusterColl = AffinityPropagationClusteringAngleLat(structure_coll, replica)
-            clustered_coll = ClusterColl.return_clusters()
         else:
             message = "Affinity Propagation not implemented for %s" % (feature_vector)
             raise RuntimeError(message)
@@ -209,75 +206,6 @@ class AffinityPropagationClusteringRDF():
         self.output("-- Number of clusters %s" % (len(info)))
         self.output("-- Distribution of clusters %s" % (sorted_info))
 
-class AffinityPropagationClusteringAngleLat():
-    '''
-    This class performs K means clustering for a fixed number of 
-    user-defined clusters on previously defined RDF vectors in each
-    structure in a structure collection
-    '''
-    def __init__(self, structure_coll, replica):
-        self.ui = user_input.get_config()
-        self.replica = replica
-        self.struct_coll = structure_coll
-        self.feature_type = self.ui.get("clustering", "feature_vector")
-
-
-    def return_clusters(self):
-        feature_list = np.array(self.return_descriptor_list())
-        print feature_list
-        af = AffinityPropagation().fit(feature_list)
-        cluster_centers_indices = af.cluster_centers_indices_
-        clustered_data = af.labels_
-
-        n_clusters_ = len(cluster_centers_indices)
-        print('Estimated number of clusters: %d' % n_clusters_)
-        print("Silhouette Coefficient: %0.3f"
-            % metrics.silhouette_score(feature_list, clustered_data, metric='sqeuclidean'))
-
-        clustered_coll = self.cluster_coll(clustered_data)
-        return self.struct_coll
-
-    def output(self, message):
-        output.local_message(message, self.replica)
-
-    def return_descriptor_list(self):
-        angle_lats = []
-        for index, struct in self.struct_coll:
-            angle_lat = struct.get_property(self.feature_type)
-            if angle_lat is not None:
-                angle_lats.append(angle_lat)
-            elif angle_lat is None:
-                struct = structure_handling.compute_bending_angle(struct, 9, 3, 13)
-                angle_lat = struct.get_property(self.feature_type)
-                angle_lats.append(angle_lat)
-        return angle_lats
-
-    def cluster_coll(self, clustered_data):
-        ''' 
-        Takes cluster labels and assigns as properties 
-        of each structure in collection
-        '''
-        # Find clusters and number of members in each
-        clusters = clustered_data.tolist()
-        info = [[x, clusters.count(x)] for x in set(clusters)]
-        infox = [x[0] for x in info]
-        sorted_info = sorted(info, key=lambda x: x[1])
-
-        # Assign cluster label as property of each structure
-        i = 0
-        for index, struct in self.struct_coll:
-            label = clusters[i]
-            struct.set_property("cluster_label", label)
-            i += 1
-            for j in info:
-
-                if label == j[0]:
-                    struct.set_property('cluster_members', j[1])
-
-        # Output info
-        self.output("-- Clustering Feature vector %s" % (self.feature_type))
-        self.output("-- Number of clusters %s" % (len(info)))
-        self.output("-- Distribution of clusters %s" % (sorted_info))
 
 class AffinityPropagationClusteringLatVol():
     '''
