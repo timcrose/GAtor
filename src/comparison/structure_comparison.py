@@ -110,7 +110,6 @@ class Comparison:
                 for pair in dup_pair:
                     dup_output.write('\t'.join(str(s) for s in pair) + '\n')
             return False
-        self.ui.grant_permission(os.path.join(tmp_dir,"GA_duplicates.dat"))
         return True
 
     def check_if_duplicate_multiprocessing(self, struct, comp_list, comparison_type):

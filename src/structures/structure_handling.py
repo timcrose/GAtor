@@ -6,9 +6,10 @@ Created on Fri May 29 16:09:38 2015
 
 Basic modification of crystal structures
 Funtions that read in a struct() and necessary arguments, and return a struct()
+or modify the given struct in place
 """
 import numpy as np
-import math
+import math # need for error function
 from structures import structure
 from core import output
 import copy
@@ -27,36 +28,17 @@ all_geo = ui.all_geo()
 nmpc = ui.get_eval('run_settings','num_molecules')
 olm = output.local_message
 
-def compute_bending_angle(original_struct, index1, index2, index3):
-    a = original_struct.get_property('a')
-    b = original_struct.get_property('b')
-    c = original_struct.get_property('c')
-    geo = original_struct.geometry
-    atom1 = [geo[index1]['x'], geo[index1]['y'], geo[index1]['z']]
-    atom2 = [geo[index2]['x'], geo[index2]['y'], geo[index2]['z']]
-    atom3 = [geo[index3]['x'], geo[index3]['y'], geo[index3]['z']]
-    bend = angle(np.array(atom1) - np.array(atom2),
-                np.array(atom3) - np.array(atom2))*180/np.pi
-    if bend > 180:
-        bend = 360 - bend
-    des = [a, b, c, bend]
-    original_struct.set_property('angle_lat_descriptor', des)
-    return original_struct
         
 def compute_RDF_vector(original_struct):
-    atomic_pairs = [['C', 'N'],['S', 'N'],['S','S']]
-    #atomic_pairs = [['C', 'N'],['S', 'N']]
-    dist = [2., 3., 4., 5., 6., 7., 8.]
-
-
-   # atomic_pairs = ui.get_list('clustering','interatomic_distance_pairs')
-  #  atomic_distance_range = ui.get_list('clustering','interatomic_distance_range')
- #   atomic_distance_increment = ui.get_eval('clustering','interatomic_distance_increment')
-
-#    print atomic_pairs, atomic_distance_range,atomic_distance_increment
-
-
-    smoothing_parameter = 1 
+    # Get user-defined parameters
+    atomic_pairs = list(ui.get_atom_pair_list('clustering','interatomic_pairs'))
+    atomic_distance_range = ui.get_list('clustering','interatomic_distance_range')
+    atomic_distance_increment = ui.get_eval('clustering','interatomic_distance_increment')
+    smoothing_parameter = float(ui.get_eval('clustering', 'smoothing_parameter'))
+    dist = np.arange(float(atomic_distance_range[0]), 
+                     float(atomic_distance_range[1]),
+                     float(atomic_distance_increment))
+    #Computer Normalization Factors
     a = smoothing_parameter
     n_factor = [4 * np.pi * (0.25 * (np.pi/a**3)**0.5 + \
                 0.5 *r**2 * (np.pi/a)**0.5 + 3*r/a * math.exp(-a*r**2) + \
@@ -82,15 +64,16 @@ def compute_RDF_vector(original_struct):
     # Compute interatomic distances and build g vector
     vector_all = [struct.struct_id]
     for pair in atomic_pairs:
-        ref_atom_type = pair[0]
-        target_atom_type = pair[1]
-        a1_range = [i for i in range (original_struct.get_n_atoms()) 
+        ref_atom_type = pair.split()[0][2]
+        target_atom_type = pair.split()[0][6]
+        print ref_atom_type
+        print target_atom_type
+        a1_range = [i for i in range(original_struct.get_n_atoms()) 
                         if original_struct.geometry[i]["element"] == ref_atom_type]
-        a2_range = [i for i in range (original_struct.get_n_atoms()) 
+        a2_range = [i for i in range(original_struct.get_n_atoms()) 
                         if original_struct.geometry[i]["element"] == target_atom_type]
         rs = all_interatomic_distances(ex_struct, ref_atom_type, target_atom_type, a1_range)
         distances = [i[2] for i in rs]
-        smoothing_parameter = 1 ###might need to modify
         g = [sum([math.exp(-smoothing_parameter*(r-r_ij)**2) 
             for r_ij in distances])/len(a1_range) for r in dist]
         g = [g[i]/n_factor[i] for i in range (len(dist))]

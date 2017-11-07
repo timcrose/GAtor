@@ -34,7 +34,6 @@ def main():
     num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
     energy_name = ui.get('initial_pool', 'stored_energy_name')
     files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
-    ui.grant_permission(added_user_structures)
     st = ' ------------------------------------------------------------------------'
     gst = '|                       GAtor filling initial pool                       |'
     output.local_message(st, replica)

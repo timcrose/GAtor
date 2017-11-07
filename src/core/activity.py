@@ -21,7 +21,6 @@ def get_execute_clearance(request_folder="",buffer=3,max_wait=1000):
                                 data_file=open(os.path.join(tmp_dir,"execute.info"),"w")
                                 data_file.write(str(time.time()))
                                 data_file.close()
-				os.system("chmod g=u "+os.path.join(tmp_dir,"execute.info"))
                                 return True
 
                         data_file=open(os.path.join(tmp_dir,"execute.info"))
@@ -80,7 +79,6 @@ def request_folder_to_check():
 		for info in folder_list:
 			f.write(info+"\n")
 		f.close()
-		os.system("chmod g=u "+os.path.join(tmp_dir,"folder.info"))
 	return result
 
 def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_index()):
@@ -98,7 +96,6 @@ def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_inde
 
         try:
 	        copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
-		os.system("chmod -R g=u "+os.path.join(bk_path,nname))
 		output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility")
 		return True
         except:
@@ -113,7 +110,6 @@ def write_active(fdir):
 	f=open(os.path.join(fdir,"active.info"),"w")
 	f.write(str(time.time()))
 	f.close()
-	os.system("chmod g=u "+os.path.join(fdir,"active.info"))
 
 def read_active(folder):
         '''

@@ -107,9 +107,6 @@ def mkdir_p(path):
 	if not os.path.isdir(os.path.dirname(path)):
 		mkdir_p(os.path.dirname(path))
         os.makedirs(path)
-	try:
-		os.system("chmod -R 771 "+path)
-	except: pass
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
@@ -148,7 +145,6 @@ def write_data(filepath, filename, contents):
     d_file = open(filepath, 'w')
     d_file.write(str(contents))
     d_file.close()
-    os.system("chmod 771 "+filepath)
 
 def read_data(filepath, filename=None):
     if filename is not None: full_filepath = os.path.join(filepath, filename)
@@ -238,11 +234,6 @@ def print_to_file(message):
         data_file = open(output_file, 'a')
         data_file.write(str(message) + '\n')
         data_file.close()
-    try:
-	os.system("chmod g=u "+output_file)
-    except:
-	pass
-
 
 if __name__ == '__main__':
     print cwd    

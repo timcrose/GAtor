@@ -51,7 +51,6 @@ def write_avg_fitness(Ig, fit_avg, structure_coll):
     to_write += str(ID)+ ' '+ str(fit_avg)
     to_write += '\n'	
     with open(os.path.join(tmp_dir, 'fitness.' + str(structure_coll.get_input_ref()) + '.dat'), 'a+') as f: f.write(to_write)
-    os.system("chmod g=u "+os.path.join(tmp_dir,'fitness.'+str(structure_coll.get_input_ref())+'.dat'))
  
 def get_energy_list(structure_coll):
     energy_list = []
@@ -76,41 +75,20 @@ def get_energy_list(structure_coll):
         parent0 = structure.get_property('parent_0')
         parent1 = structure.get_property('parent_1')
         cluster = structure.get_property('cluster_label')
-        #apcluster = structure.get_property('af_cluster_label')
-        #apmem = structure.get_property('af_cluster_members')
         mem = structure.get_property('cluster_members')
-        rev = structure.get_property('revisits')
+        if parent1 is None:
+            parent1 = ""
+        if mem is None:
+            mem = ""
+        if cluster is None:
+            cluster = ""
         if energy is not None:
             energy_list.append([ID, replica, index, energy, \
                                 vol, a, b, c, alpha, beta, \
                                 gamma, spacegroup, mut, \
                                 str(parent0)[15:], str(parent1)[15:],\
-                                crosstype, cluster, mem, rev])
+                                crosstype, cluster, mem])
     return energy_list
-
-def write_energy_vs_addition(structure_coll):
-    energy_list = get_energy_list(structure_coll)
-    to_write = ''
-    energy_list.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, clus, mem, st in energy_list:
-        if rep == 'init_pool':
-            continue
-        to_write += str(index)+"    "+str(Id)+"    "+str(energy)+'\n' 
-        file_path = os.path.join(tmp_dir, 'energy_vs_addition.' + str(structure_coll.get_input_ref()) + '.dat')
-        with open(file_path, 'w') as f:
-            f.write(to_write)
-            ui.grant_permission(file_path)
-
-def write_spe_vs_addition(structure_coll):
-    energy_list = get_energy_list(structure_coll)
-    to_write = ''
-    energy_list.sort(key=lambda x: x[0])
-    for  Id, rep, index, energy, spe, vol, a, b, c, al, be, ga, sg, mut, par0, par1, crosst, ap in energy_list:
-        if rep == 'init_pool':
-            continue
-        to_write += str(Id)+'    '+str(spe)+'\n'
-        with open(os.path.join(tmp_dir, 'sp_energy_vs_addition.' + str(structure_coll.get_input_ref()) + '.dat'), 'w') as f:
-            f.write(to_write)
 
 def write_energy_hierarchy(structure_coll):
 	to_write = ''
@@ -122,8 +100,8 @@ def write_energy_hierarchy(structure_coll):
 	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 
                 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
                 'Spacegroup', 'Mutation','ParentA', 'ParentB',
-                'Crossover', "Cluster", "Cluster_Members", "Revisits"])
-	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<7} {:<7} {:<7}'
+                'Crossover', "Cluster", "Cluster_Members"])
+	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<7} {:<7} '
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'
@@ -133,7 +111,6 @@ def write_energy_hierarchy(structure_coll):
         f = open(os.path.join(tmp_dir,filename),"w")
         f.write(to_write)
         f.close()
-        ui.grant_permission(os.path.join(tmp_dir,filename))
 
 def make_user_structure_directory(structure_coll, energy_list, n_structures=10):
     path = os.path.join(tmp_dir, 'user_structures')
@@ -144,40 +121,6 @@ def make_user_structure_directory(structure_coll, energy_list, n_structures=10):
             write_data(path, struct.get_stoic_str() + '_' + energy_list[i][0], struct.get_geo_atom_format())
         except: raise Exception
              
-def write_geometries_to_file(structure_coll):
-    pass
-    
-def plot_energies(energy_list, skip_first_n=0):
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    energy_list.sort(reverse=True)
-    x = []
-    y = []
-    if skip_first_n < len(energy_list):
-        for i in range(skip_first_n):
-            energy_list.pop(0)        
-    for i in range(len(energy_list)):
-        x.append(i)
-        y.append(energy_list[i])
-    ax1 = plt.gcf().add_subplot(111).scatter(x, y, c=y, s=50)
-    plt.title("Best Energy: " + str(energy_list[-1]))
-    plt.savefig(os.path.join(cwd,'energy_plot.eps'), format='eps', dpi=1000)
-    subprocess.Popen(['xdg-open', os.path.join(cwd,'energy_plot.eps')])
-
-def jmol(struct, name):
-    path = os.path.join(cwd, 'tmp', 'jmol')
-    mkdir_p(os.path.join(cwd, 'tmp', 'jmol'))
-    atom_file = open(os.path.join(path , name + '.dat'), 'w')
-    atom_file.write(struct.get_geometry_atom_format())
-    atom_file.close()
-    input_file = open(os.path.join(path, 'exe.sh'), 'w')
-    input_file.write('jmol ' + os.path.join(path, name + '.dat') + '  >/dev/null' + '&')  # supress out
-    input_file.close()
-    # creates shell script with proper syntax and runs it as a subprocess
-    p = subprocess.Popen(['sh', 'exe.sh'], cwd=os.path.join(cwd, 'tmp', 'jmol'))
-    p.wait()
-#     if os.path.exists(path): rmtree(path)
-    
+        
 if __name__ == '__main__':
     main('stoic.conf')

@@ -182,9 +182,6 @@ def dump_structure_with_inst(inst,section,struct):
 		elif output_format == "json":
 			f.write(struct.dumps())
 		f.close()
-		inst.grant_permission(output_path)		
-
-
 
 def safe_copy_folder(src,dst):
 	'''

@@ -276,7 +276,6 @@ class RunGA():
         struct_coll = structure_collection.get_collection(self.replica_stoic, ref_label)
         struct_coll.update_local()
         structure_collection.update_supercollection(self.structure_supercoll)
-        data_tools.write_energy_vs_addition(struct_coll)
         data_tools.write_energy_hierarchy(struct_coll)
         return struct_index
 

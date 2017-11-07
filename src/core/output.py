@@ -17,8 +17,6 @@ def restart_message(message):
     data_file = open(out_file, 'a')
     data_file.write(str(message) + '\n')
     data_file.close()
-    os.system("chmod g=u "+out_file)
-
 
 def local_message(message, replica=ui.get_replica_name()):
     out_file = os.path.join(out_tmp_dir, str(replica) + '.out')
@@ -32,7 +30,6 @@ def time_log(message,replica=ui.get_replica_name(),logfile=log_file):
 		if not os.path.exists(os.path.join(cwd,logfile)):
 			f=open(os.path.join(cwd,logfile),"w")
 			f.close()
-			os.system("chmod g=u "+os.path.join(cwd,logfile))
 		f=open(os.path.join(cwd,logfile),"a")
 		f.write(message)
 		f.close()
@@ -62,5 +59,4 @@ def move_to_shared_output(replica=ui.get_replica_name(),output_file=output_file)
         data_file = open(output_file, 'a')
         data_file.write('Replica: ' + str(replica)+" --------------------------------\n" + str(contents_string) + '\n')
         data_file.close()
-	ui.grant_permission(output_file)
     reset_local(replica)
