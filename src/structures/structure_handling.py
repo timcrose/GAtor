@@ -66,8 +66,6 @@ def compute_RDF_vector(original_struct):
     for pair in atomic_pairs:
         ref_atom_type = pair.split()[0][2]
         target_atom_type = pair.split()[0][6]
-        print ref_atom_type
-        print target_atom_type
         a1_range = [i for i in range(original_struct.get_n_atoms()) 
                         if original_struct.geometry[i]["element"] == ref_atom_type]
         a2_range = [i for i in range(original_struct.get_n_atoms()) 
@@ -188,7 +186,6 @@ def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,
 #        return False
     if (vec==None) and (((theta_deg==None) and (theta_rad==None)) 
                        or ((phi_deg==None) and (phi_rad==None))):
-        print "here2"
         return False
 	if rad==None:
 		rad=np.deg2rad(deg)

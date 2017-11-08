@@ -162,20 +162,10 @@ def compute_feature_vector(struct, ui):
         return struct
     if feature_vector == "RDF_vector":
         struct = structure_handling.compute_RDF_vector(struct)
-        print struct.get_property("RDF_vector")
         return struct
-
-
- #           ClusterColl = AffinityPropagationClusteringRDF(structure_coll, replica)
- #           clustered_coll = ClusterColl.return_clusters()
- #       elif feature_vector == "RCD_vector":
-#            ClusterColl = AffinityPropagationClusteringRCD(structure_coll, replica)
-#            clustered_coll = ClusterColl.return_clusters()
-#        elif feature_vector == "Lat_vol":
-#
-#                else:
-#            message = "Affinity Propagation not implemented for %s" % (feature_vector)
-#            raise RuntimeError(message)
+    elif feature_vector =="PCA_RDF_vector":
+        struct = structure_handling.compute_RDF_vector(struct)
+        return struct
 
 
 def return_non_duplicates(initial_list, replica, ui):
