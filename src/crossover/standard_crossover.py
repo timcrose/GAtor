@@ -334,7 +334,7 @@ class Crossover(object):
         b = struct.get_property("lattice_vector_b")
         c = struct.get_property("lattice_vector_c")
         old_lattice = [a, b, c]
-        if rand < 0.5:
+        if rand < 0.1:
             i = 0
             choice = np.random.choice(["bca","cab"])
             choice = "cab"
@@ -354,7 +354,7 @@ class Crossover(object):
                 structure_handling.move_molecule_in(struct, create_duplicate=False)
                 struct = structure_handling.cell_lower_triangular(struct)
                 self.output("-- cab orientation")
-                self.output(struct.get_geometry_atom_format())
+                #self.output(struct.get_geometry_atom_format())
             elif choice == "bca":
                 new_lattice = [b, c, a]
                 trans_mat = np.dot(np.transpose(new_lattice),
@@ -371,7 +371,7 @@ class Crossover(object):
                 structure_handling.move_molecule_in(struct, create_duplicate=False)
                 struct = structure_handling.cell_lower_triangular(struct)
                 self.output("-- bca orientation")
-                self.output(struct.get_geometry_atom_format())
+                #self.output(struct.get_geometry_atom_format())
  
     def create_child_struct(self, child_geometry, child_lattice, atom_types):
         ''' Creates a Structure() for the child to be added to the collection'''
@@ -391,8 +391,7 @@ class Crossover(object):
         new_struct.set_property('b', np.linalg.norm(child_B))
         new_struct.set_property('c', np.linalg.norm(child_C))
         new_struct.set_property('cell_vol', temp_vol)
-  #      new_struct.set_property('crossover_type', cross_type)
-        new_struct.set_property('alpha',alpha)
+       new_struct.set_property('alpha',alpha)
         new_struct.set_property('beta', beta)
         new_struct.set_property('gamma', gamma)
         return new_struct
@@ -473,38 +472,6 @@ class Crossover(object):
         y : scalar
         x : scalar
         Rotations in radians around z, y, x axes, respectively
-
-        Notes
-        -----
-        If there was no numerical error, the routine could be derived using
-        Sympy expression for z then y then x rotation matrix, which is::
-
-        [                       cos(y)*cos(z),                       -cos(y)*sin(z),         sin(y)],
-        [cos(x)*sin(z) + cos(z)*sin(x)*sin(y), cos(x)*cos(z) - sin(x)*sin(y)*sin(z), -cos(y)*sin(x)],
-        [sin(x)*sin(z) - cos(x)*cos(z)*sin(y), cos(z)*sin(x) + cos(x)*sin(y)*sin(z),  cos(x)*cos(y)]
-
-        with the obvious derivations for z, y, and x
-
-        z = atan2(-r12, r11)
-        y = asin(r13)
-        x = atan2(-r23, r33)
-
-        Problems arise when cos(y) is close to zero, because both of::
-
-        z = atan2(cos(y)*sin(z), cos(y)*cos(z))
-        x = atan2(cos(y)*sin(x), cos(x)*cos(y))
-
-        will be close to atan2(0, 0), and highly unstable.
-
-        The ``cy`` fix for numerical instability below is from: *Graphics
-        Gems IV*, Paul Heckbert (editor), Academic Press, 1994, ISBN:
-        0123361559.  Specifically it comes from EulerAngles.c by Ken
-        Shoemake, and deals with the case where cos(y) is close to zero:
-
-        See: http://www.graphicsgems.org/
-
-        The code appears to be licensed (from the website) as "can be used
-        without restrictions".
         '''
         M = np.asarray(M)
         if cy_thresh is None:
@@ -545,59 +512,6 @@ class Crossover(object):
         M : array shape (3,3)
         Rotation matrix giving same rotation as for given angles
 
-    Examples
-    --------
-    >>> zrot = 1.3 # radians
-    >>> yrot = -0.1
-    >>> xrot = 0.2
-    >>> M = euler2mat(zrot, yrot, xrot)
-    >>> M.shape == (3, 3)
-    True
-
-    The output rotation matrix is equal to the composition of the
-    individual rotations
-
-    >>> M1 = euler2mat(zrot)
-    >>> M2 = euler2mat(0, yrot)
-    >>> M3 = euler2mat(0, 0, xrot)
-    >>> composed_M = np.dot(M3, np.dot(M2, M1))
-    >>> np.allclose(M, composed_M)
-    True
-
-    You can specify rotations by named arguments
-
-    >>> np.all(M3 == euler2mat(x=xrot))
-    True
-
-    When applying M to a vector, the vector should column vector to the
-    right of M.  If the right hand side is a 2D array rather than a
-    vector, then each column of the 2D array represents a vector.
-
-    >>> vec = np.array([1, 0, 0]).reshape((3,1))
-    >>> v2 = np.dot(M, vec)
-    >>> vecs = np.array([[1, 0, 0],[0, 1, 0]]).T # giving 3x2 array
-    >>> vecs2 = np.dot(M, vecs)
-
-    Rotations are counter-clockwise.
-
-    >>> zred = np.dot(euler2mat(z=np.pi/2), np.eye(3))
-    >>> np.allclose(zred, [[0, -1, 0],[1, 0, 0], [0, 0, 1]])
-    True
-    >>> yred = np.dot(euler2mat(y=np.pi/2), np.eye(3))
-    >>> np.allclose(yred, [[0, 0, 1],[0, 1, 0], [-1, 0, 0]])
-    True
-    >>> xred = np.dot(euler2mat(x=np.pi/2), np.eye(3))
-    >>> np.allclose(xred, [[1, 0, 0],[0, 0, -1], [0, 1, 0]])
-    True
-
-    Notes
-    -----
-    The direction of rotation is given by the right-hand rule (orient
-    the thumb of the right hand along the axis around which the rotation
-    occurs, with the end of the thumb at the positive end of the axis;
-    curl your fingers; the direction your fingers curl is the direction
-    of rotation).  Therefore, the rotations are counterclockwise if
-    looking along the axis of rotation from positive to negative.
         '''
         Ms = []
         if z:

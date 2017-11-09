@@ -368,9 +368,8 @@ class RunGA():
                 if self.convergence_count== self.max_it:
                     return "converged"
 
-    def restart_scheme(self,restart_replica):
+    def restart_scheme(self, restart_replica):
         self.output("-- Restart of replicas has been requested")
-        self.output(str(restart_replica))
         structures_to_add = {}
         struct = False
         if struct == False and restart_replica:
@@ -477,7 +476,7 @@ class RunGA():
         structure_supercoll = {}
         structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
         total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
-        self.output("Generating trial structure with %i processes" % self.processes)
+        self.output("-- Generating trial structure with %i processes" % self.processes)
         selection_module = my_import(self.ui.get('modules', 'selection_module'), package='selection')
         
         # Select ID's of two parents chosen for selection
