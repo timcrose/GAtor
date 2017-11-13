@@ -150,12 +150,12 @@ class RunGA():
             self.struct_index = self.add_to_collection(struct, ref_label)
 
             #----- Optionally Save Output Data -----#
-            try:
-                self.save_unrelaxed_geometry()
-                self.save_relaxation_data()
-                self.save_aims_output()
-                self.save_replica_output()
-            except: pass
+            #try:
+            self.save_unrelaxed_geometry()
+            self.save_relaxation_data()
+            self.save_aims_output()
+            self.save_replica_output()
+            #except: pass
             #----- Success Message -----#
             self.success_message()
 
@@ -187,7 +187,7 @@ class RunGA():
 
     def save_unrelaxed_geometry(self):
         input_ref = "0"
-        geo_orig = "geometry.unrelaxed"
+        geo_orig = "geometry.orig"
         out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
                        input_ref, self.struct_index)
         geo_orig_path = os.path.join(self.working_dir, geo_orig)

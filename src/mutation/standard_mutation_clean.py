@@ -948,8 +948,9 @@ class RandomStrainMutation(object):
         strain_list = np.random.normal(scale=self.st_dev, size=6)
         strain_mat = get_strain_mat(strain_list)
         self.output("-- Strain parameters: %s \n" %(strain_list))
-        self.output("-- Strain_mat: %s \n"  %(strain_mat))
+        self.output("-- Strain_mat: \n %s"  %(strain_mat))
         strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
+        self.output("-- Strained_lattice: \n %s" % str(strain))
         return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):
@@ -1012,10 +1013,10 @@ class RandomSymmetryStrainMutation(object):
         strain_param = np.random.normal(scale=self.st_dev, size=1)
         strain_list = strain_param*get_rand_sym_strain(lat_mat)
         strain_mat = get_strain_mat(strain_list)
-        self.output("-- Strain parameter: " + str(strain_param))
-        self.output("-- Strain_matrix: \n" + str(strain_mat))
+        self.output("-- Strain parameter: %s" % str(strain_param))
+        self.output("-- Strain_matrix: \n %s" % str(strain_mat))
         strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
-        self.output("-- Strained_lattice: \n" + str(strain))
+        self.output("-- Strained_lattice: \n %s" % str(strain))
         return strain[0], strain[1], strain[2]
 
     def create_strained_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):
@@ -1118,10 +1119,10 @@ class RandomVolumeStrainMutation(object):
         strain_param = np.random.normal(scale=self.st_dev, size=1)
         strain_list = strain_param*get_rand_sym_strain(lat_mat)
         strain_mat = get_strain_mat(strain_list)
-        self.output("-- Strain parameter: " + str(strain_param))
-        self.output("-- Strain_matrix: \n" + str(strain_mat))
+        self.output("-- Strain parameter: %s" % str(strain_param))
+        self.output("-- Strain_matrix: \n %s" % str(strain_mat))
         strain = np.asarray(np.mat(lat_mat) + np.mat(strain_mat)*np.mat(lat_mat))
-        self.output("-- Strained_lattice: \n" + str(strain))
+        self.output("-- Strained_lattice: \n %s" % str(strain))
         return strain[0], strain[1], strain[2]
 
     def build_child_struct(self, lat_A, lat_B, lat_C, strained_geo, atom_types):

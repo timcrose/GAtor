@@ -198,24 +198,21 @@ class Crossover(object):
     def combine_lattice_info(self, lattice_info_a, lattice_info_b):
         ''' combines a, b, c, alpha, beta, gamma from parent lattices '''
         child_lattice_info = []
-        rand_vec = [random.uniform(0.25,0.75) for i in range(6)]
- 
+        rand_vec = [random.uniform(0.2, 0.8) for i in range(6)]
         for i in range(6):
             if i < 3:
-                rand_scale = random.uniform(0.8,1.1)
+                rand_scale = random.uniform(0.8, 1.1)
                 new_info = rand_scale * (rand_vec[i]*lattice_info_a[i] 
                                       + (1-rand_vec[i]) * lattice_info_b[i])
                 child_lattice_info.append(new_info)
             elif i >= 3:
-                rand_scale = random.uniform(0.97, 1.03)
+                rand_scale = random.uniform(0.99, 1.01)
                 new_info = rand_scale * (rand_vec[i] * lattice_info_a[i] 
                                       + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
                     self.output("--Setting angle close to 90 degrees")
                     new_info = 90.0
                 child_lattice_info.append(new_info)
-        #debugging
-        #child_lattice_info = lattice_info_a
         return child_lattice_info
 
 
@@ -233,11 +230,11 @@ class Crossover(object):
             parent_a_COM = False
 
         # Choose which Parent's conformer the child will inherit
-        #mol_geo_choice = random.random()
-        #if mol_geo_choice < 0.5:
-        #    parent_a_mol = True
-        #else:
-        #    parent_a_mol = False
+        mol_geo_choice = random.random()
+        if mol_geo_choice < 0.5:
+            parent_a_mol = True
+        else:
+            parent_a_mol = False
 
         # Randomly permute indices of molecules paired for mating
         n = len(orientation_info_a); a = range(n)
@@ -256,10 +253,10 @@ class Crossover(object):
                 COM = orientation_info_a[j][3]
             else:
                 COM = orientation_info_b[i][3]
-            #if parent_a_mol:
-            centered_mol = orientation_info_a[j][4]
-            #else:
-            #    centered_mol = orientation_info_b[i][4]
+            if parent_a_mol:
+                centered_mol = orientation_info_a[j][4]
+            else:
+                centered_mol = orientation_info_b[i][4]
             orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])   
 
         # Return Childs orientation info 
@@ -271,14 +268,8 @@ class Crossover(object):
                             info = [z, y, x, COM, centered_mol]'''
         self.output("Parent A orientation info: "+ str(orientation_info_a[0][:3]))
         self.output("Parent B orientation info: "+ str(orientation_info_b[0][:3]))
-
-
         choice_a = random.sample(set(range(self.num_mols)), 2)
         choice_b = random.sample(set(range(self.num_mols)), 2)
-
-        print choice_a
-        print choice_b
-
         orientation_info_child = []
         for i in range(len(orientation_info_a)):
 
@@ -301,6 +292,7 @@ class Crossover(object):
 
         self.output("Child orientation info: " + str(orientation_info_child[0][:3]))
         return orientation_info_child
+
     def reconstruct_child(self, child_lattice_info, child_orientation_info):
         '''
         Reconstructs the child's atomic positions and lattice
@@ -347,7 +339,7 @@ class Crossover(object):
                     new_frac = [frac[2], frac[0], frac[1]]
                     new_atom = np.dot(new_frac, new_lattice)
                     atom['x'], atom['y'], atom['z'] = new_atom
-                    i = i +1
+                    i += 1
                 struct.set_property("lattice_vector_a", c)
                 struct.set_property("lattice_vector_b", a)
                 struct.set_property("lattice_vector_c", b)
@@ -364,7 +356,7 @@ class Crossover(object):
                     new_frac = [frac[1], frac[2], frac[0]]
                     new_atom = np.dot(new_frac, new_lattice)
                     atom['x'], atom['y'], atom['z'] = new_atom
-                    i = i +1
+                    i += 1
                 struct.set_property("lattice_vector_a", b)
                 struct.set_property("lattice_vector_b", c)
                 struct.set_property("lattice_vector_c", a)
@@ -391,7 +383,7 @@ class Crossover(object):
         new_struct.set_property('b', np.linalg.norm(child_B))
         new_struct.set_property('c', np.linalg.norm(child_C))
         new_struct.set_property('cell_vol', temp_vol)
-       new_struct.set_property('alpha',alpha)
+        new_struct.set_property('alpha',alpha)
         new_struct.set_property('beta', beta)
         new_struct.set_property('gamma', gamma)
         return new_struct

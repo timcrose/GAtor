@@ -608,7 +608,6 @@ class FHIAimsEvaluation():
                 break
 
             # If aims hasn't output anything, kill process and call failure
-            outfile.close()
             self.output_time_log("aims job launch failure")
             try:
                 p.send_signal(2)
@@ -657,7 +656,7 @@ class FHIAimsEvaluation():
         saves failed realxation folder
         '''
         self.output_time_log("FHI-aims execution using control file %s" + 
-                            "failed to launch, hung, or failed" % (str(self.control_name)))
+                            "failed to launch, hung, or failed" % (self.control_name))
         self.output("-- Job failed to launch, hung, or failed")
         if self.ui.get_boolean("FHI-aims","save_failed_calc"):
             path = os.path.abspath(os.path.join(fh.fail_dir,
