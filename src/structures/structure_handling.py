@@ -30,7 +30,7 @@ olm = output.local_message
         
 def compute_RDF_vector(original_struct):
     # Get user-defined parameters
-    atomic_pairs = list(ui.get_atom_pair_list('clustering','interatomic_pairs'))
+    atomic_pairs_list = list(ui.get_list('clustering','interatomic_pairs'))
     atomic_distance_range = ui.get_list('clustering','interatomic_distance_range')
     atomic_distance_increment = ui.get_eval('clustering','interatomic_distance_increment')
     smoothing_parameter = float(ui.get_eval('clustering','smoothing_parameter'))
@@ -62,10 +62,12 @@ def compute_RDF_vector(original_struct):
 
     # Compute interatomic distances and build g vector
     vector_all = [struct.struct_id]
-
+    atomic_pairs = [atomic_pairs_list[i:i+2] for i in range(0, len(atomic_pairs_list), 2)]
     for pair in atomic_pairs:
-        ref_atom_type = pair.split()[0][2]
-        target_atom_type = pair.split()[0][6]
+        #print pair
+        ref_atom_type = pair[0]
+        target_atom_type = pair[1]
+
         a1_range = [i for i in range(original_struct.get_n_atoms()) 
                         if original_struct.geometry[i]["element"] == ref_atom_type]
         a2_range = [i for i in range(original_struct.get_n_atoms()) 

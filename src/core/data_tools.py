@@ -102,7 +102,7 @@ def write_energy_hierarchy(structure_coll):
                 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
                 'Spacegroup', 'Mutation','ParentA', 'ParentB',
                 'Crossover', "Cluster", "Cluster_Members", "Total_Clusters"])
-	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<8} {:<8} {:<30} {:<7} {:<7} {:9}'
+	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<25} {:<25} {:<30} {:<7} {:<7} {:9}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'

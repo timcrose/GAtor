@@ -140,7 +140,6 @@ class StructureSelection():
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
         min_prop = prop_list[0][0]
         max_prop = prop_list[-1][0]
-        #self.output(str(prop_list))
         # Compute relative fitness for all structs
         fitness = {}
         for index, struct in structure_coll:
@@ -158,40 +157,8 @@ class StructureSelection():
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 alpha = float(self.ui.get('selection', 'alpha'))
                 fitness[struct] = np.exp(-alpha * rho)
-
         return fitness
- 
-    def get_energy_fitness(self, structure_coll):
-        '''
-        Takes a structure collection of 2 or more structures 
-        and returns a dictionary of fitness based on energy
-        '''
-        reverse = np.random.random() < (self.ui.get_eval('selection', 
-                                        'fitness_reversal_probability'))
-        e_list = np.array([])
-        for index, structure in structure_coll:
-            try:
-                energy = structure.get_property('energy')
-                e_list = np.append(energy,e_list)
-            except:
-                energy = structure.get_property('energy_tier_1')
-                e_list = np.append(energy,e_list)
-        e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
-        min_e = e_list[0][0]
-        max_e = e_list[-1][0] 
-        fitness = {}
-        for index, struct in structure_coll:
-            try: energy = float(struct.get_property('energy'))
-            except: pass
-            rho = (max_e - energy) / (max_e - min_e)
-            if reverse: rho = 1 - rho
-            if self.ui.get('selection', 'fitness_function') == 'standard':
-                fitness[struct] = rho
-            if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = np.exp(-self.ui.get('selection', 'alpha') * rho)
-            #print rho
-        return fitness
-        
+  
     def sorted_fitness(self, fitness_dict):
         '''
         returns fitness as a sorted list of tuples.
@@ -216,7 +183,6 @@ class StructureSelection():
         for index, t_fitness in tmp: 
             normalized_fit.append((index, t_fitness + total))
             total = t_fitness + total
-
         return normalized_fit
     
     def select_best_from_fitness(self, fitness_dict):
@@ -248,9 +214,5 @@ class StructureSelection():
                             runner_up = structfit
                             self.output("-- Selected ID: %s" %(runner_up[0].struct_id))
                             break    
-                    
-
-        #print ("Best fitness: %s" % fitness[-1][0].struct_id)
-        #print ("Worst fitness: %s" % fitness[0][0].struct_id)
         return winner, runner_up
     

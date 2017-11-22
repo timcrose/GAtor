@@ -13,7 +13,7 @@ def rcd_vector_calculation(struct):
     '''
     Main RCD calculation module
     '''
-    generate_relative_coordinate_descriptor(struct,4,15,[(5,14),(0,3)])
+    generate_relative_coordinate_descriptor(struct,4,15,[(5,14),(0,3)]) 
     return struct
     
 def _flatten_rcd_vector(v):

@@ -48,30 +48,39 @@ class StructureSelection():
             message = "Unknown type of optimization style in run_settings; supporing maximize and minimize"
             raise ValueError(message)
 
+    def output(self, message): output.local_message(message, self.replica)
+
     def get_structures(self):
         banned = []
         structure_coll = self.structure_supercoll.get((self.replica_stoic, self.index))
-        struct_a, fit_a = self.select_structure(structure_coll)
+        struct_a, fit_a = self.select_structures(structure_coll)
         while True: 
-            struct_b, fit_b = self.select_structure(structure_coll)
-            if not struct_a == struct_b: break  # remove this to allow double-selection
+            struct_b, fit_b = self.select_structures(structure_coll)
+            if not struct_a == struct_b: break  
         struct_a.struct_id, struct_b.struct_id
         return [struct_a, struct_b]
 
-    def select_structure(self, structure_coll):
+    def select_structures(self, structure_coll):
         '''
-        Will calculate fitness for each structure in a collection and select parents
+        Will calculate fitness for each structure in a collection 
+        and select parents
         '''
-        # take care of single-structure case. return only structure
-        if len(structure_coll.structures) == 1: 
+        if len(structure_coll.structures) == 1:
             return (structure_coll.get_struct(0), 0)
-        else: 
-            fitness_dict = self.get_fitness(structure_coll)
-            return self.select_best_from_fitness(fitness_dict) 
+        else:
+            if self.ui.get_boolean("clustering","cluster_pool"):
+                self.output("-- Using shared fitness scheme")
+                fitness_dict = self.get_shared_fitness(structure_coll)
+                return self.select_best_from_fitness(fitness_dict)
+            else:
+                fitness_dict = self.get_fitness(structure_coll)
+                self.output("-- Using normal fitness scheme")
+                return self.select_best_from_fitness(fitness_dict)
 
     def get_fitness(self, structure_coll):
         '''
-        Take a structure collection of 2 or more structures and returns a dictionary of fitness 
+        Take a structure collection of 2 or more structures and 
+        returns a fitness dictionary
         '''
         reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
         prop_list = np.array([])
@@ -84,7 +93,7 @@ class StructureSelection():
             except KeyError:
                 ID = structure.struct_id
                 prop = self.prop
-                output.local_message("Structure %s missing the property: %s" % (ID, prop),self.replica)
+                self.output("Structure %s missing the property: %s" % (ID, prop),self.replica)
 
         prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
         min_prop = prop_list[0][0]
@@ -100,35 +109,55 @@ class StructureSelection():
             if self.ui.get('selection', 'fitness_function') == 'exponential':
                 fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
         return fitness
-    
-    def get_energy_fitness(self, structure_coll):
+
+    def get_shared_fitness(self, structure_coll):
         '''
-        Takes a structure collection of 2 or more structures and returns a dictionary of fitness based on energy
+        Take a structure collection of 2 or more structures and returns 
+        a dictionary of fitness 
         '''
-        reverse = np.random.random() < self.ui.get_eval('selection', 'fitness_reversal_probability')
-        e_list = np.array([])
+        # First get max and min value of cluster-fitness
+        reverse = np.random.random() < (self.ui.get_eval('selection',
+                                      'fitness_reversal_probability'))
+        prop_list = np.array([])
         for index, structure in structure_coll:
             try:
-                energy = structure.get_property('energy')
-                e_list = np.append(energy,e_list)
-            except:
-                energy = structure.get_property('energy_tier_1')
-                e_list = np.append(energy,e_list)
-        e_list= np.sort(e_list.reshape(len(e_list),1),axis=0)
-        min_e = e_list[0][0]
-        max_e = e_list[-1][0] 
+                prop = structure.get_property(self.prop)
+                if self.op_style=="maximize":
+                    prop = -prop
+                clust_mem = structure.get_property('cluster_members')
+                if clust_mem == None:
+                    clust_mem = 1
+                prop_clus = prop/clust_mem
+                prop_list = np.append(prop_clus,prop_list)
+            except KeyError:
+                ID = structure.struct_id
+                prop = self.prop
+                message = "Structure %s missing the property: %s" % (ID, prop)
+                output.local_message(message, self.replica)
+        # Outputs
+        prop_list= np.sort(prop_list.reshape(len(prop_list),1),axis=0)
+        min_prop = prop_list[0][0]
+        max_prop = prop_list[-1][0]
+        # Compute relative fitness for all structs
         fitness = {}
         for index, struct in structure_coll:
-            try: energy = float(struct.get_property('energy'))
-            except: pass
-            rho = (max_e - energy) / (max_e - min_e)
+            prop = struct.get_property(self.prop)
+            if self.op_style=="maximize":
+                prop = -prop
+            clust_mem = struct.get_property('cluster_members')
+            if clust_mem == None:
+                clust_mem = 1
+            prop_clus = prop/clust_mem
+            rho = (max_prop - prop_clus) / (max_prop - min_prop)
             if reverse: rho = 1 - rho
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
             if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
+                alpha = float(self.ui.get('selection', 'alpha'))
+                fitness[struct] = np.exp(-alpha * rho)
         return fitness
-        
+
+ 
     def sorted_fitness(self, fitness_dict):
         '''
         returns fitness as a sorted list of tuples.
