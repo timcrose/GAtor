@@ -166,6 +166,19 @@ def compute_feature_vector(struct, ui):
     elif feature_vector =="PCA_RDF_vector":
         struct = structure_handling.compute_RDF_vector(struct)
         return struct
+    elif feature_vector =="Lat_vol_vector":
+        a = np.linalg.norm(struct.get_property('lattice_vector_a'))
+        b = np.linalg.norm(struct.get_property('lattice_vector_b'))
+        c = np.linalg.norm(struct.get_property('lattice_vector_c'))
+        vol = struct.get_unit_cell_volume()
+        vol = np.cbrt(vol)
+        lat_vol = [a/vol, b/vol, c/vol]
+        struct.set_property("feature_vector", lat_vol)
+        return struct
+    else:
+        message = "Clustering for %s is not availble" % (feature_vector)
+        raise RuntimeError(message)
+        
 
 
 def return_non_duplicates(initial_list, replica, ui):

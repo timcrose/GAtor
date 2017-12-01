@@ -23,19 +23,19 @@ def generate_relative_coordinate_descriptor(struct,nmpc,napm,axes,close_picks=8,
     '''
     Generates and stores the rcd for the given structure
     '''
-    ref_struct = create_ref_struct(struct,nmpc,napm,close_picks)
-    axes_list = [_calculate_molecule_axes(ref_struct.geometry[x*napm:(x+1)*napm],axes) 
-        for x in range(close_picks+1)]
+    ref_struct = create_ref_struct(struct, nmpc, napm, close_picks)
+    axes_list = [_calculate_molecule_axes(ref_struct.geometry[x * napm:(x + 1) * napm],axes) 
+                 for x in range(close_picks + 1)]
     COM = [cm_calculation(ref_struct,range(x*napm,(x+1)*napm)) 
-        for x in range(close_picks+1)]
-    diff = [np.subtract(COM[x],COM[0]) 
-        for x in range(1,close_picks+1)]
+                 for x in range(close_picks + 1)]
+    diff = [np.subtract(COM[x], COM[0]) 
+                 for x in range(1, close_picks+1)]
     axes_i = np.linalg.inv(axes_list[0].T)
-    diff_t = [list(np.dot(axes_i,x)) 
-        for x in diff] #Relative coordinate in axes basis
-    orien = [[float(np.dot(axes_list[x][y],axes_list[0][y])) 
-        for y in range(3)] 
-        for x in range(1,close_picks+1)]
+    diff_t = [list(np.dot(axes_i, x)) 
+                 for x in diff] #Relative coordinate in axes basis
+    orien = [[float(np.dot(axes_list[x][y], axes_list[0][y])) 
+                 for y in range(3)] 
+                 for x in range(1, close_picks + 1)]
     vector = [[diff_t[x], orien[x]] for x in range(close_picks)]
     struct.properties[key] = vector
     return struct
@@ -43,7 +43,7 @@ def generate_relative_coordinate_descriptor(struct,nmpc,napm,axes,close_picks=8,
 def _generate_relative_coordinate_descriptor_multiprocess_wrapper(arglist):
     return generate_relative_coordinate_descriptor(*arglist)
 
-def create_ref_struct(struct,nmpc,napm,close_picks=8):
+def create_ref_struct(struct, nmpc, napm, close_picks=8):
     '''
     Using the 1st molecule in the structure as reference
     Select and return a structure with the molecules that are closest to it
@@ -57,13 +57,12 @@ def create_ref_struct(struct,nmpc,napm,close_picks=8):
     ref_struct = cell_modification(struct, nmpc, napm)
 
     COM = [cm_calculation(ref_struct,
-                          range(x*napm,(x+1)*napm))
+                          range(x * napm, (x + 1) * napm))
            for x in range(nmpc)]
-
 
     lat_mat = np.transpose(ref_struct.get_lattice_vectors())
     COMt = [(k, x, y, z, 
-            np.linalg.norm(np.subtract(np.add(COM[k],np.dot(lat_mat,[x,y,z])),
+            np.linalg.norm(np.subtract(np.add(COM[k], np.dot(lat_mat, [x,y,z])),
                                        COM[0]))) 
             for z in range(-2,3)
             for y in range(-2,3)
@@ -77,13 +76,12 @@ def create_ref_struct(struct,nmpc,napm,close_picks=8):
 
     for i in range(1, close_picks+1): #Skip the 1st original molecule
         k, x, y, z, dist = COMt[i]
-#        print k, x, y, z, dist
         ref_struct.geometry = np.concatenate((ref_struct.geometry,
-                                              all_geo[k*napm:(k+1)*napm]))
+                                              all_geo[k * napm:(k + 1) * napm]))
 
         mole_translation(ref_struct, i, napm, frac=[x,y,z], create_duplicate=False)
 
-#    print ref_struct.get_geometry_atom_format()
+#    print ref_struct.get_geometry_atom_format()i
     return ref_struct
 
 def _calculate_molecule_axes(geo,axes):
@@ -223,13 +221,11 @@ def _calculate_rcd_vector_difference(v1, v2, ratio=1, select_pairs=4):
     
     dist = [(x,y,_calculate_diff(v1[x],v2[y],ratio)) for y in range(len(v2))
                                                      for x in range(len(v1))]
-
     dist.sort(key=lambda x: x[2])
 
     result = 0
     s1 = [False] * len(v1)
     s2 = [False] * len(v2)
-    
     dist_iter = iter(dist)
     for l in range(select_pairs):
         try:
@@ -240,7 +236,7 @@ def _calculate_rcd_vector_difference(v1, v2, ratio=1, select_pairs=4):
                     result += k[2]
                     s1[k[0]] = True
                     s2[k[1]] = True
-#                    print "Here is the selection", k
+                   #print "Here is the selection", k
                     break
         except:
             raise RuntimeError("Not enough close picks to select the amount of pairs")
@@ -253,31 +249,9 @@ def _calculate_diff(v1, v2, ratio=1):
                                 /np.linalg.norm(v1[0])/np.linalg.norm(v2[0]))
     relative_orientation_diff = np.linalg.norm(np.subtract(v1[1],v2[1]))**2/3
     #Divided by 6 to normalize (b/c the cosine value range from -1 to 1)
-
 #    print "These are relative coordinates", v1[0], v2[0]
 #    print "This is relative_coordinate_diff", relative_coordinate_diff
-
 #    print "These are relative_orientations", v1[1], v2[1]
 #    print "This is relative_orientation_diff", relative_orientation_diff
     return relative_coordinate_diff + ratio*relative_orientation_diff
     
-
-def test_RCD():
-    import os
-    direct = "/lustre/project/nmarom/fcurtis/NEW_gator/latest_git/run_calcs/user_initial_pools/sim_exp"
-    path = [os.path.join(direct,x) for x in os.listdir(direct)]
-#    path = ["./duplicate_pair_1/target_2_0983_b52d9d4a9b.json","./duplicate_pair_1/target_2_0986_33d0a828d6.json"]
-    s = []
-    for i in range(2):
-        f = open(path[i],"r")
-        struct=Structure()
-        struct.loads(f.read())
-#        calculate_molecule_axes(struct.geometry[0:11],[(1,10),(3,9)])
-        #generate_relative_coordinate_descriptor(struct,4,11,[(1,10),(3,9)])
-        generate_relative_coordinate_descriptor(struct,4,15,[(5,14),(0,3)])
-        s.append(struct)
-        print struct.get_property('RCD_vector')
-    #print calculate_rcd_difference(s[0].properties["RCD_vector"],s[1].properties["RCD_vector"])
-#        create_ref_struct(struct,4,11,close_picks=8)
-if __name__=="__main__":
-    test_RCD()

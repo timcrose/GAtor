@@ -51,7 +51,7 @@ def main(structure_coll, replica):
         elif feature_vector == "RCD_vector":
             ClusterColl = AffinityPropagationClusteringRCD(structure_coll, replica)
             clustered_coll = ClusterColl.return_clusters()
-        elif feature_vector == "Lat_vol":
+        elif feature_vector == "Lat_vol_vector":
             ClusterColl = AffinityPropagationClusteringLatVol(structure_coll, replica)
             clustered_coll = ClusterColl.return_clusters()
         else:
@@ -315,10 +315,6 @@ class AffinityPropagationClusteringLatVol():
     def return_descriptor_list(self):
         lat_vols = []
         for index, struct in self.struct_coll:
-            #lat_vol = struct.get_property(self.feature_type)
-            #if lat_vol is not None:
-            #    lat_vols.append(lat_vol)
-            #elif lat_vol is None:
             a = np.linalg.norm(struct.get_property('lattice_vector_a'))
             b = np.linalg.norm(struct.get_property('lattice_vector_b'))
             c = np.linalg.norm(struct.get_property('lattice_vector_c'))
@@ -326,7 +322,6 @@ class AffinityPropagationClusteringLatVol():
             vol = np.cbrt(vol)
             lat_vol = [a/vol, b/vol, c/vol]
             struct.set_property(self.feature_type, lat_vol)
-            print lat_vol
             lat_vols.append(lat_vol)
         return lat_vols
 
