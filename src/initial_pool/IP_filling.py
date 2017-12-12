@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 from math import ceil
 from core import user_input, data_tools, output
-from core.file_handler import cwd, tmp_dir
+from core.file_handler import cwd, tmp_dir, my_import
 from external_libs.filelock import FileLock
 from structures import structure_collection, structure_handling
 from structures.structure import get_geo_from_file, Structure
@@ -150,34 +150,40 @@ def return_all_user_structures(initial_list, replica, ui):
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
         if ui.get_boolean("clustering","cluster_pool"):
-           struct = compute_feature_vector(struct, ui) 
+            clustering_mod = my_import(ui.get('modules','clustering_module'), package='clustering')
+            AFV = clustering_mod.AssignFeatureVector(struct)
+            struct = AFV.compute_feature_vector() 
         structure_collection.add_structure(struct, stoic, 0)
         ip_count += 1
     return ip_count
 
 
-def compute_feature_vector(struct, ui):
-    feature_vector = ui.get("clustering", "feature_vector")
-    if struct.get_property('feature_vector') is not None:
-        return struct
-    if feature_vector == "RDF_vector":
-        struct = structure_handling.compute_RDF_vector(struct)
-        return struct
-    elif feature_vector =="PCA_RDF_vector":
-        struct = structure_handling.compute_RDF_vector(struct)
-        return struct
-    elif feature_vector =="Lat_vol_vector":
-        a = np.linalg.norm(struct.get_property('lattice_vector_a'))
-        b = np.linalg.norm(struct.get_property('lattice_vector_b'))
-        c = np.linalg.norm(struct.get_property('lattice_vector_c'))
-        vol = struct.get_unit_cell_volume()
-        vol = np.cbrt(vol)
-        lat_vol = [a/vol, b/vol, c/vol]
-        struct.set_property("feature_vector", lat_vol)
-        return struct
-    else:
-        message = "Clustering for %s is not availble" % (feature_vector)
-        raise RuntimeError(message)
+#def compute_feature_vector(struct, ui):
+#    feature_vector = ui.get("clustering", "feature_vector")
+#    if struct.get_property('feature_vector') is not None:
+#        return struct
+#    if feature_vector == "RDF_vector":
+#        struct = structure_handling.compute_RDF_vector(struct)
+#        return struct
+#    elif feature_vector == "PCA_RDF_vector":
+#        struct = structure_handling.compute_RDF_vector(struct)
+#        return struct
+#    elif feature_vector == "Lat_vol_vector":
+#        a = np.linalg.norm(struct.get_property('lattice_vector_a'))
+#        b = np.linalg.norm(struct.get_property('lattice_vector_b'))
+#        c = np.linalg.norm(struct.get_property('lattice_vector_c'))
+#        vol = struct.get_unit_cell_volume()
+#        vol = np.cbrt(vol)
+#        lat_vol = [a/vol, b/vol, c/vol]
+#        struct.set_property(feature_vector, lat_vol)
+#        return struct
+#    elif feature_vector == "RCD_vector":  
+#        RCD_struct = rcd_vector_calculation(struct)
+#        RCD_vector = RCD_struct.get_property(self.feature_type)
+#        struct.set_property(feature_vector, RCD_vector)
+#    else:
+#        message = "Clustering for %s is not availble" % (feature_vector)
+#        raise RuntimeError(message)
         
 
 

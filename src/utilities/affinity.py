@@ -52,7 +52,7 @@ def _convert_distance_to_affinity_mat(dist_mat, affinity_type=["exponential",1])
     m = len(dist_mat); n = len(dist_mat[0])
     affinity_mat = [[0]*n for x in range(m)]
 
-    print(affinity_type)
+    #print(affinity_type)
     #print m, n
     for i in range(m):
         for j in range(n):

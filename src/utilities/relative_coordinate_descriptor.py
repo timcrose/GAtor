@@ -9,12 +9,14 @@ import numpy as np
 from copy import deepcopy
 from utilities import misc
 
-def rcd_vector_calculation(struct):
-    '''
-    Main RCD calculation module
-    '''
-    generate_relative_coordinate_descriptor(struct,4,15,[(5,14),(0,3)]) 
-    return struct
+#def rcd_vector_calculation(struct, nmpc, napm, axes_indices, close_picks=8):
+#    '''
+#    Main RCD calculation module
+#    '''
+# 
+#
+#    generate_relative_coordinate_descriptor(struct, nmpc, napm, axes_indices, close_picks) 
+#    return struct
     
 def _flatten_rcd_vector(v):
     return [entry for mol in v for rel in mol for entry in rel]

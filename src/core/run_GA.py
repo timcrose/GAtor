@@ -144,8 +144,8 @@ class RunGA():
 
             #----- Optional store feature vector  ----#
             if self.ui.get_boolean("clustering","cluster_pool"):
-                struct = self.compute_feature_vector(struct)
-
+                AFV = self.clustering_module.AssignFeatureVector(struct)
+                struct = AFV.compute_feature_vector()
             #----- Add Structure to collection -----#
             self.struct_index = self.add_to_collection(struct, ref_label)
 
@@ -168,14 +168,6 @@ class RunGA():
             #----- End of Iteration Data Tasks -----#
             restart_count += 1
             convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
-
-    def compute_feature_vector(self, struct):
-        feature_vector = self.ui.get("clustering", "feature_vector")
-        if feature_vector == "RDF_vector":
-            struct = structure_handling.compute_RDF_vector(struct)
-            return struct 
-        else:
-            raise ValueError("Feature vector not devloped in runGA compute_feature_vector yet")
 
     def save_replica_output(self):
         input_ref = "0"
@@ -487,9 +479,7 @@ class RunGA():
         # Choose probability of crossover, mutation, and symmetric crossover
         rand_cross = np.random.random()
         cross_prob = self.ui.get_eval('crossover', 'crossover_probability')
-        try: sym_cross_prob = self.ui.get_eval('crossover', 'symmetric_crossover_probability')
-        except: sym_cross_prob = 0.0
-        mut_prob = 1.0 - float(cross_prob) - float(sym_cross_prob)
+        mut_prob = 1.0 - float(cross_prob) 
         mutation_list = self.ui.get_list('mutation','specific_mutations')
         mutation_choice = np.random.choice(mutation_list) 
 
@@ -501,10 +491,10 @@ class RunGA():
                 struct = structure_create_for_multiprocessing((self.replica, self.replica_stoic, 
                                                                parent_a_ID, parent_b_ID, 
                                                                rand_cross, cross_prob, 
-                                                               sym_cross_prob, mutation_choice))
+                                                               mutation_choice))
             else:
                 arglist = [(self.replica+"_"+str(x), self.replica_stoic, parent_a_ID, parent_b_ID,\
-                rand_cross, cross_prob, sym_cross_prob, mutation_choice) for x in range (self.processes)]
+                rand_cross, cross_prob, mutation_choice) for x in range (self.processes)]
                 results = self.worker_pool.map(structure_create_for_multiprocessing, arglist)
 
                 for i in range (self.processes): #Find a success
@@ -646,7 +636,7 @@ def structure_create_for_multiprocessing(args):
     '''
     ui = user_input.get_config()
     nmpc = ui.get_eval('run_settings','num_molecules')
-    replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, sym_cross_prob, mut_choice= args
+    replica, stoic, parent_a_id, parent_b_id, rand_cross, cross_prob, mut_choice= args
     output.local_message("\n|----------------------- Structure creation process ----------------------|",replica)
     crossover_module = my_import(ui.get('modules', 'crossover_module'), package='crossover')
     try: alt_crossover_module = my_import(ui.get('modules', 'alt_crossover_module'), package='crossover')
@@ -683,31 +673,10 @@ def structure_create_for_multiprocessing(args):
         new_struct.set_property('mutation_type', 'No_mutation')
         for i in range(len(structures_to_cross)):
             par_st = structures_to_cross[i]
-            new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
-            + str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
-
-    #----- Alternative Crossover -----#
-    elif rand_cross > cross_prob and rand_cross <= cross_prob + sym_cross_prob:
-        output.local_message("\n---- Alternative Crossover ----", replica)
-        new_struct = alt_crossover_module.main(structures_to_cross, replica)
-        if new_struct is False:
-            output.local_message("Crossover failure", replica)
-            return False
-        if ui.all_geo():
-            output.local_message("\n-- Parent A's geometry --\n" +
-            structures_to_cross[0].get_geometry_atom_format(), replica)
-            output.local_message("-- Parent B's geometry --\n" +
-            structures_to_cross[1].get_geometry_atom_format(), replica)
-            output.local_message("-- Child's geometry --\n" +
-            new_struct.get_geometry_atom_format(),replica)
-        new_struct.set_property('mutation_type', 'No_mutation')
-        for i in range(len(structures_to_cross)):
-            par_st = structures_to_cross[i]
-            new_struct.set_property('parent_' + str(i), par_st.get_stoic_str()+'/'
-                + str(par_st.get_input_ref()) + '/' + str(par_st.get_struct_id()))
+            new_struct.set_property('parent_' + str(i), par_st.struct_id)
 
     #----- Mutation  -----#
-    elif rand_cross > cross_prob + sym_cross_prob:
+    elif rand_cross > cross_prob:
         output.local_message("\n---- Mutation ----",replica)
         choice_struct = random.choice([structures_to_cross[0], structures_to_cross[1]])
         if ui.all_geo():
@@ -720,8 +689,7 @@ def structure_create_for_multiprocessing(args):
         if new_struct is False:
             output.local_message('-- Mutation failure',replica)
             return False
-        new_struct.set_property('parent_1', choice_struct.get_stoic_str() + '/'
-            + str(choice_struct.get_input_ref()) + '/' + str(choice_struct.get_struct_id()))
+        new_struct.set_property('parent_0', choice_struct.struct_id)
         if random.random() < 0.0:
             output.local_message("\n---- Second Mutation ----",replica)
             choice_struct = new_struct
