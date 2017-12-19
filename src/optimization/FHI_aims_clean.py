@@ -655,8 +655,8 @@ class FHIAimsEvaluation():
         Checks if aims calculation failed and optionally
         saves failed realxation folder
         '''
-        self.output_time_log("FHI-aims execution using control file %s" + 
-                            "failed to launch, hung, or failed" % (self.control_name))
+        self.output_time_log("FHI-aims execution using control file " + 
+                            "failed to launch, hung, or failed")
         self.output("-- Job failed to launch, hung, or failed")
         if self.ui.get_boolean("FHI-aims","save_failed_calc"):
             path = os.path.abspath(os.path.join(fh.fail_dir,
