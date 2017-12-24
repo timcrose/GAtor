@@ -46,7 +46,7 @@ class RunGA():
         self.replica_stoic = stoic
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.GA_module_init()
-#        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
+        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
         self.verbose = self.ui.verbose()
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")

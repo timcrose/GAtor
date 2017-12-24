@@ -282,19 +282,19 @@ class FHIAimsEvaluation():
             return False #File missing
         counter = 0
         while True:
-                line = aims_out.readline()
-                if "Leaving FHI-aims" in line:
-                    output.time_log("Execution with control file " + 
-                                     self.control_name  + " completed.",
-                                     self.replica)
-                    return True
-                elif line == '':
-                    counter += 1
-                else:
-                    counter = 0
-                #Allows 10 empty lines in a row before determining eof
-                if counter > 10: 
-                        break
+            line = aims_out.readline()
+            if "Leaving FHI-aims" in line:
+                output.time_log("Execution with control file " + 
+                                 self.control_name  + " completed.",
+                                 self.replica)
+                return True
+            elif line == '':
+                counter += 1
+            else:
+                counter = 0
+            #Allows 10 empty lines in a row before determining eof
+            if counter > 10: 
+                    break
         return False
 
     def extract_and_build_structure(self):

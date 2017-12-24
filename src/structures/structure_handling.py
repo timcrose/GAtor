@@ -346,11 +346,11 @@ def lattice_parameters(struct):
 			
 
 def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
-	if (vec==None) and (frac==None):
+	if (vec is None) and (frac is None):
 		raise exceptions.RuntimeError("Please input at least one type of translation vector into structure_handling.mole_translation")
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
-	if vec==None:
+	if vec is None:
 		vec=[0,0,0]
 		for i in range (3):
 			for j in range (3):
@@ -899,17 +899,17 @@ def list_rotation(llist,vec=None,theta_deg=None,theta_rad=None,phi_deg=None,phi_
 	'''
 	if create_duplicate:
 		llist=copy.deepcopy(llist)
-	if (deg==None) and (rad==None):
+	if (deg is None) and (rad is None):
 		return False
-	if (vec==None) and (((theta_deg==None) and (theta_rad==None)) or ((phi_deg==None) and (phi_rad==None))):
+	if (vec is None) and (((theta_deg is None) and (theta_rad is None)) or ((phi_deg is None) and (phi_rad is None))):
 		return False
-	if rad==None:
+	if rad is None:
 		rad=np.deg2rad(deg)
-	if (theta_rad==None) and (theta_deg!=None):
+	if (theta_rad is None) and (theta_deg!=None):
 		theta_rad=np.deg2rad(theta_deg)
-	if (phi_rad==None) and (phi_deg!=None):
+	if (phi_rad is None) and (phi_deg!=None):
 		phi_rad=np.deg2rad(phi_deg)
-	if vec==None:
+	if vec is None:
 		vec=[np.sin(phi_rad)*np.cos(theta_rad),np.sin(phi_rad)*np.sin(theta_rad),np.cos(phi_rad)]
 	else:
 		l=(vec[0]**2+vec[1]**2+vec[2]**2)**0.5
