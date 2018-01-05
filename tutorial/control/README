@@ -1,0 +1,4 @@
+Note the provided control files are for tutorial purposes only.
+
+They should not be used for production calculations as they limit
+the number of SCF and relaxation steps.

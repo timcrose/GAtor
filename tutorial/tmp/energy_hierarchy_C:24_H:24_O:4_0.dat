@@ -1,0 +1,11 @@
+#Rank Added Replica      Index                Energy (eV)  Volume  A      B      C      Alpha  Beta   Gamma  Spacegroup Mutation         ParentA                ParentB                Cluster Cluster_Members Total_Clusters
+1     0     init_pool    init_0435            -33433.208   483.2   5.49   8.33   10.57  89.9   89.8   90.0   29                                                                                        None     
+2     0     init_pool    init_0310            -33433.118   499.7   5.38   6.90   13.49  89.4   86.6   88.4   14                                                                                        None     
+3     0     init_pool    init_0559            -33433.071   495.2   5.37   9.32   9.89   90.4   90.5   90.1   14                                                                                        None     
+4     0     init_pool    init_0382            -33433.031   491.2   7.46   7.66   9.15   70.1   89.9   89.7   9                                                                                         None     
+5     0     init_pool    init_0535            -33433.017   505.9   5.39   7.73   12.40  90.1   90.0   101.9  14                                                                                        None     
+6     0     init_pool    init_0524            -33432.951   500.4   6.50   6.68   13.17  87.1   85.7   61.3   2                                                                                         None     
+7     0     init_pool    init_0464            -33432.929   500.9   4.27   9.84   11.92  89.9   88.7   89.8   33                                                                                        None     
+8     0     init_pool    init_0558            -33432.757   533.0   5.39   7.96   12.42  90.3   91.7   90.0   33                                                                                        None     
+9     0     init_pool    init_0542            -33432.745   510.1   6.15   7.14   11.98  97.6   90.0   101.6  1                                                                                         None     
+10    0     init_pool    init_0103            -33432.677   518.6   6.74   7.11   10.83  90.0   90.0   90.0   54                                                                                        None     
