@@ -490,11 +490,17 @@ class FHIAimsEvaluation():
         if self.ui.get_boolean(sname,"monitor_execution"):
             self.enable_monitor = True
             # Check monitor parameters match number of control files
-            self.update_poll_times = self.ui.get_list(sname,"update_poll_times",eval=True)
+            try:
+                self.update_poll_times = self.ui.get_list(sname,"update_poll_times",eval=True)
+            except: 
+                self.update_poll_times = [60] * int(self.control_len)
             if len(self.update_poll_times)!=self.control_len:
                 raise ValueError("Number of specified update poll times" + 
                                  "must match that of control.in files")
-            self.update_poll_intervals = self.ui.get_list(sname,"update_poll_intervals",eval=True)
+            try:
+                self.update_poll_intervals = self.ui.get_list(sname,"update_poll_intervals",eval=True)
+            except:
+                self.update_poll_intervals = [10] * int(self.control_len) 
             if len(self.update_poll_intervals)!=self.control_len:
                 raise ValueError("Number of specified update poll intervals" + 
                                  "must match that of control.in files")

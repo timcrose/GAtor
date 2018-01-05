@@ -114,8 +114,8 @@ def convert_to_structures(files_to_add, energy_name="energy"):
 							     create_duplicate=True)
             initial_list.append(struct)
         else:
-            raise ValueError('Energy name %s not found for  %s' % \
-                             (en, file))
+            raise ValueError('Stored energy name not found for %s' % \
+                             (file))
     return initial_list
 
 def set_IP_structure_matcher(ui):
