@@ -1,5 +1,0 @@
-2017-10-05 14:05:31 master : Final initial pool count: 99
-2017-10-05 14:11:16 master : Parallelization method: subprocess
-2017-10-05 14:11:16 master : Beginning to launch new replicas using subprocessing
-2017-10-05 14:11:16 master : Running subprocess: python /lus/theta-fs0/projects/HybridPV_tesp/fcurtis/Spring_PROD/gator/src/GAtor_master.py /lus/theta-fs0/projects/HybridPV_tesp/fcurtis/Spring_PROD/gator/example_run/tmp/conf_tmp/7a172d8c02.conf
-2017-10-05 14:11:24 7a172d8c02 : GAtor instance reporting from thetalogin6; controlling 1 process(es)
