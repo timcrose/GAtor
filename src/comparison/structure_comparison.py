@@ -161,8 +161,8 @@ class Comparison:
         Args: self
         Returns: Pymatgen StructureMatcher object
         '''
-        ui= self.ui
-        L_tol =ui.get_eval(comparison_type, 'ltol')
+        ui = self.ui
+        L_tol = ui.get_eval(comparison_type, 'ltol')
         S_tol = ui.get_eval(comparison_type, 'stol')
         Angle_tol = ui.get_eval(comparison_type, 'angle_tol')
         Scale = ui.get_boolean(comparison_type, 'scale_vol')

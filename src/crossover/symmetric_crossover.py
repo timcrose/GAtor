@@ -39,7 +39,7 @@ class Symmetric_Crossover(object):
 	'''
 	def __init__(self,parent_a,parent_b, replica):
 		self.ui = user_input.get_config()
-		sn = "symmetric_crossover"
+		sn = "crossover"
 		self.swap_sym = self.ui.get_eval(sn,"swap_sym_prob")
 		self.swap_sym_tol = self.ui.get_eval(sn,"swap_sym_tol")
 

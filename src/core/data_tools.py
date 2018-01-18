@@ -85,6 +85,8 @@ def get_energy_list(structure_coll):
             mem = ""
         if cluster is None:
             cluster = ""
+        if tot_clusters is None:
+            tot_clusters = ""
         if energy is not None:
             energy_list.append([ID, replica, index, energy, \
                                 vol, a, b, c, alpha, beta, \

@@ -123,10 +123,10 @@ def set_IP_structure_matcher(ui):
 	Args: The UI for setting tolerances for pymatgen's structure matcher
 	Returns: Pymatgen StructureMatcher object
 	'''
-	L_tol =ui.get_eval('initial_pool', 'ltol')
-	S_tol = ui.get_eval('initial_pool', 'stol')
-	Angle_tol = ui.get_eval('initial_pool', 'angle_tol')
-	Scale = ui.get_boolean('initial_pool', 'scale_vol')
+	L_tol =ui.get_eval('post_relaxation_comparison', 'ltol')
+	S_tol = ui.get_eval('post_relaxation_comparison', 'stol')
+	Angle_tol = ui.get_eval('post_relaxation_comparison', 'angle_tol')
+	Scale = ui.get_boolean('post_relaxation_comparison', 'scale_vol')
 	sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, 
                           scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
 	return sm
@@ -156,35 +156,6 @@ def return_all_user_structures(initial_list, replica, ui):
         structure_collection.add_structure(struct, stoic, 0)
         ip_count += 1
     return ip_count
-
-
-#def compute_feature_vector(struct, ui):
-#    feature_vector = ui.get("clustering", "feature_vector")
-#    if struct.get_property('feature_vector') is not None:
-#        return struct
-#    if feature_vector == "RDF_vector":
-#        struct = structure_handling.compute_RDF_vector(struct)
-#        return struct
-#    elif feature_vector == "PCA_RDF_vector":
-#        struct = structure_handling.compute_RDF_vector(struct)
-#        return struct
-#    elif feature_vector == "Lat_vol_vector":
-#        a = np.linalg.norm(struct.get_property('lattice_vector_a'))
-#        b = np.linalg.norm(struct.get_property('lattice_vector_b'))
-#        c = np.linalg.norm(struct.get_property('lattice_vector_c'))
-#        vol = struct.get_unit_cell_volume()
-#        vol = np.cbrt(vol)
-#        lat_vol = [a/vol, b/vol, c/vol]
-#        struct.set_property(feature_vector, lat_vol)
-#        return struct
-#    elif feature_vector == "RCD_vector":  
-#        RCD_struct = rcd_vector_calculation(struct)
-#        RCD_vector = RCD_struct.get_property(self.feature_type)
-#        struct.set_property(feature_vector, RCD_vector)
-#    else:
-#        message = "Clustering for %s is not availble" % (feature_vector)
-#        raise RuntimeError(message)
-        
 
 
 def return_non_duplicates(initial_list, replica, ui):
@@ -227,37 +198,15 @@ def return_non_duplicates(initial_list, replica, ui):
 def return_duplicate_pairs(initial_list, ui, replica):
     dup_pairs = []
     ip_dup_output = open(os.path.join(tmp_dir, "IP_duplicates.dat"),'w')
-    vector_name = ui.get_eval('initial_pool', 'vector_for_comparison') 
-    check_if_vec = initial_list[0].get_property(vector_name)
-    if check_if_vec is not None:
-        for struct, structc in itertools.combinations(initial_list, 2):
-            rdf_tol = compute_rdf_diff(struct, structc, ui)
-            if rdf_tol < ui.get_eval('initial_pool', 'vector_cosdiff_threshold'):
-                fit = compute_pymatgen_fit(struct, structc, ui)
-                if fit:
-                    struct_fp = struct.get_property('file_path')
-                    structc_fp = structc.get_property('file_path')
-                    if ui.verbose():
-                        output.local_message("Found duplicate pair", replica)
-                        output.local_message("-- %s" % struct_fp, replica)
-                        output.local_message("-- %s" % structc_fp, replica)
-                    dup_pairs.append((struct_fp, structc_fp))
-    else: dup_pairs = return_duplicate_pymat_pairs(initial_list, ui)
+    dup_pairs = return_duplicate_pymat_pairs(initial_list, ui)
     for pair in dup_pairs:
         ip_dup_output.write('\t'.join(str(s) for s in pair) + '\n')
     return dup_pairs
 
-def compute_rdf_diff(struct, structc, ui):
-    vector_name = ui.get_eval('initial_pool', 'vector_for_comparison') 
-    rd = np.asarray(struct.get_property(vector_name))
-    rdc = np.asarray(structc.get_property(vector_name))
-    rdf_tol = 1-(np.dot(rd,rdc))/(np.linalg.norm(rd)*np.linalg.norm(rdc))
-    return rdf_tol
-
 def compute_pymatgen_fit(struct, structc, ui):
     sm = set_IP_structure_matcher(ui)
-    structp = get_pymatgen_structure(struct.get_frac_data())
-    structpc = get_pymatgen_structure(structc.get_frac_data())
+    structp = struct.get_pymatgen_structure()
+    structpc = structc.get_pymatgen_structure()
     fit = sm.fit(structp, structpc)
     return fit
 	
@@ -266,8 +215,8 @@ def return_duplicate_pymat_pairs(initial_list, ui):
     sm = set_IP_structure_matcher(ui)
     replica = ui.get_replica_name() 
     for struct, structc in itertools.combinations(initial_list, 2):
-        structp = get_pymatgen_structure(struct.get_frac_data())
-        structpc = get_pymatgen_structure(structc.get_frac_data())
+        structp = struct.get_pymatgen_structure()
+        structpc = structc.get_pymatgen_structure()
         fit = sm.fit(structp, structpc)
         if fit:
             struct_fp = struct.get_property('file_path')
@@ -277,18 +226,6 @@ def return_duplicate_pymat_pairs(initial_list, ui):
             output.local_message("-- %s" % structc_fp, replica)
             dup_pairs.append((struct_fp, structc_fp))
     return dup_pairs
-
-def get_pymatgen_structure(frac_data):
-	'''
-	Args: Geometric data from GAtor's Structure() object
-	Returns: A pymatgen StructureP() object with the same geometric properties
-	'''
-	coords = frac_data[0] # frac coordinates
-	atoms = frac_data[1] # site labels
-	lattice = (LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], 
-                                alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7]))
-	structp = StructureP(lattice, atoms, coords)
-	return structp
 
 
 if __name__ == '__main__':

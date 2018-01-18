@@ -289,27 +289,6 @@ def cell_extension_input(struct, extension, create_duplicate=True):
         for j in range (nmpc):
             mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
     return struct
-def cell_populate_molecules(struct,mole_info_list):
-	'''
-	Reads in a list of molecule information and fills the structure with the molecules defined in ui.conf; 
-        requires the mole_info_list to be comprehensive and matching with the number of molecules specified in [run_settings]
-	mole_info_list should be a list of tuples defined as:
-	[COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle]
-	'''
-	ui=user_input.get_config()
-	if len(mole_info_list)!=ui.get_eval("run_settings","num_molecules"):
-		raise RuntimeError("In structure_handling.cell_populate_molecules, the number of molecules to be populated does not match")
-		return False
-	count=-1
-	mole_list=ui.get_eval("run_settings","molecule_list")
-	llist=[]
-	for (molename,napm,occurance) in mole_list:
-		geo=file_handler.get_molecule_geo(molename)
-		for t in range (occurance):
-			count+=1
-			llist+=list_transformation(geo,mole_info_list[count])
-	struct.geometry=structure.convert_array(llist)
-	return True	
 
 def lattice_lower_triangular(struct):
 	'''

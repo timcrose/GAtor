@@ -3,8 +3,6 @@
 '''
 from __future__ import division
 from collections import defaultdict
-from compiler.ast import Print
-import math
 import numpy as np
 from random import choice
 import random
@@ -106,8 +104,6 @@ class StructureSelection():
             if reverse: rho = 1 - rho
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
-            if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = math.exp(-self.ui.get('selection', 'alpha') * rho)
         return fitness
 
     def get_shared_fitness(self, structure_coll):
@@ -152,9 +148,6 @@ class StructureSelection():
             if reverse: rho = 1 - rho
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
-            if self.ui.get('selection', 'fitness_function') == 'exponential':
-                alpha = float(self.ui.get('selection', 'alpha'))
-                fitness[struct] = np.exp(-alpha * rho)
         return fitness
 
  

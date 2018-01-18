@@ -106,8 +106,8 @@ class ListSafeConfigParser(SafeConfigParser):
 		processes = 1
 		if self.has_option(sname,"processes_per_replica"):
 			processes = self.get_eval(sname,"processes_per_replica")
-			if self.has_option(sname,"processes_per_node"):
-				processes = min(self.get_eval(sname,"processes_per_node"), processes)
+			#if self.has_option(sname,"processes_per_node"):
+			#	processes = min(self.get_eval(sname,"processes_per_node"), processes)
 		return processes
 
     def verbose(self):

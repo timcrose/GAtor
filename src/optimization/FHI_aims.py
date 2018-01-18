@@ -10,17 +10,16 @@ import json
 from copy import deepcopy
 import core.file_handler as fh
 from core import user_input, output
-import core.file_handler as fh
 from core.activity import *
 from utilities import misc, parallel_run
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, get_collection
-
+from utilities.parse_aims_output import ParseOutput
 
 def main(input_struct):
     ''' 
     Inputs:
-    A Structure object
+    A Structure object, stoichiometry of crystal
 
     Returns
     A Structure object and a status
@@ -64,10 +63,13 @@ def main(input_struct):
 
     # Setup and run aims for each user-defined control file
     for i in range(num_control_files):
+        # Get control file for current run
         current_control_name = control_list[i]
         current_control_path = os.path.join(os.path.join(fh.cwd, control_dir),
                                     current_control_name)
         current_control_string = fh.read_data(current_control_path)
+
+        # Construct FHI instance
         FHI = FHIAimsEvaluation(i,
                                 input_struct, 
                                 working_dir, 
@@ -77,6 +79,7 @@ def main(input_struct):
                                 DFT_bin,
                                 execute_command,
                                 replica)
+
         # Launch and run aims job
         FHI.execute()
 
@@ -88,9 +91,11 @@ def main(input_struct):
         # Extract energy and check thresholds
         energy = FHI.extract_energy()
         if not energy:
-            output.time_log("Total energy not found in aims.out")
-            FHI.save_failed_calculation()
-            return input_struct, "failed"
+            energy = FHI.extract_energy_no_scf()
+            if not energy:
+                output.time_log("Total energy not found in aims.out")
+                FHI.save_failed_calculation()
+                return input_struct, "failed"
 
         # Add if energy is false, possibly b/c SCF cycle didnt converge
         if not FHI.is_energy_acceptable(energy):
@@ -100,13 +105,15 @@ def main(input_struct):
         result_struct = FHI.extract_and_build_structure()
         result_struct.set_property("energy", energy)
         result_struct.set_property(energy_names[i], energy)    
-    
+
         # Print to output end of current aims evaluation
         output.local_message("\n"+
                              "|------------------------ " +
                              "End of FHI-aims evaluation" + 
                              "------------------------|")
         input_struct = deepcopy(result_struct) 
+
+
 
     return input_struct, "accepted" 
 
@@ -312,6 +319,12 @@ class FHIAimsEvaluation():
         # Else create new structure for relaxed geometry
         output.local_message("-- Updated geometry retrieved")
 
+        # Save any previous energies stored
+        for name in self.sen:
+            prev_energy = self.input_struct.get_property(name)
+            if prev_energy is not None:
+                self.result_struct.set_property(name, prev_energy)
+
         # Lattice vectors and magnitudes
         latA = self.result_struct.get_property("lattice_vector_a")
         latB = self.result_struct.get_property("lattice_vector_b")
@@ -356,6 +369,24 @@ class FHIAimsEvaluation():
                 tokens = line.split() 
                 energy = float(tokens[11])  
                 return energy
+
+    def extract_energy_no_scf(self):
+        '''
+        reads the resulting energy from the FHI-aims log
+        looks for | Total energy corrected        : in cases
+        where SCF cycle is not converged
+        Returns: float if successful, False if unsuccessful
+        '''
+        st = '| Total energy corrected        :' 
+        aims_out = open(os.path.join(self.working_dir, 'aims.out'))
+        aims_data = reversed(aims_out.readlines())
+        for line in aims_data:
+            if st in line:
+                tokens = line.split()
+                energy = float(tokens[5])
+                self.output(energy)
+                return energy
+        return False # energy not found
 
     def is_energy_acceptable(self, energy):
         ''' 
@@ -433,10 +464,10 @@ class FHIAimsEvaluation():
             arglist = ["mpirun","-wdir",self.working_dir]
             if ui.has_option("parallel_settings","allocated_nodes"):
                 arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-            if ui.has_option("parallel_settings","processes_per_replica"):
-                arglist += ["-n",ui.get("parallel_settings","processes_per_replica")]
-            if ui.has_option("parallel_settings","additional_arguments"):
-                arglist += ui.get_eval("parallel_settings","additional_arguments")
+            if ui.has_option("parallel_settings","aims_processes_per_replica"):
+                arglist += ["-n",ui.get("parallel_settings","aims_processes_per_replica")]
+            if ui.has_option("FHI-aims","additional_arguments"):
+                arglist += ui.get_eval("FHI-aims","additional_arguments")
             arglist += [self.bin]
 
         elif self.execute_command == "srun":
@@ -444,23 +475,23 @@ class FHIAimsEvaluation():
             if ui.has_option("parallel_settings","allocated_nodes"):
                 arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
                 arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
-            if ui.has_option("parallel_settings","processes_per_replica"):
-                np = ui.get("parallel_settings","processes_per_replica")
+            if ui.has_option("parallel_settings","aims_processes_per_replica"):
+                np = ui.get("parallel_settings","aims_processes_per_replica")
                 arglist += ["-n",np]
                 mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
                 arglist += ["--mem",str(mem)]
             arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
-            if ui.has_option(sname,"additional_arguments"):
-                arglist += ui.get_eval(sname,"additional_arguments")
+            if ui.has_option("FHI-aims","additional_arguments"):
+                arglist += ui.get_eval("FHI-aims","additional_arguments")
             arglist += [self.bin]
 
         elif self.execute_command == "aprun":
             arglist = ["aprun"]
-            if ui.has_option("parallel_settings","processes_per_replica"):
+            if ui.has_option("parallel_settings","aims_processes_per_replica"):
                     arglist += ["-n",ui.get("parallel_settings","aims_processes_per_replica")]
             arglist+=["-e","OMP_NUM_THREADS=1"]
-            if ui.has_option("parallel_settings","additional_arguments"):
-                    arglist += ui.get_eval("parallel_settings","additional_arguments")
+            if ui.has_option("FHI-aims","additional_arguments"):
+                    arglist += ui.get_eval("FHI-aims","additional_arguments")
             arglist += [self.bin]
 
         elif self.execute_command == "runjob":
@@ -473,8 +504,8 @@ class FHIAimsEvaluation():
                 arglist += ["--corner",ui.get("parallel_settings","runjob_corner")]
             if ui.has_option("parallel_settings","runjob_shape"):
                 arglist += ["--shape",ui.get("parallel_settings","runjob_shape")]
-            if ui.has_option("parallel_settings","additional_arguments"):
-                arglist += ui.get_eval("parallel_settings","additional_arguments")
+            if ui.has_option("FHI-aims","additional_arguments"):
+                arglist += ui.get_eval("FHI-aims","additional_arguments")
 
         elif self.execute_command == "shell":
             os.chdir(self.working_dir)
@@ -677,6 +708,4 @@ class FHIAimsEvaluation():
         output.time_log("aims job exited with status "
                 + str(status),self.replica)
         os.chdir(self.original_dir)
-
-
 

@@ -22,21 +22,17 @@ from utilities import misc
 from utilities import space_group_utils as sgu
 import copy, shutil, multiprocessing
 
-
 def main(replica,stoic):
-	mkdir_p(tmp_dir)	
-	mkdir_p(structure_dir)
-	ga = RunGA(replica, stoic)	
-	if not ga.ui.get_boolean('run_settings', 'recover_from_crashes'): 
-		ga.start()  # no exception catching
-	else:
-		while True:
-			try:
-				ga.start() 
-				break
-			except Exception, e: 
-				output.error(e, replica)
-	output.move_to_shared_output(replica)
+    mkdir_p(tmp_dir)
+    mkdir_p(structure_dir)
+    ga = RunGA(replica, stoic)
+    while True:
+        try:
+            ga.start()
+            break
+        except Exception, e:
+            output.error(e, replica)
+    output.move_to_shared_output(replica)
 
 class RunGA():
     '''This class controls the main the genetic algorithm tasks each replica runs'''

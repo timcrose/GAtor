@@ -108,8 +108,6 @@ class StructureSelection():
             if reverse: rho = 1 - rho
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
-            if self.ui.get('selection', 'fitness_function') == 'exponential':
-                fitness[struct] = np.exp(-self.ui.get('selection', 'alpha') * rho)
         return fitness
 
     def get_shared_fitness(self, structure_coll):
@@ -154,9 +152,6 @@ class StructureSelection():
             if reverse: rho = 1 - rho
             if self.ui.get('selection', 'fitness_function') == 'standard':
                 fitness[struct] = rho
-            if self.ui.get('selection', 'fitness_function') == 'exponential':
-                alpha = float(self.ui.get('selection', 'alpha'))
-                fitness[struct] = np.exp(-alpha * rho)
         return fitness
   
     def sorted_fitness(self, fitness_dict):

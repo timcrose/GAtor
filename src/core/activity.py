@@ -39,47 +39,47 @@ def get_execute_clearance(request_folder="",buffer=3,max_wait=1000):
                 time.sleep(buffer)
 
 def request_folder_to_check():
-	'''
+    '''
 	Reads folder.info and returns the last one
 	Updates folder.info if the time has exceeded user defined
-	'''
-	ui = user_input.get_config()
-	time_wait = ui.get_eval("run_settings","update_folder_interval")
-	result=False
-	with FileLock("folder.info",tmp_dir,3600):
-		need_update=False
-		if not os.path.exists(os.path.join(tmp_dir,"folder.info")):
-			need_update=True
-		else:
-			f=open(os.path.join(tmp_dir,"folder.info"),"r")
-			folder_list=f.read().split("\n")
-			if folder_list[0]=="" or time.time()-float(folder_list[0])>time_wait:
-				need_update=True
-			f.close()
-		if need_update:
-			folder_list=[str(time.time())] #Time stamp comes first
-			restart_wait=ui.get_eval("parallel_settings","restart_interval")
-			list_of_folders = [name for name in os.listdir(tmp_dir)\
-			if os.path.isdir(os.path.join(tmp_dir,name)) and os.path.exists(os.path.join(tmp_dir,name,"active.info"))]
-			for folder in list_of_folders:
-				time_stamp=read_active(os.path.join(tmp_dir,folder))
-				if time_stamp!=False and time.time()-time_stamp>restart_wait:
-					folder_list.append(folder)
-		f=open(os.path.join(tmp_dir,"folder.info"),"w")
-		restart_wait=ui.get_eval("parallel_settings","restart_interval")
-		while len(folder_list)>1 and result==False: #Take the last on the list
-			result=folder_list.pop()
-			if (result=="") or not os.path.exists(os.path.join(tmp_dir,result,"active.info")): #Check the active info again in case the folder gets reactivated somehow
-				result = False
-			else:
-				time_stamp = read_active(os.path.join(tmp_dir,result))
-				if time_stamp==False or time.time()-time_stamp < restart_wait: 
-					result = False	
-				
-		for info in folder_list:
-			f.write(info+"\n")
-		f.close()
-	return result
+    '''
+    ui = user_input.get_config()
+    time_wait = 60
+    result = False
+    with FileLock("folder.info",tmp_dir,3600):
+        need_update = False
+        if not os.path.exists(os.path.join(tmp_dir,"folder.info")):
+            need_update = True
+        else:
+            f = open(os.path.join(tmp_dir,"folder.info"),"r")
+            folder_list = f.read().split("\n")
+            if folder_list[0] =="" or time.time()-float(folder_list[0])>time_wait:
+                need_update=True
+            f.close()
+        if need_update:
+            folder_list = [str(time.time())] #Time stamp comes first
+            restart_wait = 30
+            list_of_folders = ([name for name in os.listdir(tmp_dir) if 
+                                os.path.isdir(os.path.join(tmp_dir,name)) and 
+                                os.path.exists(os.path.join(tmp_dir,name,"active.info"))])
+            for folder in list_of_folders:
+                time_stamp = read_active(os.path.join(tmp_dir,folder))
+                if time_stamp != False and time.time()-time_stamp>restart_wait:
+                    folder_list.append(folder)
+        f = open(os.path.join(tmp_dir,"folder.info"),"w")
+        restart_wait = 30
+        while len(folder_list)>1 and result==False: #Take the last on the list
+            result=folder_list.pop()
+            if (result=="") or not os.path.exists(os.path.join(tmp_dir,result,"active.info")):
+                result = False
+            else:
+                time_stamp = read_active(os.path.join(tmp_dir,result))
+                if time_stamp == False or time.time()-time_stamp < restart_wait: 
+                    result = False
+        for info in folder_list:
+            f.write(info+"\n")
+        f.close()
+    return result
 
 def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_index()):
         '''

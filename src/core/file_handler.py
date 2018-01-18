@@ -63,7 +63,7 @@ def argument_opt():
 src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 GAtor_master_path = os.path.join(src_dir,"GAtor_master.py")
 GA_dir = os.path.abspath(os.path.join(src_dir, os.pardir))
-res_dir = os.path.join(src_dir, 'res')
+default_conf_dir = os.path.join(src_dir, 'core')
 
 # working directories TODO: make this movable
 tmp_dir = os.path.join(cwd, 'tmp/')
@@ -86,7 +86,7 @@ db_file = os.path.join(cwd, 'structures.sqlite')
 
 # useful files
 progress_file = os.path.join(cwd, tmp_dir , 'progress.dat')
-default_config = os.path.join(res_dir, 'default.conf')
+default_config = os.path.join(default_conf_dir, 'default.conf')
 (options,argv)=argument_opt() #Retrieve the user_input from command line
 ui_conf = os.path.abspath(sys.argv[-1])
 replica_file = os.path.join(tmp_dir, 'replica_index.dat')
@@ -205,29 +205,6 @@ def get_and_increment_index(index_path):
 def get_random_index(seed=None):
     LENGTH_OF_INDEX = 10
     return sha1(repr(time.time())+str(seed)).hexdigest()[:LENGTH_OF_INDEX]
-
-def get_molecule_geo(molename,adjusted=True):
-	'''
-	Reads in the molecule geometry from the molecules_dir
-	if adjusted=True, then the file opened will be molename_com_adjusted
-	'''
-	if adjusted:
-		f=open(os.path.join(molecules_dir,molename+"_com_adjusted"),"r")
-	else:
-		f=open(os.path.join(molecules_dir,molename),"r")
-	st=f.readline()
-	llist=[]
-	while st!='':
-		atom=st.split()
-		if len(atom)<4:
-			st=f.readline()
-			continue
-		for j in range (3):
-			atom[j]=float(atom[j])
-		llist.append(atom)
-		st=f.readline()
-	f.close()
-	return llist
 
 def print_to_file(message):
     with FileLock(output_file):
