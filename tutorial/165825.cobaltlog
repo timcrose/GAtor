@@ -1,5 +1,0 @@
-Jobid: 165825
-qsub --mode script -n 8 -t 30 -q default -A SC_Architectures_2 submit_to_cluster.sh
-Thu Jan 04 18:14:26 2018 +0000 (UTC) submitted with cwd set to: /lus/theta-fs0/projects/HybridPV_tesp/fcurtis/gator_github/tutorial
-jobid 165825 submitted from terminal /dev/pts/22
-Thu Jan 04 18:21:36 2018 +0000 (UTC) Info: user delete requested; removing job from the queue

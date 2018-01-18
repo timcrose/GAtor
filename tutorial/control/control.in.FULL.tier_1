@@ -18,8 +18,8 @@
   sc_accuracy_eev    1E-2
   sc_accuracy_etot   1E-6
   sc_accuracy_forces 1E-4 #uncomment for relaxation
-  sc_iter_limit      50
-  max_relaxation_steps 1
+  sc_iter_limit      100
+  max_relaxation_steps 2
   check_cpu_consistency .true.
 
 #  Eigenvalue solution
