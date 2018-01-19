@@ -140,7 +140,7 @@ def return_all_user_structures(initial_list, replica, ui):
     ip_count = 0
     structure_supercoll = {}
 
-    if ui.get_boolean("clustering","cluster_pool"):
+    if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
         message = "Clustering is requested."  
         output.local_message(message,replica)
     for struct in initial_list:
@@ -149,7 +149,7 @@ def return_all_user_structures(initial_list, replica, ui):
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
-        if ui.get_boolean("clustering","cluster_pool"):
+        if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
             clustering_mod = my_import(ui.get('modules','clustering_module'), package='clustering')
             AFV = clustering_mod.AssignFeatureVector(struct)
             struct = AFV.compute_feature_vector() 
@@ -169,7 +169,7 @@ def return_non_duplicates(initial_list, replica, ui):
     remove_list = []
     structure_supercoll = {}
     dup_pairs = return_duplicate_pairs(initial_list, ui, replica)
-    if ui.get_boolean("clustering","cluster_pool"):
+    if ui.get('selection', 'fitness_function') == 'standard_cluster':
         message = "Clustering is requested."
         output.local_message(message,replica)
     for path, path_dup in dup_pairs:
@@ -183,8 +183,10 @@ def return_non_duplicates(initial_list, replica, ui):
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
-        if ui.get_boolean("clustering","cluster_pool"):
-           struct = compute_feature_vector(struct, ui)        
+        if ui.get('selection', 'fitness_function') == 'standard_cluster':
+            clustering_mod = my_import(ui.get('modules','clustering_module'), package='clustering')
+            AFV = clustering_mod.AssignFeatureVector(struct)
+            struct = AFV.compute_feature_vector()
         structure_collection.add_structure(struct, stoic, 0)
     if len(initial_list)!=0:
         struct_coll = StructureCollection(stoic, 0)

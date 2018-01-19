@@ -82,7 +82,7 @@ class RunGA():
         convergeTF = None
 
         # Optionally Cluster Input Collection
-        if self.ui.get_boolean("clustering","cluster_pool"):
+        if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
             struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
             self.clustering_module.main(struct_coll, self.replica)
             data_tools.write_energy_hierarchy(struct_coll)
@@ -139,7 +139,7 @@ class RunGA():
             self.check_global_optimization(struct,top_prop_list)
 
             #----- Optional store feature vector  ----#
-            if self.ui.get_boolean("clustering","cluster_pool"):
+            if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
                 AFV = self.clustering_module.AssignFeatureVector(struct)
                 struct = AFV.compute_feature_vector()
             #----- Add Structure to collection -----#
@@ -156,7 +156,7 @@ class RunGA():
             self.success_message()
 
             #----- Optional Clustering on updated collection----#
-            if self.ui.get_boolean("clustering","cluster_pool"):
+            if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
                 struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
                 self.clustering_module.main(struct_coll, self.replica)
                 structure_collection.update_supercollection(self.structure_supercoll)

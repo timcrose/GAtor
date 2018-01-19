@@ -106,7 +106,7 @@ class StructureSelection():
             except: pass
             rho = (max_prop - prop) / (max_prop - min_prop)
             if reverse: rho = 1 - rho
-            if self.ui.get('selection', 'fitness_function') == 'standard':
+            if self.ui.get('selection', 'fitness_function') == 'standard_energy':
                 fitness[struct] = rho
         return fitness
 
@@ -150,8 +150,7 @@ class StructureSelection():
             prop_clus = prop/clust_mem
             rho = (max_prop - prop_clus) / (max_prop - min_prop)
             if reverse: rho = 1 - rho
-            if self.ui.get('selection', 'fitness_function') == 'standard':
-                fitness[struct] = rho
+            fitness[struct] = rho
         return fitness
   
     def sorted_fitness(self, fitness_dict):
