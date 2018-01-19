@@ -35,15 +35,14 @@ class ListSafeConfigParser(SafeConfigParser):
         return ast.literal_eval(self.get(section, option))
 
     def get_boolean(self,section,option):
-		'''
-		Check and see if the section and option is specified
-		if specified, has to set to "TRUE", else an error will be raised
-		'''
-		if self.has_option(section,option):
-			if self.get(section,option)!="TRUE":
-				#raise ValueError("Optional boolean flag has to be set to TRUE if present")
-			    return True
-		return False
+        '''
+        Check and see if the section and option is specified
+        if specified, has to set to "TRUE", else an error will be raised
+        '''
+        if self.has_option(section,option):
+            if self.get(section,option) == "TRUE":
+                return True
+        return False
 
     def get_list_of_booleans(self,section,option):
 		'''
