@@ -41,8 +41,8 @@ class ListSafeConfigParser(SafeConfigParser):
 		'''
 		if self.has_option(section,option):
 			if self.get(section,option)!="TRUE":
-				raise ValueError("Optional boolean flag has to be set to TRUE if present")
-			return True
+				#raise ValueError("Optional boolean flag has to be set to TRUE if present")
+			    return True
 		return False
 
     def get_list_of_booleans(self,section,option):
