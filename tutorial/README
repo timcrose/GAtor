@@ -10,7 +10,7 @@ One required input is an intial pool, an example
 one is given by ./initial_pool and contains the input structures
 in JSON format.  They include geometric parameters and energy information.
 
-The other required input is a configuration file, eg. TCS3.conf, which controls 
+The other required input is a configuration file, eg. ui.conf, which controls 
 which GA modules are being used, a path to the initial pool, details for the parallelization, 
 and additional parameters which can be modified during the GA run.
 
@@ -19,9 +19,9 @@ The one given, TCS3.conf is intended to be very basic and skips the DFT energy e
 ***********************************************
 RUNNING THE CODE
 
-To run the master code one can just execute:
+To run the master code one can execute:
 
->> ./run.sh &
+>> python ../src/GAtor_master.py ui.conf
 
 which calls the master script ../src/GAtor_master.py and takes TCS3.conf 
 as an input.
@@ -37,6 +37,8 @@ This runs 1 GA replica on 1 process. Increasing processes_per_replica speeds up 
 generation process. For a laptop, one can run several GA replicas in parallel by running ./run.sh
 several times.  The number_of_replicas setting is intended for HPC environments and will only work 
 with number_of_replicas = 1 on a laptop.
+
+For an example of running GAtor on a cluster see submit_to_cluster.sh
 
 ****************************************************
 OUTPUTS
@@ -74,11 +76,5 @@ Additional notes:
 
 GAtor checks that each new structure is not a dupicate and/or is not physical.  This is why structure generation can 'fail' 
 and/or take a little time. This information will be output to GAtor.out.
-
-
-
-
-
-
 
 
