@@ -14,7 +14,7 @@ The other required input is a configuration file, eg. ui.conf, which controls
 which GA modules are being used, a path to the initial pool, details for the parallelization, 
 and additional parameters which can be modified during the GA run.
 
-The one given, TCS3.conf is intended to be very basic and skips the DFT energy evaluations
+The one given, ui.conf is intended to be very basic 
 
 ***********************************************
 RUNNING THE CODE
