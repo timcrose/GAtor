@@ -608,7 +608,7 @@ class FHIAimsEvaluation():
                                         self.energy_threshold[self.iter])
         # Worst energy threshold
         if self.worst_energy[self.iter]:
-            struct_coll = get_collection(stoic,0)
+            struct_coll = get_collection(self.input_struct.get_stoic(),0)
             struct_coll.update_local()
             if self.energy_threshold == None:
                 self.energy_threshold = max(energies)
