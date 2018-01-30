@@ -175,6 +175,8 @@ class FHIAimsEvaluation():
         Calls from FHI-aims control settings found in res directory.
         Returns: None
         '''
+        #if not os.path.isdir(self.working_dir):
+        #    os.makedirs(self.working_dir)
         geometry_file = open(os.path.join(self.working_dir, 'geometry.in'), 'w')
         geometry_file.write(self.input_struct.get_geometry_atom_format())
         geometry_file.close()
@@ -474,7 +476,7 @@ class FHIAimsEvaluation():
             arglist = ["srun","-D",self.working_dir]
             if ui.has_option("parallel_settings","allocated_nodes"):
                 arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-                arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
+                #arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
             if ui.has_option("parallel_settings","aims_processes_per_replica"):
                 np = ui.get("parallel_settings","aims_processes_per_replica")
                 arglist += ["-n",np]
@@ -585,7 +587,8 @@ class FHIAimsEvaluation():
                 energy_name = "energy"
             for key, struct in struct_coll:
                 energies.append(struct.get_property(energy_name))
-            if energies[0] is None: 
+            #if energies[0] is None:
+            if None in energies: 
                 energies = []
                 for key, struct in struct_coll:
                     energies.append(struct.get_property("energy"))

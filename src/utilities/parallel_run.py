@@ -474,10 +474,8 @@ def get_all_processes(command,hostlist=None):
         #ppr = ui.get_eval(sname,"processes_per_replica")
         #total_processes = npr*ppr   
         #arglist += ["-n",str(total_processes)]
-        print "HERE"
 
     arglist += ["python",os.path.join(fh.src_dir,"utilities","print_host.py")]
-    print arglist
     output.time_log("Acquiring all available processes using this command: "+" ".join(map(str,arglist)))
     p = subprocess.Popen(arglist,stdout=subprocess.PIPE)
     time.sleep(2)

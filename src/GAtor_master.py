@@ -8,7 +8,7 @@ import os, subprocess, shutil
 import sys,socket
 import core.file_handler as fh
 import time
-from core import user_input, kill, output
+from core import user_input, kill, output, check_conf
 from utilities import parallel_run,stoic_model, misc
 try:
 	import imp.reload as reload #Python 3.0-3.3
@@ -46,9 +46,15 @@ class GAtor():
         if self.ui.get_boolean(sname,"clean_folder") and\
             self.ui.is_master_process():
                 self.clean_folder()
+        if self.ui.get_boolean(sname,"check_conf_file") and\
+            self.ui.is_master_process():
+                self.check_conf_file()
+
         if self.ui.get_boolean(sname,"fill_initial_pool") and\
             self.ui.is_master_process():
 			    self.fill_initial_pool()
+
+
         if self.ui.get_boolean(sname,"run_ga"):
             self.run_ga()
 
@@ -64,7 +70,11 @@ class GAtor():
     def kill_GA(self):
         kill.set_kill()
         return
-    
+
+    def check_conf_file(self):
+        CC = check_conf.ConfigurationChecker() 
+        CC.run_checks()
+
     def fill_initial_pool(self):
         IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
         fh.mkdir_p(fh.out_tmp_dir)
