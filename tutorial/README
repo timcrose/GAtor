@@ -1,7 +1,7 @@
 ***************************************************
-This example calculation folder generates new structures 
-but does not perform energy evalutations with an
-external DFT code
+This folder provides the inputs according to the
+tutorial of the user manual. See user manual
+for full instructions.
 
 ************************************************
 INPUTS
@@ -23,11 +23,11 @@ To run the master code one can execute:
 
 >> python ../src/GAtor_master.py ui.conf
 
-which calls the master script ../src/GAtor_master.py and takes TCS3.conf 
+which calls the master script ../src/GAtor_master.py and takes ui.conf 
 as an input.
 
 On a laptop, GAtor uses subprocessing to run each parallel replica, the necessary settings 
-in TCS3.conf are given by:
+in ui.conf are given by:
 
 parallelization_method = subprocess
 number_of_replicas = 1
@@ -38,10 +38,10 @@ generation process. For a laptop, one can run several GA replicas in parallel by
 several times.  The number_of_replicas setting is intended for HPC environments and will only work 
 with number_of_replicas = 1 on a laptop.
 
-For an example of running GAtor on a cluster see submit_to_cluster.sh
+For an example of running GAtor on a cluster see user manual and submit_to_cluster.sh
 
 ****************************************************
-OUTPUTS
+SAMPLE OUTPUTS
 
 Std outputs and error are found in:
 
@@ -63,7 +63,7 @@ modify
 
   end_GA_structures_added 
 
-in TCS3.conf and the GA will stop automatically when this number has been reached. 
+in ui.conf and the GA will stop automatically when this number has been reached. 
 
 To kill GAtor mid run:
     Either kill the process ID or remove /tmp/. 
