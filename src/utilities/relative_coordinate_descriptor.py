@@ -148,7 +148,6 @@ def rcd_difference_calculation(inst):
     if diff_matrix_output!="":
         f = open(diff_matrix_output,"a")
         for k in diff_mat:
-            print k
             f.write(" ".join(map(str,k))+"\n")
         f.close()
 
