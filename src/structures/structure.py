@@ -92,10 +92,7 @@ class Structure(object):
             self.add_lattice_vector(vector)
 
     def set_lattice_angles(self):
-        print "set lattice angles"
-        print self.get_lattice_vectors()
         alpha, beta, gamma = self.get_lattice_angles() 
-        print alpha
         self.set_property("alpha", alpha)
         self.set_property("beta", beta)
         self.set_property("gamma", gamma)
@@ -107,11 +104,6 @@ class Structure(object):
         if 'lattice_vector_c' in self.properties: raise Exception  # lattice vectors are full, 
         self.set_property(lattice_vector_name, vector)
 
-
-
-
-
-        
     def build_geo_whole(self, geometry): self.geometry = geometry
     def build_geo_from_atom_file(self, filepath): self.build_geo_whole_atom_format(read_data(filepath))
     def build_geo_from_json_file(self, filepath): self.loads(read_data(filepath))	
