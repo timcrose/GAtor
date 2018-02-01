@@ -22,7 +22,7 @@ the following python packages:
 1) pymatgen
 2) sci-kit learn
 
-These can be installed simply using pip.
+These can be installed simply using pip
 
 The source code is split into modules located in ./src
 
