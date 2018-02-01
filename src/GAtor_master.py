@@ -49,13 +49,12 @@ class GAtor():
         if self.ui.get_boolean(sname,"check_conf_file") and\
             self.ui.is_master_process():
                 self.check_conf_file()
-
         if self.ui.get_boolean(sname,"fill_initial_pool") and\
             self.ui.is_master_process():
-			    self.fill_initial_pool()
-
-
+                self.check_conf_file()
+                self.fill_initial_pool()
         if self.ui.get_boolean(sname,"run_ga"):
+            self.check_initial_pool_filled()
             self.run_ga()
 
     def testing_mode(self):
@@ -79,6 +78,18 @@ class GAtor():
         IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
         fh.mkdir_p(fh.out_tmp_dir)
         IP_module.main()
+
+    def check_initial_pool_filled(self):
+        s = "           "
+        IP_dat = os.path.join(fh.tmp_dir,"num_IP_structs.dat")   
+        msg = "Initial pool has not been filled properly.\n" + s
+        msg += "Make sure [GAtor_master]/fill_initial_pool=TRUE has been run.\n" +s
+        msg += "Check [initial_pool]/stored_energy_name is correct if other than 'energy'."
+        if not os.path.isfile(IP_dat):
+             raise Exception(msg)
+        if os.path.isfile(IP_dat):
+            if os.stat(IP_dat).st_size == 0:
+                raise Exception(msg)
 
     def clean_folder(self):
         sname = "clean_folder"
