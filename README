@@ -21,17 +21,13 @@ the following python packages:
 
 1) pymatgen
 2) sci-kit learn
-3) spglib
 
 These can be installed simply using pip.
 
 The source code is split into modules located in ./src
 
-Control files for FHI-aims (not necessary if no DFT evaluations) 
-are located in ./control
-
 An example calculation folder with further instructions for running the code
-is located in ./example_run
+is located in ./tutorial
 
 *******************************************
 
