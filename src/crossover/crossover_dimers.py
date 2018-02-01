@@ -276,9 +276,6 @@ class Crossover(object):
         choice_a = random.sample(set(range(self.num_mols)), 2)
         choice_b = random.sample(set(range(self.num_mols)), 2)
 
-        print choice_a
-        print choice_b
-
         orientation_info_child = []
         for i in range(len(orientation_info_a)):
 
