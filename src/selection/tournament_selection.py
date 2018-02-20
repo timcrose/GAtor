@@ -55,8 +55,6 @@ class StructureSelection():
         a, b = self.select_structures(structure_coll)
         struct_a = a[0]
         struct_b = b[0]
-        #print "selected a", struct_a.struct_id, a[1]
-        #print "selected b", struct_b.struct_id, b[1]
         return [struct_a, struct_b]
 
     def select_structures(self, structure_coll):
@@ -67,14 +65,12 @@ class StructureSelection():
         if len(structure_coll.structures) == 1: 
             return (structure_coll.get_struct(0), 0)
         else:
-            if self.ui.get_boolean("clustering","cluster_pool"):
-                #print "shared fitness"
+            if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
                 self.output("-- Using shared fitness scheme")
                 fitness_dict = self.get_shared_fitness(structure_coll)
                 return self.select_best_from_fitness(fitness_dict)
             else:
                 fitness_dict = self.get_fitness(structure_coll)
-                #print "normal"
                 self.output("-- Using normal fitness scheme")
                 return self.select_best_from_fitness(fitness_dict) 
 
@@ -158,7 +154,6 @@ class StructureSelection():
         returns fitness as a sorted list of tuples.
         '''
         sorted_fitness = sorted(fitness_dict.iteritems(), key=lambda x:x[1])
-        # sorted_fitness = sorted_fitness[::-1] # sort fitness 1 to 0
         return sorted_fitness
 
     def normalized_fitness(self, sorted_fit):

@@ -1,5 +1,5 @@
 '''
-@authors newhouse, farren
+@authors farren
 '''
 from __future__ import division
 from collections import defaultdict
@@ -13,9 +13,8 @@ from core.file_handler import INITIAL_POOL_REFID, tmp_dir
 from structures import structure_collection
 from structures.structure import StoicDict
 from structures import structure_handling
-#Returns ID of two parents instead of structure object.  This is to be used to pass to multiprocessing.
 
-def main(structure_supercoll, replica_stoic,replica=user_input.get_config().get_replica_name()):
+def main(structure_supercoll, replica_stoic, replica=user_input.get_config().get_replica_name()):
     '''
     For a structure selection module, the method main() must be implemented.
     It must take as arguments a 'Structure supercollection'
@@ -66,7 +65,7 @@ class StructureSelection():
         if len(structure_coll.structures) == 1:
             return (structure_coll.get_struct(0), 0)
         else:
-            if self.ui.get_boolean("clustering","cluster_pool"):
+            if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
                 self.output("-- Using shared fitness scheme")
                 fitness_dict = self.get_shared_fitness(structure_coll)
                 return self.select_best_from_fitness(fitness_dict)
@@ -155,7 +154,6 @@ class StructureSelection():
         returns fitness as a sorted list of tuples.
         '''
         sorted_fitness = sorted(fitness_dict.iteritems(), key=lambda x:x[1])
-        # sorted_fitness = sorted_fitness[::-1] # sort fitness 1 to 0
         return sorted_fitness
 
     def normalized_fitness(self, sorted_fit):
@@ -173,15 +171,11 @@ class StructureSelection():
         for index, t_fitness in tmp: 
             normalized_fit.append((index, t_fitness + total))
             total = t_fitness + total
-        #print normalized_fit[0][0].struct_id, normalized_fit[0][1]
-        #print normalized_fit[-1][0].struct_id, normalized_fit[-1][1]
         return normalized_fit
     
     def select_best_from_fitness(self, fitness_dict):
         fitness = self.sorted_fitness(fitness_dict)
         fitness = self.normalized_fitness(fitness)
-        #for struct, fit in fitness:
-            #print struct.struct_id, fit
         dec = float(self.percent*0.01)
         dec_comp = 1-dec
         random_num = np.random.uniform(dec_comp,1.0)
