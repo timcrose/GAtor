@@ -32,6 +32,7 @@ def main():
     user_structures_dir = os.path.join(cwd, ui.get('initial_pool', 'user_structures_dir'))
     added_user_structures = os.path.join(tmp_dir, 'added_user_structures.dat')
     num_IP_structures = os.path.join(tmp_dir, 'num_IP_structs.dat')
+    top_count = ui.get_eval('run_settings', 'followed_top_structures')
     energy_name = ui.get('initial_pool', 'stored_energy_name')
     files_to_add = file_lock_structures(user_structures_dir, added_user_structures)
     st = ' ------------------------------------------------------------------------'
@@ -48,21 +49,24 @@ def main():
     if ui.get_boolean('initial_pool', 'duplicate_check'):
         output.time_log("Checking initial pool for duplicates")
         output.local_message("---- Checking initial pool for duplicates ----",replica)
-        ip_count = return_non_duplicates(initial_list, replica, ui)
+        ip_count, stoic = return_non_duplicates(initial_list, replica, ui)
         output.time_log("Final initial pool count: %i" % ip_count)
         output.local_message("Final initial pool count: %i" % ip_count,replica)
     else:
-		ip_count = return_all_user_structures(initial_list, replica, ui)
+		ip_count, stoic = return_all_user_structures(initial_list, replica, ui)
 		output.time_log("Final initial pool count: %i" % ip_count)
 		output.local_message("Final initial pool count: %i" % ip_count,replica)
     output.move_to_shared_output(replica="init_pool")
+    write_top_struct_ids(stoic, top_count)
     if ip_count!=0 and ip_count!=None:
         with open(num_IP_structures,'w') as f:
             f.write(str(ip_count))
             f.close()
+
         return ip_count
     else:
         return 
+
 
 def file_lock_structures(user_structures_dir, added_user_structures):
 	'''
@@ -155,7 +159,7 @@ def return_all_user_structures(initial_list, replica, ui):
             struct = AFV.compute_feature_vector() 
         structure_collection.add_structure(struct, stoic, 0)
         ip_count += 1
-    return ip_count
+    return (ip_count, stoic)
 
 
 def return_non_duplicates(initial_list, replica, ui):
@@ -195,7 +199,7 @@ def return_non_duplicates(initial_list, replica, ui):
             output.local_message("Total duplicate pairs found: %d" % (len(remove_list)),replica)
             output.local_message("Total checked: %d" % (len(initial_list)),replica)
             output.local_message("Total unique structures added: %d" % (len(struct_coll.structures)),replica)
-        return len(struct_coll.structures)
+        return (len(struct_coll.structures),stoic)
 
 def return_duplicate_pairs(initial_list, ui, replica):
     dup_pairs = []
@@ -229,6 +233,25 @@ def return_duplicate_pymat_pairs(initial_list, ui):
             dup_pairs.append((struct_fp, structc_fp))
     return dup_pairs
 
+def write_top_struct_ids(stoic, top_count):
+    top_structs_f = os.path.join(tmp_dir,'top_structs.dat')
+    top_iter_f = os.path.join(tmp_dir,'top_iter.dat')
+    struct_coll = StructureCollection(stoic, 0)
+    ids_energies = []
+    for index, struct in struct_coll.structures.items():
+        struct_id = struct.struct_id
+        energy = struct.get_property('energy')
+        ids_energies.append([struct_id, energy])
+    ids_energies.sort(key=lambda x: x[1])
+    top_ids = [ids_energies[i][0] for i in range(top_count)]
+    with open(top_structs_f,'w') as f:
+        for i in top_ids:
+            f.write(i+"\n")
+        f.close()
+    with open(top_iter_f,'w') as f:
+        f.write("0")
+        f.close()
+    return
 
 if __name__ == '__main__':
     main()
