@@ -117,6 +117,7 @@ def all_interatomic_distances (struct, a1, a2, a1_range=None, a2_range=None):
                     geo[i]["y"] - geo[j]["y"],\
                     geo[i]["z"] - geo[j]["z"]])])
     return result
+
 def cell_lower_triangular(struct,create_duplicate=True):
     '''
     Sets the cell back to lower triangular form
@@ -164,6 +165,7 @@ def cell_reflection_z(struct,create_duplicate=True):
 	struct.properties["lattice_vector_b"][2]=-struct.properties["lattice_vector_b"][2]
 	struct.properties["lattice_vector_c"][2]=-struct.properties["lattice_vector_c"][2]
 	return struct
+
 def cell_reflection_x(struct,create_duplicate=True):
 	'''
 	Flips the cell's x axis 
@@ -183,9 +185,6 @@ def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,
                   deg=None,rad=None,create_duplicate=True):
     if create_duplicate:
         struct=copy.deepcopy(struct)
-#    if (deg==None) and (rad==None):
-#        print "here1"
-#        return False
     if (vec==None) and (((theta_deg==None) and (theta_rad==None)) 
                        or ((phi_deg==None) and (phi_rad==None))):
         return False
@@ -259,6 +258,7 @@ def cell_extension_2(struct, create_duplicate=True):
 		for j in range (nmpc):
 			mole_translation(struct,i*nmpc+j,napm,frac=extension[i],create_duplicate=False)
 	return struct
+
 def cell_extension(struct,extension=[[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]],create_duplicate=True):
     '''
     Extends the structure by the specified extensions
@@ -268,13 +268,20 @@ def cell_extension(struct,extension=[[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,
         struct=copy.deepcopy(struct)
     napc = len(struct.geometry)
     for extend in extension:
-        #Calculate the trans_vector as a dot product of the extension and traspose of lattice_vector matrix
-        trans_vector = np.dot(extend,[struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"]])
+        A = struct.properties["lattice_vector_a"]
+        B = struct.properties["lattice_vector_b"]
+        C = struct.properties["lattice_vector_c"]
+        trans_vector = np.dot(extend,[A, B, C])
 
         #Create a new copy of each of the atom in the original geometry
         for i in range (napc):
             atom = copy.deepcopy(struct.geometry[i])
-            struct.build_geo_by_atom(atom['x']+trans_vector[0],atom['y']+trans_vector[1],atom['z']+trans_vector[2],atom['element'],atom['spin'],atom['charge'],atom['fixed'])
+            struct.build_geo_by_atom(atom['x']+trans_vector[0],
+                                     atom['y']+trans_vector[1],
+                                     atom['z']+trans_vector[2],
+                                     atom['element'],
+                                     atom['spin'],
+                                     atom['charge'],atom['fixed'])
     return struct
 
 def cell_extension_input(struct, extension, create_duplicate=True):
@@ -311,17 +318,18 @@ def lattice_lower_triangular(struct):
 	return lattice
 
 def lattice_parameters(struct):
-	'''
-	Returns a dictionary of the lattice parameters a, b, c, alpha, beta, gamma
-	'''
-	parameters={}
-	parameters["a"] = np.linalg.norm(struct.properties["lattice_vector_a"])
-	parameters["b"] = np.linalg.norm(struct.properties["lattice_vector_b"])
-	parameters["c"] = np.linalg.norm(struct.properties["lattice_vector_c"])
-	parameters["alpha"] = np.rad2deg(np.arccos(np.dot(struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"])/parameters["b"]/parameters["c"]))
-	parameters["beta"] = np.rad2deg(np.arccos(np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_c"])/parameters["a"]/parameters["c"]))
-	parameters["gamma"] = np.rad2deg(np.arccos(np.dot(struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"])/parameters["a"]/parameters["b"]))
-	return parameters
+    ''' Returns a dictionary of the lattice parameters a, b, c, alpha, beta, gamma'''
+    parameters={}
+    A = struct.properties["lattice_vector_a"]
+    B = struct.properties["lattice_vector_b"]
+    C = struct.properties["lattice_vector_c"]
+    parameters["a"] = np.linalg.norm(A)
+    parameters["b"] = np.linalg.norm(B)
+    parameters["c"] = np.linalg.norm(C)
+    parameters["alpha"] = np.rad2deg(np.arccos(np.dot(B, C)/parameters["b"]/parameters["c"]))
+    parameters["beta"] = np.rad2deg(np.arccos(np.dot(A, C)/parameters["a"]/parameters["c"]))
+    parameters["gamma"] = np.rad2deg(np.arccos(np.dot(A, B)/parameters["a"]/parameters["b"]))
+    return parameters
 			
 
 def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
@@ -338,29 +346,6 @@ def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
 		for j in range (3):
 			struct.geometry[i][j]+=vec[j]
 	return struct
-
-def mole_recognize(struct):
-	'''
-	Interpret the geometry of struct in terms of the molecules given in ui.conf
-	Returns a tuple of [COM[0],COM[1],COM[2],is_mirror_reflection,vec[0],vec[1],vec[2],angle,residual]
-	where vec is the axis of rotation, and angle is the angle being rotated
-	the orientation is determined according to the standard geometry
-	found in run_calcs/molecules
-	'''
-	molecules=ui.get_eval('run_settings','molecule_list')
-	sum=0;count=-1
-	result=[]
-	struct=copy.deepcopy(struct)
-	for (molename,napm,occurance) in molecules:
-		geo=file_handler.get_molecule_geo(molename)
-		for j in range (occurance):
-			com=cm_calculation(struct,range(sum,sum+napm))
-			orient=mole_get_orientation(struct,geo,range(sum,sum+napm),com,create_duplicate=False)
-			if orient==False:
-				return False
-			result.append(com+orient)
-				#if a molecule is torn apart by relaxation, mole_get_orientation will return False, thus causing error for connecting the list
-	return result
 
 def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=True):
 	'''
@@ -946,8 +931,6 @@ def list_transformation(llist,info,create_duplicate=True):
 	list_translation(llist,info[0:3],False)
 	return llist
 	
-
- 
 def print_aims(struct):
 	os=''        
 	st="lattice_vector"
@@ -969,17 +952,4 @@ def print_aims(struct):
 		os=os+st+' '+struct.geometry[i][3]+"\n"
 	os+='\n'
 	return os
-
-def main():
-	struct=structure.Structure()
-	struct.set_property("lattice_vector_a",[10,0,0])
-	struct.set_property("lattice_vector_b",[0,10,0])
-	struct.set_property("lattice_vectory_c",[0,0,10])
-	mole_info=[[1,2,3,False,0,0,1,72],[5,6,7,True,0,1,0,0]]
-	cell_populate_mole(struct,mole_info)
-	print print_aims(struct)
-
-
-if __name__ == '__main__':
-	main2()
 
