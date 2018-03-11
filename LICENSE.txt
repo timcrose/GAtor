@@ -1,6 +1,6 @@
 BSD 3-Clause License
 
-Copyright (c) 2018 Farren Curtis and Contributors
+Copyright (c) 2018 Carnegie Mellon University and Fritz-Haber-Institut der Max-Planck-Gessellschaft
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
