@@ -28,7 +28,7 @@ def main(replica,stoic):
     ga = RunGA(replica, stoic)
     while True:
         try:
-            ga.start()
+            ga.run()
             break
         except Exception, e:
             output.error(e, replica)
@@ -50,8 +50,8 @@ class RunGA():
         self.number_of_tot_structures = int(self.ui.get('run_settings', 'end_GA_structures_total'))
         self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
         self.max_it = self.ui.get_eval('run_settings', 'max_iterations_no_change')
+        self.number_of_IP = open(os.path.join(tmp_dir,"num_IP_structs.dat")).read()
         self.replica_child_count = 0
-        self.convergence_count= 0
         self.structure_supercoll = {}
         self.structure_supercoll[(self.replica_stoic, 0)] = \
         structure_collection.get_collection(self.replica_stoic, 0)
@@ -68,7 +68,7 @@ class RunGA():
         ''' Output messages to replica output in replica_out folder'''
         output.local_message(message, self.replica)
 
-    def start(self):
+    def run(self):
         '''
         Performs main genetic algorithm operations
         Loads necessary modules based on UI at runtime
@@ -78,8 +78,6 @@ class RunGA():
 
         # Intialiaze restarts
         restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
-        restart_count = 0
-        convergeTF = None
 
         # Optionally Cluster Input Collection
         if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
@@ -93,10 +91,10 @@ class RunGA():
         # Main loop of GA
         while True:
             #----- Beginning of Iteration Tasks -----#
-            begin_time = self.beginning_tasks(restart_count)
+            begin_time = self.beginning_tasks()
             
             #----- Check if GA finished/converged -----#
-            end = self.check_finished(convergeTF)
+            end = self.check_convergence()
             if end: return
             
             #----- Restart Scheme -----#
@@ -109,7 +107,6 @@ class RunGA():
 
             #----- Compare Pre-relaxed Structure to Collection -----#
             if self.structure_comparison(struct, "pre_relaxation_comparison") == False:
-                convergeTF = False
                 rmdir_silence(self.working_dir)
                 continue
 
@@ -124,9 +121,12 @@ class RunGA():
                     continue
                 #----- Compare Post-relaxed Structure to Collection -----#
                 if self.structure_comparison(struct, "post_relaxation_comparison") == False:
-                    convergeTF = False
                     rmdir_silence(self.working_dir)
                     continue
+
+            #----- Check if GA finished/converged by another replica-----#
+            end = self.check_convergence()
+            if end: return
 
             #---- Compute Spacegroup of Relaxed Structure ----#
             struct = sgu.identify_space_group(struct)
@@ -136,12 +136,13 @@ class RunGA():
             ref_label = 0
             coll = self.structure_supercoll.get((self.replica_stoic,ref_label))
             top_prop_list = self.return_property_array(coll)
-            self.check_global_optimization(struct,top_prop_list)
+            self.check_global_minimum(struct,top_prop_list)
 
             #----- Optional store feature vector  ----#
             if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
                 AFV = self.clustering_module.AssignFeatureVector(struct)
                 struct = AFV.compute_feature_vector()
+
             #----- Add Structure to collection -----#
             self.struct_index = self.add_to_collection(struct, ref_label)
 
@@ -161,9 +162,13 @@ class RunGA():
                 self.clustering_module.main(struct_coll, self.replica)
                 structure_collection.update_supercollection(self.structure_supercoll)
 
-            #----- End of Iteration Data Tasks -----#
-            restart_count += 1
-            convergeTF = self.end_of_iteration_tasks(restart_count, top_prop_list, begin_time, coll)
+            #----- End of Iteration Outputs -----#
+            self.end_of_iteration_outputs(begin_time)
+
+            #----- Check if GA finished/converged -----#
+            end = self.check_convergence(struct_added=True)
+            if end: return
+
 
     def save_replica_output(self):
         input_ref = "0"
@@ -213,7 +218,7 @@ class RunGA():
         try: self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
         except: pass
 
-    def beginning_tasks(self, restart_count):
+    def beginning_tasks(self):
         st = ' -------------------------------------------------------------------------'
         output.move_to_shared_output(self.replica)
         begin_time = datetime.datetime.now()
@@ -236,7 +241,7 @@ class RunGA():
             prop_list = [-x for x in prop_list] #Reverse it back
         return prop_list
 
-    def check_global_optimization(self,struct,prop_list):
+    def check_global_minimum(self,struct,prop_list):
 		prop = struct.get_property(self.prop)
 		glob = prop_list[0][0] #Best current property
 		self.output("-- Structure's %s: %f eV \n-- Previous global minimum: %f eV" % 
@@ -279,18 +284,15 @@ class RunGA():
         data_tools.write_energy_hierarchy(struct_coll)
         return struct_index
 
-    def check_finished(self, convergeTF):
+    def check_convergence(self, struct_added=False):
         end = False
-        IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
-        try: number_of_IP = open(IP_dat).read()
-        except: raise ValueError("Initial pool has not been filled properly")
+        top_structs_f = os.path.join(tmp_dir,'top_structs.dat')
+        top_iter_f = os.path.join(tmp_dir,'top_iter.dat')
+        prev_top_iter = int(open(top_iter_f).readlines()[0])
         struct_coll = structure_collection.get_collection(self.replica_stoic, 0)
         struct_coll.update_local()
         size_of_common = len(struct_coll.structures)
-        size_of_added = size_of_common - int(number_of_IP)
-
-        self.output(' Total size of common pool: %i   Total number of GA-added structures: %i'
-                    % (size_of_common, size_of_added))
+        size_of_added = size_of_common - int(self.number_of_IP)
         cst = '|------------------------------GA CONVERGED-------------------------------|'
         st =  '|-------------------------------------------------------------------------|'
         header = '\n'+st+'\n'+cst+'\n'
@@ -314,47 +316,49 @@ class RunGA():
             message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
             self.output(message)
             end = True
-        if convergeTF == True:
-            message = ''
-            message += header + 'Top '+str(self.top_count)
-            message +=' energies havent changed in user-specfied number of iterations: '
-            message += str(self.max_it) +'\n'
-            message +='Number of GA additions to pool: '
-            message += str(size_of_added) +'\n'
-            message +='Total size of collection: '
-            message += str(size_of_common) +'\n'
-            message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
-            self.output(message)
-            end = True
-        if os.path.isfile(os.path.join(tmp_dir, "kill.dat")):
-            self.output("User has killed GAtor")
-            os.remove(os.path.join(tmp_dir, "kill.dat"))
-            end = True
-        return end
-
-    def check_local_convergence(self, old_prop_list):
-        '''
-        Check if top N structures havent 
-        changed in X iterations
-        '''
-        new_e_list = np.array([])
-        coll_new = self.structure_supercoll.get((self.replica_stoic,0))
-        new_prop_list = self.return_property_array(coll_new)
-        new_list_top_prop = new_prop_list[:self.top_count]
-        old_list_top_prop = old_prop_list[:self.top_count]
-        self.convergence_count= self.convergence_count + 1
-        for prop_new in new_list_top_prop:
-            if prop_new in old_list_top_prop:
-                continue
+        message = ''
+        message += header + 'Top '+str(self.top_count)
+        message +=' energies havent changed in user-specfied number of iterations: '
+        message += str(self.max_it) +'\n'
+        message +='Number of GA additions to pool: '
+        message += str(size_of_added) +'\n'
+        message +='Total size of collection: '
+        message += str(size_of_common) +'\n'
+        message += 'GAtor ended at: '+str(datetime.datetime.now()) + '\n' + st
+        if struct_added:
+            # Compute current top structures
+            ids_energies = []
+            for index, struct in struct_coll.structures.items():
+                struct_id = struct.struct_id
+                energy = struct.get_property('energy')
+                ids_energies.append([struct_id, energy])
+            ids_energies.sort(key=lambda x: x[1])
+            top_ids = [ids_energies[i][0] for i in range(self.top_count)]
+            # Check previous top structures
+            prev_top_ids = []
+            f = open(top_structs_f,'r') 
+            for line in f.readlines():
+                prev_top_ids.append(line.strip("\n"))
+            if top_ids == prev_top_ids:
+                top_iter = prev_top_iter + 1
+                with open(top_iter_f,'w') as f:
+                    f.write(str(top_iter))
+                if top_iter == self.max_it: 
+                    self.output(message)
+                    end = True
             else:
-                self.output("-- Top "+str(self.top_count)+" structures have changed.")
-                self.convergence_count= 0
-                self.output("-- Local convergence counter reset.")
-                self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
-                return "not_converged"
-                self.output("-- Replica's local iteration:  "+ str(self.convergence_count))
-                if self.convergence_count== self.max_it:
-                    return "converged"
+                with open(top_structs_f,'w') as f:
+                     for i in top_ids:
+                        f.write(i+"\n")
+                with open(top_iter_f,'w') as f:
+                    f.write('0')
+        else:
+            # Check if already converged by another replica
+            prev_top_iter = int(open(top_iter_f).readlines()[0])
+            if prev_top_iter == self.max_it:
+                self.output(message)
+                end = True
+        return end
 
     def restart_scheme(self, restart_replica):
         self.output("-- Restart of replicas has been requested")
@@ -375,7 +379,7 @@ class RunGA():
         geometry.in.next_step has to be present. Will attempt to read
         struct.json to update other properties that might be lost in restart
         if scavenge failure, returns False
-		if cleanup=True and scavenging is successful, removes the folder afterwards
+        if cleanup=True and scavenging is successful, removes the folder afterwards
 		WARNING: make sure the folder is inactive before calling this function 
         '''
         geometry = os.path.join(folder,"geometry.in")
@@ -599,25 +603,12 @@ class RunGA():
         message += "\n-- Added from replica: %s " % (self.replica)
         self.output(message)
 
-    def end_of_iteration_tasks(self, begin_time, old_list_top_en, restart_count, coll):
-        # Remove working directory in /tmp
+    def end_of_iteration_outputs(self, begin_time):
         rmdir_silence(self.working_dir)
-
-        #Check convergence
-        converged = self.check_local_convergence(old_list_top_en)
-
-        #End of Iteration Outputs
-        IP_dat = os.path.join(tmp_dir,"num_IP_structs.dat")
-        number_of_IP = open(IP_dat).read()
         size_of_common = len(self.structure_supercoll.get((self.replica_stoic, 0)).structures)
-        size_of_added = size_of_common - int(number_of_IP)
-        self.output(' Total size of common pool: %i   Total number of GA-added structures: %i'
+        size_of_added = size_of_common - int(self.number_of_IP)
+        self.output('-- Total size of common pool: %i   Total number of GA-added structures: %i'
                     % (size_of_common, size_of_added))
-        if converged is "not_converged":
-            self.output("GA not converged yet.")
-            pass
-        elif converged is "converged":
-            return True	
 
 	def add_structure(self, struct, input_ref):
 		structure_collection.add_structure(struct,struct.self.replica_stoic(),"pre-evaluation")
@@ -732,7 +723,7 @@ def structure_create_for_multiprocessing(args):
 
 if __name__ == '__main__':
 	'''
-	This command is important. If the module is run directly instead of imported,
+	If the module is run directly instead of imported,
 	it will execute the main() method. This allows for a single replica to join 
 	a current genetic algorithm search.
 	'''
