@@ -27,8 +27,6 @@ def main(list_of_structures, replica):
     output_parent_properties(parent_a, parent_b, replica)
     cross_obj = Crossover(parent_a, parent_b, num_mols, replica)
     child_struct = cross_obj.cross()
-    #print "child"
-    #print child_struct.get_geometry_atom_format()
     return child_struct
 
 class Crossover(object):
@@ -61,12 +59,6 @@ class Crossover(object):
         (molecule COM's) x, y, z
         (molecule orientations) thetax, thety, thetaz
         '''
-        #shell debugging
-        #print "parent a \n"
-        #print self.parent_a.get_geometry_atom_format()
-        #print "parent b"
-        #print self.parent_b.get_geometry_atom_format()
-
         # Get lattice information from each parent 
         A_a, B_a, C_a = self.parent_a.get_lattice_magnitudes()
         A_b, B_b, C_b = self.parent_b.get_lattice_magnitudes()
@@ -149,13 +141,6 @@ class Crossover(object):
         for atom in mol:
             atoms.append([float(atom[0]), float(atom[1]), float(atom[2])])
 
-        #Visualize in shell for debugging
-        #print "beforei\n"
-        #for i in range(len(types)):
-        #    st =  "atom " + str(mol[i][0])+" "+str(mol[i][1])+" "+str(mol[i][2])+" "+types[i]
-        #    before += st + "\n"
-        #print before
-
         molp = Molecule(types, atoms)
         centered_molp = molp.get_centered_molecule()
 
@@ -180,17 +165,6 @@ class Crossover(object):
             new_atom = [new_atom[0], new_atom[1], new_atom[2]]
             aligned_mol.append(new_atom)
 
-        #Visualize
-        #print "after"
-        #atom_out = ""
-        #for i in range(len(centered_sites)):
-        #    st =  "atom " + str(aligned_mol[i][0])+" "\
-        #    +str(aligned_mol[i][1])+" "+str(aligned_mol[i][2])+" "+types[i]
-        #    atom_out += st + "\n"
-        #self.output(atom_out)
-        #print atom_out
-
-        
         #Euler angles 
         z, y, x =  self.mat2euler(rot)
         return z, y, x, aligned_mol
@@ -544,6 +518,7 @@ def rotation_matrix(theta, psi, phi):
                 (np.sin(phi) * np.cos(theta)),
                 (np.cos(phi) * np.cos(theta)))])
     return Rxyz
+
 def output_parent_properties(parent_a, parent_b, replica):
     parent_a_vecs = np.array(map(float, parent_a.get_lattice_magnitudes()))
     parent_b_vecs = np.array(map(float, parent_b.get_lattice_magnitudes()))
