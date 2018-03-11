@@ -104,9 +104,9 @@ def write_energy_hierarchy(structure_coll):
 		ranked_energy_list.append([count + 1] + energy_list[count])
 	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 
                 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
-                'Spacegroup', 'Mutation','ParentA', 'ParentB',
+                'SG', 'Mutation','ParentA', 'ParentB',
                 'Cluster', 'Cluster_Members', 'Total_Clusters'])
-	form = '{:<5} {:<5} {:<12} {:20} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<10} {:<16} {:<22} {:<22} {:<7} {:<7} {:9}'
+	form = '{:<5} {:<5} {:<12} {:12} {:<12} {:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} {:<3} {:<12} {:<14} {:<14} {:<7} {:<7} {:9}'
 	to_write += form.format(*header) + '\n'
 	for line in ranked_energy_list:
 		to_write += form.format(*line) + '\n'
