@@ -42,7 +42,7 @@ class RunGA():
         self.replica_stoic = stoic
         self.working_dir = os.path.join(tmp_dir, str(self.replica))
         self.GA_module_init()
-        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
+        #self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
         self.verbose = self.ui.verbose()
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")
@@ -76,7 +76,7 @@ class RunGA():
         # Report Replica to Common Output 
         self.output("----Replica %s running GA on common pool----" %(self.replica))
 
-        # Intialiaze restarts
+        # Restart Boolean
         restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
 
         # Optionally Cluster Input Collection
@@ -169,7 +169,6 @@ class RunGA():
             end = self.check_convergence(struct_added=True)
             if end: return
 
-
     def save_replica_output(self):
         input_ref = "0"
         out_path = os.path.join(structure_dir, self.replica_stoic.get_string(), \
@@ -215,8 +214,7 @@ class RunGA():
         '''This routine reads in the modules defined in ui.conf'''
         self.optimization_module = my_import(self.ui.get('modules', 'optimization_module'), package='optimization')
         self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
-        try: self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
-        except: pass
+        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
 
     def beginning_tasks(self):
         st = ' -------------------------------------------------------------------------'
