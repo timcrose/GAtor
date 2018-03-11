@@ -1,20 +1,28 @@
 ***************************************************
 This folder provides the inputs according to the
 tutorial of the user manual. See user manual
-for full instructions.
-
-************************************************
+for full instructions and explanations.
+***************************************************
 INPUTS
 
-One required input is an intial pool, an example
+One required input is an initial pool, an example
 one is given by ./initial_pool and contains the input structures
-in JSON format.  They include geometric parameters and energy information.
+in JSON format.  They include geometry and energy information.
 
 The other required input is a configuration file, eg. ui.conf, which controls 
-which GA modules are being used, a path to the initial pool, details for the parallelization, 
-and additional parameters which can be modified during the GA run.
+which GA modules are being used at runtime, a path to the initial pool, 
+details for the parallelization, and additional parameters which can be 
+modified during the GA run.
 
-The one given, ui.conf is intended to be very basic 
+One also needs a build of FHI-aims, the path to which can be specified in ui.conf
+under 
+
+If one just wants to create structures without
+relaxations or energy evaluations for tutorial purposes 
+uncomment [run_settings]/skip_energy_evaluations = TRUE in ui.conf.
+and
+The ui.conf given is intended to be basic for tutorial purposes.
+See user manual for a full list of available keywords.
 
 ***********************************************
 RUNNING THE CODE
@@ -26,19 +34,17 @@ To run the master code one can execute:
 which calls the master script ../src/GAtor_master.py and takes ui.conf 
 as an input.
 
-On a laptop, GAtor uses subprocessing to run each parallel replica, the necessary settings 
-in ui.conf are given by:
+On a laptop, GAtor uses subprocessing to run each parallel replica, the 
+necessary settings in ui.conf are given by:
 
 parallelization_method = subprocess
 number_of_replicas = 1
 processes_per_replica = 1
 
 This runs 1 GA replica on 1 process. Increasing processes_per_replica speeds up the structure
-generation process. For a laptop, one can run several GA replicas in parallel by running ./run.sh
-several times.  The number_of_replicas setting is intended for HPC environments and will only work 
-with number_of_replicas = 1 on a laptop.
+generation process.
 
-For an example of running GAtor on a cluster see user manual and submit_to_cluster.sh
+For detailed examples of running GAtor on specific clusters see user manual and submit_to_cluster.sh
 
 ****************************************************
 SAMPLE OUTPUTS
@@ -49,8 +55,9 @@ GAtor.out - details the structure generation process
 GAtor.log - details the parallelization process
 GAtor.err - error file
 
-Newly generated structures, as well as the initial pool, are stored in ./structures/structures/C\:32_N\:16_S\:12/0
-Each structure has a unique random index.
+Newly generated structures, as well as the initial pool, are stored in ./structures/structures/<stoic>/0
+Where <stoic> is a string of the element types and numbers in the crystal.
+Each structure is labelled by a unique random index.
 
 A list of all structures by index, and their energy values and relevant parameters is output to ./energy_hierarchy.dat
 If energy evaluations are not being performed then the energy value is simply set to 0.00
@@ -66,10 +73,7 @@ modify
 in ui.conf and the GA will stop automatically when this number has been reached. 
 
 To kill GAtor mid run:
-    Either kill the process ID or remove /tmp/. 
-
-    If a GA run is killed but tmp is not removed, it can be resumed by running ./run.sh again, and all previous information is
-retained
+    One can just run ./reset_calc.sh
 
 *******************************
 Additional notes:
