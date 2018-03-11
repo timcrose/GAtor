@@ -353,10 +353,6 @@ class AffinityPropagationClusteringLatVol():
         clustered_data = af.labels_
 
         n_clusters_ = len(cluster_centers_indices)
-        self.output('Estimated number of clusters: %d' % n_clusters_)
-        self.output("Silhouette Coefficient: %0.3f"
-            % metrics.silhouette_score(feature_list, clustered_data, metric='sqeuclidean'))
-
         clustered_coll = self.cluster_coll(clustered_data)
         return self.struct_coll
 
