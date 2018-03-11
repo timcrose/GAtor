@@ -1,22 +1,24 @@
 '''
-New master script for running of GAtor
-
-Created on June 26th, 2016
+Master script of GAtor
 '''
 
 import os, subprocess, shutil
 import sys,socket
 import core.file_handler as fh
 import time
-from core import user_input, kill, output, check_conf
+from core import user_input, output, check_conf
 from utilities import parallel_run,stoic_model, misc
-try:
-	import imp.reload as reload #Python 3.0-3.3
-except:
-	try:
-		import importlib.reload as reload #Python 3.4 above
-	except:
-		pass #Python 2
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose", 
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya", 
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com/software"
 
 def main():
 	src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -36,16 +38,7 @@ class GAtor():
             reload_modules()
         if self.ui.get_boolean(sname,"testing_mode"):
             self.testing_mode()
-            return #Under test mode, no further comamnd is read
-        if self.ui.get_boolean(sname,"bundled_ga"):
-            parallel_run.launch_bundled()
-            return
-        if self.ui.get_boolean(sname,"kill_ga") and\
-            self.ui.is_master_process():
-                self.kill_GA()
-        if self.ui.get_boolean(sname,"clean_folder") and\
-            self.ui.is_master_process():
-                self.clean_folder()
+            return 
         if self.ui.get_boolean(sname,"check_conf_file") and\
             self.ui.is_master_process():
                 self.check_conf_file()
@@ -64,10 +57,6 @@ class GAtor():
             output.time_log("Testing and debugging mode enabled")
             output.time_log("Testing procedure used: "+test_procedure)
         getattr(test_and_debug,test_procedure)()
-        return
-
-    def kill_GA(self):
-        kill.set_kill()
         return
 
     def check_conf_file(self):
@@ -90,18 +79,6 @@ class GAtor():
         if os.path.isfile(IP_dat):
             if os.stat(IP_dat).st_size == 0:
                 raise Exception(msg)
-
-    def clean_folder(self):
-        sname = "clean_folder"
-        output.time_log("Cleaning folder is activated; pending user confirmation", sname)
-        user_answer = user_input.keyboard_input("Are you sure you want to clean the working directory (y/n):",
-                                                allowed_answers=["y","n"],time_out=30)
-        if user_answer=="y":
-            output.time_log("User confirmation received. Begins cleaning.",sname)
-            clean()
-        else:
-            output.time_log("User denied cleaning",sname)
-            output.time_log("Moving on",sname)
 
     def run_ga(self):
         from core import run_GA
@@ -138,11 +115,9 @@ class GAtor():
         output.time_log(message)
         stoic = stoic_model.determine_stoic()
         ga = run_GA.RunGA(self.ui.get_replica_name(),stoic)
-        ga.start()
+        ga.run()
         output.move_to_shared_output(self.ui.get_replica_name())
 	
-
-
 def reload_modules():
 	'''
 	These modules need to be reloaded after the configuration file is changed
@@ -154,37 +129,6 @@ def reload_modules():
 	reload(misc)
 	reload(kill)
 
-def clean():
-    print 'resetting environment'
-    sname = "clean"
-    #directory_to_clean = [fh.tmp_dir, fh.structure_dir, fh.conf_tmp_dir,
-    directory_to_clean = []
-    directory_to_remove = ([fh.success_dir, fh.scavenge_dir, 
-                            fh.fail_dir, fh.tmp_dir, fh.structure_dir, 
-                            fh.conf_tmp_dir, fh.out_tmp_dir])
-    try:
-        files_to_remove = [fh.output_file, fh.restart_relaxation_file, fh.restart_replica_file]
-    except: pass
-    output.time_log("Cleaning all the .out and .err files in: " + fh.cwd, sname)
-    p = subprocess.Popen(['rm *.out'], cwd=fh.cwd, shell=True)
-    p.wait()
-    p = subprocess.Popen(['rm *.err'], cwd=fh.cwd, shell=True)
-    p.wait()
-    # tmp index is to keep track of replica number
-    for directory in directory_to_clean:
-        output.time_log("Cleaning directory: "+directory, sname)
-        fh.mkdir_p_clean(directory)
-    for directory in directory_to_remove:
-        if os.path.exists(directory):
-            output.time_log("Removing directory: "+directory, sname)
-            shutil.rmtree(directory,ignore_errors=True)
-    for rmfile in files_to_remove:
-        if os.path.exists(rmfile):
-            output.time_log("Removing file: "+rmfile, sname)
-            os.remove(rmfile)
-    p = subprocess.Popen(['rm *.log'], cwd=fh.cwd, shell=True)
-    p.wait()
-    return			
 
 if __name__ == "__main__":
 	main()
