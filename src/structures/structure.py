@@ -215,7 +215,12 @@ class Structure(object):
         frac_data = self.get_frac_data()
         coords = frac_data[0] # frac coordinates
         atoms = frac_data[1] # site labels
-        lattice = LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7])
+        lattice = LatticeP.from_parameters(a=frac_data[2],
+                                           b=frac_data[3], 
+                                           c=frac_data[4], 
+                                           alpha=frac_data[5],
+                                           beta=frac_data[6], 
+                                           gamma=frac_data[7])
         structp = StructureP(lattice, atoms, coords)
         return structp	
 
