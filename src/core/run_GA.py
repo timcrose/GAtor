@@ -8,11 +8,12 @@ J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;
 arXiv 1802.08602 (2018)                                                        
 """   
 from __future__ import division
-import datetime
 import os
 import sys
 import random
 import shutil
+import datetime                                                                
+import time
 import multiprocessing
 import numpy as np
 from core import user_input, data_tools, output, activity
@@ -26,7 +27,7 @@ from utilities import misc
 from utilities import space_group_utils as sgu
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
-__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\           
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
                 "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
 __credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
                "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
@@ -488,7 +489,7 @@ class RunGA():
 
     def generate_trial_structure(self):
         sname = "run_settings"
-        begin_time = datetime.datetime.now()
+        begin_time = time.time()
         structure_supercoll = {}
         structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
         total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
@@ -536,7 +537,7 @@ class RunGA():
                         pass
             count += self.processes
 
-        end_time = datetime.datetime.now()
+        end_time = time.time()
         if count == total_attempts and struct==False:
             self.output("-- Generating structure maxed out on generation attempts: %s" % (total_attempts))
             self.output("-- Selecting new parents --")
@@ -559,7 +560,7 @@ class RunGA():
         This routine takes a structure, updates self.structure_supercoll, and 
                 does comparison on the structure
         '''
-        t1 = datetime.datetime.now()
+        t1 = time.time()
         if comparison_type == "pre_relaxation_comparison":
             self.output("\n---- Pre-relaxation Comparison  ----")
         elif comparison_type == "post_relaxation_comparison":
@@ -567,7 +568,7 @@ class RunGA():
         structure_collection.update_supercollection(self.structure_supercoll)
         is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)),
                                                                                             self.replica, comparison_type))
-        t2 = datetime.datetime.now()
+        t2 = time.time()
         self.output("-- Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
         if is_acceptable is False:
             self.output('-- Structure is not acceptable')
