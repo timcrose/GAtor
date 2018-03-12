@@ -1,12 +1,14 @@
-'''
-@authors: newhouse, farren
-
-This module's purpose is to provide tools to the user wishing to access the data stored in the database
-
-'''
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""   
 import os
 import subprocess
-
 from core import user_input
 from core.file_handler import db_file, mkdir_p, cwd, structure_dir, read_data, \
     tmp_dir, write_data

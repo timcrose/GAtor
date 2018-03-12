@@ -6,7 +6,7 @@ import os
 import itertools
 import numpy as np
 from math import ceil
-from core import user_input, data_tools, output
+from core import user_input, output
 from core.file_handler import cwd, tmp_dir, my_import
 from external_libs.filelock import FileLock
 from structures import structure_collection, structure_handling

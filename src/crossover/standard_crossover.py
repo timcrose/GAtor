@@ -529,3 +529,6 @@ def output_parent_properties(parent_a, parent_b, replica):
                '\n-- Parent B lattice vectors: ' + str(parent_b_vecs).strip('[').strip(']') +
                '\n-- Parent B lattice angles: ' + str(parent_b_angs).strip('[').strip(']'))
     output.local_message(message, replica)
+
+if __name__ == "__main__":
+    main()

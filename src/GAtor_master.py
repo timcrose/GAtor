@@ -1,16 +1,26 @@
-'''
-Master script of GAtor
-'''
+"""
+Master script of the GAtor genetic algorithm                                   
+                                                                               
+Runs main procedures designated in conf file                                   
+                                                                               
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,                                                                                                L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic 
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018) 
+"""
 
 import os, subprocess, shutil
 import sys,socket
-import core.file_handler as fh
 import time
+import core.file_handler as fh
 from core import user_input, output, check_conf
-from utilities import parallel_run,stoic_model, misc
+from utilities import parallel_run, stoic_model, misc
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
-__copyright__ = "Copyright 2018, Carnegie Mellon University and Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
 __credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose", 
                "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya", 
                "Luca M. Ghiringhelli", "Noa Marom"]
@@ -18,18 +28,19 @@ __license__ = "BSD-3"
 __version__ = "1.0"
 __maintainer__ = "Timothy Rose"
 __email__ = "trose@andrew.cmu.edu"
-__url__ = "http://www.noamarom.com/software"
+__url__ = "http://www.noamarom.com"
 
 def main():
-	src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-	sys.path.append(src_dir)
-	main_process = GAtor()
+    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 
+                                                          os.pardir))
+    sys.path.append(src_dir)
+    GAtor()
 
 class GAtor():
-    '''
-    This is the master class of GAtorr
-    Takes the path to a configuration file as an necessary input
-    '''
+    """
+    This is the master class of GAtor
+    Inputs the path to the configuration file
+    """
     def __init__(self):
         sname = "GAtor_master"
         self.ui = user_input.get_config()
@@ -50,21 +61,14 @@ class GAtor():
             self.check_initial_pool_filled()
             self.run_ga()
 
-    def testing_mode(self):
-        from utilities import test_and_debug
-        test_procedure = self.ui.get("test_and_debug","testing_procedure")
-        if self.ui.is_master_process():
-            output.time_log("Testing and debugging mode enabled")
-            output.time_log("Testing procedure used: "+test_procedure)
-        getattr(test_and_debug,test_procedure)()
-        return
-
     def check_conf_file(self):
         CC = check_conf.ConfigurationChecker() 
         CC.run_checks()
 
     def fill_initial_pool(self):
-        IP_module = fh.my_import(self.ui.get("modules","initial_pool_module"),package="initial_pool")
+        IP_module = fh.my_import(self.ui.get("modules",
+                                 "initial_pool_module"),
+                                 package="initial_pool")
         fh.mkdir_p(fh.out_tmp_dir)
         IP_module.main()
 
@@ -73,7 +77,7 @@ class GAtor():
         IP_dat = os.path.join(fh.tmp_dir,"num_IP_structs.dat")   
         msg = "Initial pool has not been filled properly.\n" + s
         msg += "Make sure [GAtor_master]/fill_initial_pool=TRUE has been run.\n" +s
-        msg += "Check [initial_pool]/stored_energy_name is correct if other than 'energy'."
+        msg += "Check [initial_pool]/stored_energy_name is correct if not 'energy'."
         if not os.path.isfile(IP_dat):
              raise Exception(msg)
         if os.path.isfile(IP_dat):
@@ -118,6 +122,14 @@ class GAtor():
         ga.run()
         output.move_to_shared_output(self.ui.get_replica_name())
 	
+    def testing_mode(self):
+        from utilities import test_and_debug
+        test_procedure = self.ui.get("test_and_debug","testing_procedure")
+        if self.ui.is_master_process():
+            output.time_log("Testing and debugging mode enabled")
+            output.time_log("Testing procedure used: "+test_procedure)
+        getattr(test_and_debug,test_procedure)()
+        return
 def reload_modules():
 	'''
 	These modules need to be reloaded after the configuration file is changed
@@ -129,6 +141,5 @@ def reload_modules():
 	reload(misc)
 	reload(kill)
 
-
 if __name__ == "__main__":
-	main()
+    main()

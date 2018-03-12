@@ -1,23 +1,36 @@
-'''
-@author: newhouse
-This module contains the default user input values.
-Values are overridden by textual user input
-'''
+"""                                                                            
+If any part of this module is used for a publication please cite:              
 
-from core.file_handler import default_config, ui_conf
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""
 import sys
+import ast, os
+from core.file_handler import default_config, ui_conf
 from select import select
 try:
         from ConfigParser import SafeConfigParser
 except ImportError:
         from configparser import SafeConfigParser
-import ast, os
-
 try:
         from StringIO import StringIO
 except ImportError:
         from io import StringIO
 
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com"  
 
 DEFAULT_CONFIG_REPLICA = -1
 
@@ -55,8 +68,6 @@ class ListSafeConfigParser(SafeConfigParser):
 				result.append(True)
 			elif k == "FALSE":
 				result.append(False)
-			else:
-				raise ValueError("List of boolean parameter must contain only TRUE and FALSE, all caps; received: "+str(k))
 		return result
 
     def get_section_as_dict(self,section,eval=False):
@@ -105,8 +116,6 @@ class ListSafeConfigParser(SafeConfigParser):
 		processes = 1
 		if self.has_option(sname,"processes_per_replica"):
 			processes = self.get_eval(sname,"processes_per_replica")
-			#if self.has_option(sname,"processes_per_node"):
-			#	processes = min(self.get_eval(sname,"processes_per_node"), processes)
 		return processes
 
     def verbose(self):

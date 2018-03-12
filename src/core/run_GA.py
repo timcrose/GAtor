@@ -1,18 +1,22 @@
-#!/usr/bin/python
+"""
+If any part of this module is used for a publication please cite:
 
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic 
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""   
 from __future__ import division
 import datetime
 import os
 import sys
-import time
 import random
+import shutil
+import multiprocessing
 import numpy as np
-src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) # add source directory to python path
-sys.path.append(src_dir)
-
 from core import user_input, data_tools, output, activity
 from file_handler import *
-from kill import *
 from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
@@ -20,7 +24,18 @@ from utilities.stoic_model import determine_stoic
 from utilities.parse_aims_output import ParseOutput
 from utilities import misc
 from utilities import space_group_utils as sgu
-import copy, shutil, multiprocessing
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\           
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com"  
 
 def main(replica,stoic):
     mkdir_p(tmp_dir)
@@ -35,7 +50,10 @@ def main(replica,stoic):
     output.move_to_shared_output(replica)
 
 class RunGA():
-    '''This class controls the main the genetic algorithm tasks each replica runs'''
+    '''
+    This class controls the main the genetic algorithm tasks 
+    each replica runs
+    '''
     def __init__(self, replica, stoic):
         self.replica = replica
         self.ui = user_input.get_config()
@@ -45,11 +63,6 @@ class RunGA():
         self.verbose = self.ui.verbose()
         self.prop = self.ui.get("run_settings","property_to_optimize")
         self.op_style = self.ui.get("run_settings","optimization_style")
-        self.number_of_GA_structures = int(self.ui.get('run_settings', 'end_GA_structures_added'))
-        self.number_of_tot_structures = int(self.ui.get('run_settings', 'end_GA_structures_total'))
-        self.top_count = self.ui.get_eval('run_settings', 'followed_top_structures')
-        self.max_it = self.ui.get_eval('run_settings', 'max_iterations_no_change')
-        self.number_of_IP = open(os.path.join(tmp_dir,"num_IP_structs.dat")).read()
         self.replica_child_count = 0
         self.structure_supercoll = {}
         self.structure_supercoll[(self.replica_stoic, 0)] = \
@@ -62,6 +75,14 @@ class RunGA():
         self.processes = self.ui.get_multiprocessing_processes()
         if self.processes > 1:
             self.worker_pool = multiprocessing.Pool(processes=self.processes)
+        self.number_of_GA_structures = self.ui.get_eval('run_settings',
+                                          'end_GA_structures_added')
+        self.number_of_tot_structures = self.ui.get_eval('run_settings', 
+                                          'end_GA_structures_total')
+        self.top_count = self.ui.get_eval('run_settings', 
+                                          'followed_top_structures')
+        self.max_it = self.ui.get_eval('run_settings', 'max_iterations_no_change')
+        self.number_of_IP = open(os.path.join(tmp_dir,"num_IP_structs.dat")).read()
 
     def output(self, message):
         ''' Output messages to replica output in replica_out folder'''
@@ -211,9 +232,15 @@ class RunGA():
 
     def GA_module_init(self):
         '''This routine reads in the modules defined in ui.conf'''
-        self.optimization_module = my_import(self.ui.get('modules', 'optimization_module'), package='optimization')
-        self.comparison_module = my_import(self.ui.get('modules', 'comparison_module'), package='comparison')
-        self.clustering_module = my_import(self.ui.get('modules','clustering_module'), package='clustering')
+        self.optimization_module = my_import(self.ui.get('modules', 
+                                                         'optimization_module'), 
+                                                          package='optimization')
+        self.comparison_module = my_import(self.ui.get('modules', 
+                                                       'comparison_module'), 
+                                                         package='comparison')
+        self.clustering_module = my_import(self.ui.get('modules',
+                                                       'clustering_module'), 
+                                                        package='clustering')
 
     def beginning_tasks(self):
         st = ' -------------------------------------------------------------------------'
@@ -461,7 +488,7 @@ class RunGA():
 
     def generate_trial_structure(self):
         sname = "run_settings"
-        begin_time = time.time()
+        begin_time = datetime.datetime.now()
         structure_supercoll = {}
         structure_supercoll[(self.replica_stoic, 0)] = structure_collection.get_collection(self.replica_stoic, 0)
         total_attempts = self.ui.get_eval(sname,"failed_generation_attempts")
@@ -509,7 +536,7 @@ class RunGA():
                         pass
             count += self.processes
 
-        end_time = time.time()
+        end_time = datetime.datetime.now()
         if count == total_attempts and struct==False:
             self.output("-- Generating structure maxed out on generation attempts: %s" % (total_attempts))
             self.output("-- Selecting new parents --")
@@ -532,7 +559,7 @@ class RunGA():
         This routine takes a structure, updates self.structure_supercoll, and 
                 does comparison on the structure
         '''
-        t1 = time.time()
+        t1 = datetime.datetime.now()
         if comparison_type == "pre_relaxation_comparison":
             self.output("\n---- Pre-relaxation Comparison  ----")
         elif comparison_type == "post_relaxation_comparison":
@@ -540,7 +567,7 @@ class RunGA():
         structure_collection.update_supercollection(self.structure_supercoll)
         is_acceptable = (self.comparison_module.main(struct, self.structure_supercoll.get((self.replica_stoic, 0)),
                                                                                             self.replica, comparison_type))
-        t2 = time.time()
+        t2 = datetime.datetime.now()
         self.output("-- Time taken to compare structure to collection: %0.3f seconds" % (t2-t1))
         if is_acceptable is False:
             self.output('-- Structure is not acceptable')
