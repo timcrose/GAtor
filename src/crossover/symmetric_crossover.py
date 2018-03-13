@@ -20,6 +20,18 @@ from utilities.misc import random_rotation_matrix
 from utilities.space_group_utils import reduce_by_symmetry, rebuild_by_symmetry,\
                                         are_symmops_compatible
 
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com"    
+
 def main(list_of_structures, replica):
 	'''
 	Args: list of 2 Structures() to crossover, the replica name running the crossover instance.

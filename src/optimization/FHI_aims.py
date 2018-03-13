@@ -23,7 +23,7 @@ from structures.structure_collection import StructureCollection, get_collection
 from utilities.parse_aims_output import ParseOutput
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
-__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\            
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
                 "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
 __credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
                "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
