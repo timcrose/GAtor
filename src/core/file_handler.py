@@ -25,6 +25,7 @@ __version__ = "1.0"
 __maintainer__ = "Timothy Rose"                                                
 __email__ = "trose@andrew.cmu.edu"                                             
 __url__ = "http://www.noamarom.com" 
+
 cwd = os.getcwd()
 
 def argument_opt():

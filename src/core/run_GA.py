@@ -182,7 +182,7 @@ class RunGA():
                 struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
                 self.clustering_module.main(struct_coll, self.replica)
                 structure_collection.update_supercollection(self.structure_supercoll)
-
+                data_tools.write_energy_hierarchy(struct_coll)
             #----- End of Iteration Outputs -----#
             self.end_of_iteration_outputs(begin_time)
 

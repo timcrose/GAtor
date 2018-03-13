@@ -1,14 +1,15 @@
 """
-Master script of the GAtor genetic algorithm                                   
-                                                                               
-Runs main procedures designated in conf file                                   
-                                                                               
+Master script of the GAtor genetic algorithm
+
+Runs main procedures designated in conf file
+
 If any part of this module is used for a publication please cite:              
                                                                                
-F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,                                                                                                L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic 
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
 Algorithm for Molecular Crystal Structure Prediction",                         
 J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
-arXiv 1802.08602 (2018) 
+arXiv 1802.08602 (2018)                                                        
 """
 
 import os, subprocess, shutil
