@@ -199,9 +199,9 @@ class Structure(object):
         atom_string = ''
         if lattice_vectors is not False:
             for vector in lattice_vectors:
-            	atom_string += 'lattice_vector ' + ' '.join(map(str, vector)) + '\n'        
+                atom_string += 'lattice_vector ' + ' '.join(map(str, vector)) + '\n'        
 	    for item in self.geometry:
-            	atom_string += 'atom ' + "%.5f" % item['x'] + ' ' + "%.5f" % item['y'] + ' ' + "%.5f" % item['z'] + ' ' + str(item['element']) + '\n'
+                atom_string += 'atom ' + "%.5f" % item['x'] + ' ' + "%.5f" % item['y'] + ' ' + "%.5f" % item['z'] + ' ' + str(item['element']) + '\n'
             if not math.isnan(item['spin']): atom_string += 'initial_moment ' + "%.5f" % item['spin'] + '\n'
             if not math.isnan(item['charge']): atom_string += 'initial_charge ' + "%.5f" % item['charge'] + '\n'
             if item['fixed'] == True: atom_string += 'constrain_relaxation    .true.\n'
