@@ -370,13 +370,13 @@ def convert_array(list_of_list):
         geometry[i]['y'] = list_of_list[i][1]
         geometry[i]['z'] = list_of_list[i][2]
         geometry[i]['element'] = str(list_of_list[i][3])
-	try:
-        	geometry[i]['spin'] = list_of_list[i][4]
-	except: geometry[i]['spin'] = None
-	try:
-        	geometry[i]['charge'] = list_of_list[i][5]
-	except: geometry[i]['charge'] = None
-	try:
-        	geometry[i]['fixed'] = list_of_list[i][6]
-	except: geometry[i]['fixed'] = None
+        try:
+            geometry[i]['spin'] = list_of_list[i][4]
+        except: geometry[i]['spin'] = None
+        try:
+            geometry[i]['charge'] = list_of_list[i][5]
+        except: geometry[i]['charge'] = None
+        try:
+            geometry[i]['fixed'] = list_of_list[i][6]
+        except: geometry[i]['fixed'] = None
     return geometry
