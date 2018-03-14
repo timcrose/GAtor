@@ -56,7 +56,7 @@ def create_ref_struct(struct, nmpc, napm, close_picks=8):
     close_picks: number of closest molecules to select
 
     '''
-    ref_struct = cell_modification(struct, nmpc, napm)
+    ref_struct = cell_modification(struct, napm)
 
     COM = [cm_calculation(ref_struct,
                           range(x * napm, (x + 1) * napm))

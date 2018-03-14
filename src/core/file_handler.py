@@ -123,14 +123,14 @@ def mkdir_p(path):
     makes full directory path
     '''
     try:
-	if not os.path.isdir(os.path.dirname(path)):
-		mkdir_p(os.path.dirname(path))
+        if not os.path.isdir(os.path.dirname(path)):
+            mkdir_p(os.path.dirname(path))
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
-        
+
 def mkdir_p_clean(path):
     '''
     removes directory and recreates it
