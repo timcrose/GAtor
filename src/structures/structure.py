@@ -179,7 +179,7 @@ class Structure(object):
         try: return self.properties.get(key)
         except:
             try: self.reload_structure()  # may not have properly read property
-            except Exception as e: print str(e); return None
+            except Exception as e: print(e); return None
     def get_lattice_vectors(self):
         if 'lattice_vector_a' not in self.properties: return False
         return_list = []
