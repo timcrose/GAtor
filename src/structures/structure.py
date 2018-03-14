@@ -328,8 +328,8 @@ class StoicDict(defaultdict):
     
     def get_string(self):
         keys = list(self.keys())
-	keys.sort()
-	
+        keys.sort()
+
 #        keys.sort()
         stoic_string = ''
         for item in keys:
