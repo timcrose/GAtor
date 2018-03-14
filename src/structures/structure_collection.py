@@ -18,7 +18,7 @@ from core.file_handler import structure_dir, mkdir_p, write_data, read_data, \
 from structures.structure import Structure, StoicDict
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
-__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\            
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
                 "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
 __credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
                "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
