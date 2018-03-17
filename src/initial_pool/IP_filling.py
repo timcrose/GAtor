@@ -161,7 +161,7 @@ def return_all_user_structures(initial_list, replica, ui):
     ip_count = 0
     structure_supercoll = {}
 
-    if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
+    if ui.get('selection', 'fitness_function') == 'standard_cluster':
         message = "Clustering is requested."  
         output.local_message(message,replica)
     for struct in initial_list:
