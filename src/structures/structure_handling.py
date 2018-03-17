@@ -24,17 +24,17 @@ from structures.structure import Structure
 from spglib import niggli_reduce
 from pymatgen import Lattice
 
-__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
-__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\            
-                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
-__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
-               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
-               "Luca M. Ghiringhelli", "Noa Marom"]                            
-__license__ = "BSD-3"                                                          
-__version__ = "1.0"                                                            
-__maintainer__ = "Timothy Rose"                                                
-__email__ = "trose@andrew.cmu.edu"                                             
-__url__ = "http://www.noamarom.com" 
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com"
 
 lat_interp = {0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
 ui = user_input.get_config()
