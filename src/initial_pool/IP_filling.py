@@ -170,7 +170,7 @@ def return_all_user_structures(initial_list, replica, ui):
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
-        if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
+        if ui.get('selection', 'fitness_function') == 'standard_cluster':
             clustering_mod = my_import(ui.get('modules','clustering_module'), package='clustering')
             AFV = clustering_mod.AssignFeatureVector(struct)
             struct = AFV.compute_feature_vector() 
