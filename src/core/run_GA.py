@@ -262,12 +262,10 @@ class RunGA():
         Return index of structure sucessfully added 
         to the common pool
         '''	
-        prev_struct_index = None #None for now
         ID = len(StructureCollection(self.replica_stoic, 0).structures) + 1
         self.replica_child_count = self.replica_child_count + 1
         struct.set_property('ID', ID) 
         try:
-            struct.set_property('prev_struct_id', prev_struct_index)
             struct.set_property('ID', ID)
             struct.set_property('replica', self.replica)
             struct.set_property('child_counter', self.replica_child_count)
