@@ -1,12 +1,18 @@
-'''
-@author: farren 
-'''
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+""" 
 from __future__ import division
 import os
 import itertools
 import numpy as np
 from math import ceil
-from core import user_input, data_tools, output
+from core import user_input, output
 from core.file_handler import cwd, tmp_dir, my_import
 from external_libs.filelock import FileLock
 from structures import structure_collection, structure_handling
@@ -15,8 +21,19 @@ from structures.structure_collection import StructureCollection
 from utilities import compute_spacegroup_pymatgen
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
-from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,SpeciesComparator,FrameworkComparator
-
+from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,\
+                                                SpeciesComparator,FrameworkComparator
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com"  
 
 def main():
     '''
@@ -144,7 +161,7 @@ def return_all_user_structures(initial_list, replica, ui):
     ip_count = 0
     structure_supercoll = {}
 
-    if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
+    if ui.get('selection', 'fitness_function') == 'standard_cluster':
         message = "Clustering is requested."  
         output.local_message(message,replica)
     for struct in initial_list:
@@ -153,7 +170,7 @@ def return_all_user_structures(initial_list, replica, ui):
         struct = compute_spacegroup_pymatgen.main(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
-        if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
+        if ui.get('selection', 'fitness_function') == 'standard_cluster':
             clustering_mod = my_import(ui.get('modules','clustering_module'), package='clustering')
             AFV = clustering_mod.AssignFeatureVector(struct)
             struct = AFV.compute_feature_vector() 

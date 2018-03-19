@@ -1,11 +1,15 @@
 """
-Created on Fri May 29 16:09:38 2015
-
-@authors: Patrick Kilecdi, Farren Curtis
-
-Basic modification of crystal structures
+Basic modification of crystal structures                                       
 Funtions that read in a struct() and necessary arguments, and return a struct()
 or modify the given struct in place
+                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv
 """
 import numpy as np
 import math # need for error function
@@ -20,6 +24,18 @@ from structures.structure import Structure
 from spglib import niggli_reduce
 from pymatgen import Lattice
 
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com"
+
 lat_interp = {0:'lattice_vector_a',1:'lattice_vector_b',2:'lattice_vector_c'}
 ui = user_input.get_config()
 verbose = ui.verbose()
@@ -27,7 +43,6 @@ all_geo = ui.all_geo()
 nmpc = ui.get_eval('run_settings','num_molecules')
 olm = output.local_message
 
-        
 def compute_RDF_vector(original_struct):
     # Get user-defined parameters
     atomic_pairs_list = list(ui.get_list('clustering','interatomic_pairs'))

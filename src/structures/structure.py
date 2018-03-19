@@ -1,21 +1,33 @@
-'''
-Created on Aug 2, 2013
-
-@author: newhouse
-'''
-
-
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+""" 
 import ast
 from collections import defaultdict
 import json
 import math
 import numpy as np
 import os
-
 from core.file_handler import read_data, structure_dir, write_data
-
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com"    
 
 class Structure(object):
     '''
@@ -179,7 +191,7 @@ class Structure(object):
         try: return self.properties.get(key)
         except:
             try: self.reload_structure()  # may not have properly read property
-            except Exception, e: print str(e); return None
+            except Exception as e: print(e); return None
     def get_lattice_vectors(self):
         if 'lattice_vector_a' not in self.properties: return False
         return_list = []
@@ -199,9 +211,9 @@ class Structure(object):
         atom_string = ''
         if lattice_vectors is not False:
             for vector in lattice_vectors:
-            	atom_string += 'lattice_vector ' + ' '.join(map(str, vector)) + '\n'        
-	    for item in self.geometry:
-            	atom_string += 'atom ' + "%.5f" % item['x'] + ' ' + "%.5f" % item['y'] + ' ' + "%.5f" % item['z'] + ' ' + str(item['element']) + '\n'
+                atom_string += 'lattice_vector ' + ' '.join(map(str, vector)) + '\n'
+            for item in self.geometry:
+                atom_string += 'atom ' + "%.5f" % item['x'] + ' ' + "%.5f" % item['y'] + ' ' + "%.5f" % item['z'] + ' ' + str(item['element']) + '\n'
             if not math.isnan(item['spin']): atom_string += 'initial_moment ' + "%.5f" % item['spin'] + '\n'
             if not math.isnan(item['charge']): atom_string += 'initial_charge ' + "%.5f" % item['charge'] + '\n'
             if item['fixed'] == True: atom_string += 'constrain_relaxation    .true.\n'
@@ -253,7 +265,7 @@ class Structure(object):
         alpha = self.angle(B, C)
         beta = self.angle(C, A)
         gamma = self.angle(A, B)
-    	return alpha, beta, gamma
+        return alpha, beta, gamma
 
     def get_lattice_magnitudes(self):
         A = self.get_property('lattice_vector_a')
@@ -328,8 +340,8 @@ class StoicDict(defaultdict):
     
     def get_string(self):
         keys = list(self.keys())
-	keys.sort()
-	
+        keys.sort()
+
 #        keys.sort()
         stoic_string = ''
         for item in keys:
@@ -370,13 +382,13 @@ def convert_array(list_of_list):
         geometry[i]['y'] = list_of_list[i][1]
         geometry[i]['z'] = list_of_list[i][2]
         geometry[i]['element'] = str(list_of_list[i][3])
-	try:
-        	geometry[i]['spin'] = list_of_list[i][4]
-	except: geometry[i]['spin'] = None
-	try:
-        	geometry[i]['charge'] = list_of_list[i][5]
-	except: geometry[i]['charge'] = None
-	try:
-        	geometry[i]['fixed'] = list_of_list[i][6]
-	except: geometry[i]['fixed'] = None
+        try:
+            geometry[i]['spin'] = list_of_list[i][4]
+        except: geometry[i]['spin'] = None
+        try:
+            geometry[i]['charge'] = list_of_list[i][5]
+        except: geometry[i]['charge'] = None
+        try:
+            geometry[i]['fixed'] = list_of_list[i][6]
+        except: geometry[i]['fixed'] = None
     return geometry

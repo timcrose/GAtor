@@ -1,39 +1,55 @@
-"""
-Created on Tues May 10 11:03:12 2016
-
-@author: Farren Curtis
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
 """
 from __future__ import division
 
 import os
 import numpy as np
+import multiprocessing
 from copy import deepcopy
 from core import user_input, output
 from core.file_handler import cwd, tmp_dir
 from time import time
-from structures import structure_collection
-from structures.structure_collection import StructureCollection
-from pymatgen import Lattice as LatticeP
-from pymatgen import Structure as StructureP
 from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator
 from pymatgen.analysis.structure_matcher import SpeciesComparator,FrameworkComparator
-from core import output
+from core import user_input, output                                            
+from core.file_handler import cwd, tmp_dir                                     
+from time import time                                                          
+from structures import structure_collection                                    
+from structures.structure_collection import StructureCollection
 
-import multiprocessing
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com" 
 
-def main(struct, structure_coll, replica, comparison_type):
+def main(struct, structure_coll, replica, comparison_type="pre_relaxation_comparison"):
     '''
-    The module takes a structure and compare it to the given structure collection.
+    Inputs a structure and and structure collection for comparison.
+    comparison_type 
     Returns: True/False if the structure passes/fails test for uniqueness and for energy
     '''
     if comparison_type == "pre_relaxation_comparison":
         comp = Comparison(struct, structure_coll, replica, comparison_type)
         structs_to_compare = comp.get_all_structures()
-        dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
+        dup_result = comp.check_if_duplicate(struct, structs_to_compare, comparison_type)
     elif comparison_type == "post_relaxation_comparison":
         comp = Comparison(struct, structure_coll, replica, comparison_type)
         structs_to_compare = comp.get_similar_energy_structures(comparison_type)
-        dup_result = comp.check_if_duplicate_multiprocessing(struct, structs_to_compare, comparison_type)
+        dup_result = comp.check_if_duplicate(struct, structs_to_compare, comparison_type)
     if dup_result:
         output.local_message("-- The structure compared is unique. ", replica)
     return dup_result # Boolean
@@ -50,25 +66,6 @@ class Comparison:
         self.stoic = struct.get_stoic()
 
     def output(self, message): output.local_message(message, self.replica)
-
-    def acceptable_energy(self):
-        energy = self.struct.get_property('energy')
-        if energy == None: raise Exception
-        energies = []
-        for index, comp_struct in self.structure_coll:
-            energies.append(comp_struct.get_property('energy'))
-        sorted_ens = np.sort(np.array(energies))
-        worst_energy =sorted_ens[-1]
-
-        self.output("Energy of current structure: " + str(energy))
-        self.output("Highest energy in collection: " + str(worst_energy))
-
-        if energy > worst_energy:
-            self.output("Structure has unacceptable energy that is higher than entire collection")
-            return False
-        elif energy <= worst_energy:
-            self.output("Structure has acceptable energy.")
-            return True
 
     def get_all_structures(self):
         '''
@@ -93,32 +90,17 @@ class Comparison:
             comp_en = float(comp_struct.get_property(self.ui.get_property_to_optimize()))
             if en - e_tol <= comp_en <= en + e_tol:
                 sim_list.append((index, comp_struct)) 
-        self.output("-- Number of structures w/in duplicate energy tolerance: "+str(len(sim_list)))
+        self.output("-- Number of structures w/in duplicate energy tolerance: %i" % len(sim_list))
         return sim_list
 
     def check_if_duplicate(self, struct, comp_list, comparison_type):
-        dup_pair = []
-        dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
-        for indexc, structc in comp_list:
-            fit = self.compute_pymatgen_fit(struct, structc, comparison_type)
-            if fit:
-                self.output("-- Structure is a duplicate of another in common pool")
-                self.output("-- Duplicate Structure ID in common pool is: %s" % indexc)
-                index = structure_collection.add_structure(struct, struct.get_stoic(), 'duplicates')
-                self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
-                dup_pair.append(("0/"+ str(indexc),"duplicates/"+str(index)))
-                for pair in dup_pair:
-                    dup_output.write('\t'.join(str(s) for s in pair) + '\n')
-            return False
-        return True
-
-    def check_if_duplicate_multiprocessing(self, struct, comp_list, comparison_type):
         global pool
+        global is_dup
+
         processes = self.ui.get_multiprocessing_processes()
         pool = multiprocessing.Pool(processes)
         self.output("-- Comparison done with %i parallel processes" % processes)
-        
-        global is_dup
+
         is_dup = None
         runs = []
         try:
@@ -169,21 +151,7 @@ class Comparison:
         sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True, 
                           scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
         return sm
-
-    def get_pymatgen_structure(self, frac_data):
-        '''
-        Args: self, Geometric data from GAtor's Structure() object
-        Returns: A pymatgen StructureP() object with the same geometric properties
-        '''
-        coords = frac_data[0] # frac coordinates
-        atoms = frac_data[1] # site labels
-        lattice = (LatticeP.from_parameters(a=frac_data[2], b=frac_data[3], c=frac_data[4], 
-                                  alpha=frac_data[5],beta=frac_data[6], gamma=frac_data[7]))
-        structp = StructureP(lattice, atoms, coords)
-        return structp
-    
-
-        
+ 
 def compute_pymatgen_fit(s1, s2, comparison_type):
 	ui = user_input.get_config()
 	L_tol =ui.get_eval(comparison_type, 'ltol')

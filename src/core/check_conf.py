@@ -1,6 +1,27 @@
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""   
 import os
 import shutil
 import user_input
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com"     
 
 class ConfigurationChecker():
     def __init__(self):
@@ -10,6 +31,7 @@ class ConfigurationChecker():
         self.aims_x = self.ui.get("FHI-aims","path_to_aims_executable")
         self.initial_pool_dir = self.ui.get("initial_pool","user_structures_dir")
         self.selection_module = self.ui.get("modules","selection_module")
+        self.skip_energies = self.ui.get_boolean("run_settings", "skip_energy_evaluations")
 
     def run_checks(self):
         self.check_init_pool_paths()
@@ -39,9 +61,10 @@ class ConfigurationChecker():
                 raise IOError(msg)
 
     def check_aims_executable(self):
-        if not os.path.isfile(self.aims_x):
-            msg = "Aims executable %s does not exist" % (self.aims_x)
-            raise IOError(msg)
+        if not self.skip_energies:
+            if not os.path.isfile(self.aims_x):            
+                msg = "Aims executable %s does not exist" % (self.aims_x)
+                raise IOError(msg)
 
     def check_selection_parameters(self):
         if self.selection_module == "tournament_selection":

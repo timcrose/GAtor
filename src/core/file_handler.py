@@ -1,11 +1,30 @@
-import errno
-import errno
-import os,sys
-from shutil import rmtree
-import time
-from hashlib import sha1
+"""                                                                            
+If any part of this module is used for a publication please cite:
 
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""   
+import errno
+import os, sys
+import time
+from shutil import rmtree
+from hashlib import sha1
 from external_libs.filelock import FileLock
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"            
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",                   
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",             
+               "Luca M. Ghiringhelli", "Noa Marom"]                            
+__license__ = "BSD-3"                                                          
+__version__ = "1.0"                                                            
+__maintainer__ = "Timothy Rose"                                                
+__email__ = "trose@andrew.cmu.edu"                                             
+__url__ = "http://www.noamarom.com" 
 
 cwd = os.getcwd()
 
@@ -104,14 +123,14 @@ def mkdir_p(path):
     makes full directory path
     '''
     try:
-	if not os.path.isdir(os.path.dirname(path)):
-		mkdir_p(os.path.dirname(path))
+        if not os.path.isdir(os.path.dirname(path)):
+            mkdir_p(os.path.dirname(path))
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
-        
+
 def mkdir_p_clean(path):
     '''
     removes directory and recreates it
