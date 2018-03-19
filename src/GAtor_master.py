@@ -1,13 +1,20 @@
 '''
 Master script of GAtor
+
+If any part of this module is used in a publication please cite:
+
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya, L. M. Ghiringhelli, and N. Marom 
+“GAtor: A First-Principles Genetic Algorithm for Molecular Crystal Structure Prediction”, 
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152; arXiv 1802.08602 (2018)
+
 '''
 
 import os, subprocess, shutil
-import sys,socket
+import sys, socket
 import core.file_handler as fh
 import time
-from core import user_input, output, check_conf
-from utilities import parallel_run,stoic_model, misc
+from core import user_input, output, check_conf, run_GA
+from utilities import parallel_run, stoic_model, misc, test_and_debug
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
 __copyright__ = "Copyright 2018, Carnegie Mellon University and Fritz-Haber-Institut der Max-Planck-Gessellschaft"
@@ -18,7 +25,7 @@ __license__ = "BSD-3"
 __version__ = "1.0"
 __maintainer__ = "Timothy Rose"
 __email__ = "trose@andrew.cmu.edu"
-__url__ = "http://www.noamarom.com/software"
+__url__ = "http://www.noamarom.com"
 
 def main():
 	src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -27,8 +34,9 @@ def main():
 
 class GAtor():
     '''
-    This is the master class of GAtorr
+    This is the master class of GAtor
     Takes the path to a configuration file as an necessary input
+    Starts major procedures designated in conf file
     '''
     def __init__(self):
         sname = "GAtor_master"
@@ -49,15 +57,6 @@ class GAtor():
         if self.ui.get_boolean(sname,"run_ga"):
             self.check_initial_pool_filled()
             self.run_ga()
-
-    def testing_mode(self):
-        from utilities import test_and_debug
-        test_procedure = self.ui.get("test_and_debug","testing_procedure")
-        if self.ui.is_master_process():
-            output.time_log("Testing and debugging mode enabled")
-            output.time_log("Testing procedure used: "+test_procedure)
-        getattr(test_and_debug,test_procedure)()
-        return
 
     def check_conf_file(self):
         CC = check_conf.ConfigurationChecker() 
@@ -81,9 +80,8 @@ class GAtor():
                 raise Exception(msg)
 
     def run_ga(self):
-        from core import run_GA
         sname = "parallel_settings"
-        time.sleep(5)
+        time.sleep(5) 
         if self.ui.get(sname,"parallelization_method") != "serial":
             #Launch parallelism
             parallel_run.launch_parallel()
@@ -117,7 +115,16 @@ class GAtor():
         ga = run_GA.RunGA(self.ui.get_replica_name(),stoic)
         ga.run()
         output.move_to_shared_output(self.ui.get_replica_name())
-	
+
+    def testing_mode(self):
+        from utilities import test_and_debug
+        test_procedure = self.ui.get("test_and_debug","testing_procedure")
+        if self.ui.is_master_process():
+            output.time_log("Testing and debugging mode enabled")
+            output.time_log("Testing procedure used: "+test_procedure)
+        getattr(test_and_debug,test_procedure)()
+        return	
+
 def reload_modules():
 	'''
 	These modules need to be reloaded after the configuration file is changed
