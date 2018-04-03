@@ -1,20 +1,3 @@
-'''
-Created on Jul 29, 2013
-
-@author: newhouse
-
-data taken from fhi-aims tight settings
-'''
-
-radii = {}
-'''
-Created on Jul 29, 2013
-
-@author: newhouse
-
-data taken from fhi-aims tight settings
-'''
-# TODO: make these correct
 radii = {}  # angstroms
 radii["H"] = 0.32
 radii["He"] = 0.49
