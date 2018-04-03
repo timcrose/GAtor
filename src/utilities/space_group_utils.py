@@ -1,8 +1,13 @@
-'''
-Computes Spacegroup of Structure()
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""
 
-Created by Farren Curtis on July5 5th, 2016
-'''
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer as SGA
@@ -12,6 +17,18 @@ from structures import structure, structure_handling
 import numpy as np
 import copy
 import spglib
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com"
 
 def identify_space_group(struct,key="space_group"):
 	''' 
@@ -178,7 +195,6 @@ def is_transformation_matrix(mat,tol=0.01):
 		return False
 
 	n = np.dot(np.transpose(mat),mat)
-#	print n
 	for i in range(len(mat)):
 		for j in range(len(mat)):
 			if (i==j and abs(n[i][i]-1) > tol)\
@@ -202,41 +218,6 @@ def are_symmops_compatible(lat,symmops,tol=0.01):
 	'''
 	for op in symmops:
 		if not is_compatible(lat,op[0]):
-#			print "This is not compatible!"
-#			print lat
-#			print op
 			return False
 	return True
 
-def _test_reconstruction(path):
-	f = open(path,"r")
-	original_struct = structure.Structure()
-	original_struct.loads(f.read())
-	struct = copy.deepcopy(original_struct)
-#	print struct.get_geometry_atom_format()
-	struct= reduce_by_symmetry(struct,create_duplicate=False)
-	print struct.dumps()
-	rebuild_by_symmetry(struct,napm=15,create_duplicate=False)
-	from duplicate_check import duplicate_check_single
-	print("Reconstruction success? "+ 
-		str(duplicate_check_single(original_struct,struct)))
-
-def _test_1():
-	path = ""
-	f = open(path,"r")
-	original_struct = structure.Structure()
-	original_struct.build_geo_whole_atom_format(f.read())
-	original_struct.properties["symmetry_operations"] = \
-	[[[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0.0, 0.0, 0.0]],\
-	[[[1, 0, 0], [0, -1, 0], [0, 0, -1]], [0.5, 0.0016089550825786336, 0.9995215992369104]]]
-	struct = rebuild_by_symmetry(struct,napm=15)
-	print struct.get_geometry_atom_format()
-
-
-pymatgen.symmetry.groups.SpaceGroup.get_orbit = get_orbit
-
-if __name__ == "__main__":
-#	print "Hello world!"
-#	_test_1()
-#	_test_reconstruction("/home/xli20/2_BTM_PROD_RUN/upper_sr_new_100_fr/2_09131_cf1784bbae.json")
-	pass
