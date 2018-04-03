@@ -7,10 +7,10 @@ INPUTS
 
 One required input is an initial pool, an example
 one is given by ./initial_pool and contains the input structures
-in JSON format.  They include geometry and energy information.
+in JSON format.  They include geometry (cartesian coordinates) and energy information.
 
 The other required input is a configuration file, eg. ui.conf, which controls 
-which GA modules are being used at runtime, a path to the initial pool, 
+which GA modules are being used at runtime, the path to the initial pool, 
 details for the parallelization, and additional parameters which can be 
 modified during the GA run.
 
@@ -21,6 +21,7 @@ If one just wants to create structures without
 relaxations or energy evaluations for tutorial purposes 
 uncomment [run_settings]/skip_energy_evaluations = TRUE in ui.conf.
 and
+
 The ui.conf given is intended to be basic for tutorial purposes.
 See user manual for a full list of available keywords.
 
@@ -52,14 +53,18 @@ SAMPLE OUTPUTS
 Std outputs and error are found in:
 
 GAtor.out - details the structure generation process
-GAtor.log - details the parallelization process
+GAtor.log - details the parallelization process and aims evaluations
 GAtor.err - error file
 
-Newly generated structures, as well as the initial pool, are stored in ./structures/structures/<stoic>/0
+Newly generated structures, as well as the initial pool, are stored in 
+    ./structures/structures/<stoic>/0
+
 Where <stoic> is a string of the element types and numbers in the crystal.
 Each structure is labelled by a unique random index.
 
-A list of all structures by index, and their energy values and relevant parameters is output to ./energy_hierarchy.dat
+A list of all structures by index, and their energy values and relevant 
+    parameters is output to ./tmp/energy_hierarchy_C\:24_H\:24_O\:4_0.dat
+
 If energy evaluations are not being performed then the energy value is simply set to 0.00
 
 *******************************
@@ -71,6 +76,7 @@ modify
   end_GA_structures_added 
 
 in ui.conf and the GA will stop automatically when this number has been reached. 
+See manual for other options for stopping the GA.
 
 To kill GAtor mid run:
     One can just run ./reset_calc.sh
