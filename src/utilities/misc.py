@@ -1,6 +1,14 @@
-'''
+"""
 Miscellaneous utilities functions
-'''
+                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""
 
 from structures import structure
 from core import output
@@ -8,9 +16,20 @@ from external_libs.filelock import FileLock
 from external_libs import matrix_op
 import random
 import copy
-import numpy
 import numpy as np
 import os, shutil
+
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com"
 
 def random_rotation_matrix():
 	'''
@@ -19,10 +38,12 @@ def random_rotation_matrix():
 	u=random.uniform(0,1)
 	v=random.uniform(0,1)
 	theta=360*u
-	phi=numpy.rad2deg(numpy.arccos(2*v-1))
-	ovec=[numpy.sin(numpy.deg2rad(phi))*numpy.cos(numpy.deg2rad(theta)),numpy.sin(numpy.deg2rad(phi))*numpy.sin(numpy.deg2rad(theta)),numpy.cos(numpy.deg2rad(phi))]
+	phi=np.rad2deg(np.arccos(2*v-1))
+	ovec=([np.sin(np.deg2rad(phi))*np.cos(np.deg2rad(theta)),
+         np.sin(np.deg2rad(phi))*np.sin(np.deg2rad(theta)),
+         np.cos(np.deg2rad(phi))])
 	rot=random.random()*360
-	c=numpy.cos(numpy.deg2rad(rot));s=numpy.sin(numpy.deg2rad(rot))
+	c=np.cos(np.deg2rad(rot));s=np.sin(np.deg2rad(rot))
 	x,y,z=ovec
 	return ([[x*x*(1-c)+c,x*y*(1-c)-z*s,x*z*(1-c)+y*s],
 		[x*y*(1-c)+z*s,y*y*(1-c)+c,y*z*(1-c)-x*s],
@@ -72,13 +93,13 @@ def molecule_harris_info_prep(trans,orien):
 	'''
 	Generate the molecule_harris_info character of the structure given by trans and orien
 	'''
-	if round(numpy.linalg.det(orien)) == -1:
+	if round(np.linalg.det(orien)) == -1:
 
 		is_enantiomer = True
-		orien = numpy.dot(orien,[[1,0,0],[0,1,0],[0,0,-1]])
+		orien = np.dot(orien,[[1,0,0],[0,1,0],[0,0,-1]])
 	else:
 		is_enantiomer = False
-	angles =  list(numpy.rad2deg(matrix_op.euler_from_matrix(orien,"rzyz")))
+	angles =  list(np.rad2deg(matrix_op.euler_from_matrix(orien,"rzyz")))
 	for k in range (3):
 		if angles[k]<0:
 			angles[k] += 360
