@@ -1,7 +1,16 @@
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""
+
 import os
 import sys
 sys.path.append(os.path.join(os.getcwd(),".."))
-
 import multiprocessing
 from structures.structure_handling import *
 from structures.structure import Structure
@@ -9,15 +18,18 @@ import numpy as np
 from copy import deepcopy
 from utilities import misc
 
-#def rcd_vector_calculation(struct, nmpc, napm, axes_indices, close_picks=8):
-#    '''
-#    Main RCD calculation module
-#    '''
-# 
-#
-#    generate_relative_coordinate_descriptor(struct, nmpc, napm, axes_indices, close_picks) 
-#    return struct
-    
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com"
+
 def _flatten_rcd_vector(v):
     return [entry for mol in v for rel in mol for entry in rel]
 
