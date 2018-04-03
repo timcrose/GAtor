@@ -24,7 +24,6 @@ __maintainer__ = "Timothy Rose"
 __email__ = "trose@andrew.cmu.edu"
 __url__ = "http://www.noamarom.com"
     
-
 def AP_distance_matrix(coll, dist_mat, affinity_type=["exponential",1],
                        damping=0.5, convergence_iter=75, max_iter=200,
                        preference=None, stored_property_key="AP_cluster"):
