@@ -1,8 +1,13 @@
-'''
-Created on Nov 12, 2013
+"""                                                                            
+If any part of this module is used for a publication please cite:              
+                                                                               
+F. Curtis, X. Li, T. Rose, A. Vazquez-Mayagoitia, S. Bhattacharya,             
+L. M. Ghiringhelli, and N. Marom "GAtor: A First-Principles Genetic            
+Algorithm for Molecular Crystal Structure Prediction",                         
+J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
+arXiv 1802.08602 (2018)                                                        
+"""
 
-@author: newhouse
-'''
 from ConfigParser import ConfigParser
 from StringIO import StringIO
 import time
@@ -12,20 +17,17 @@ from core.file_handler import read_data, ui_conf
 from structures.structure import Structure, StoicDict
 from core.file_handler import structure_dir
 
-#def determine_stoic(stoic_path=None):
-#    if stoic_path == None: stoic_path = ui_conf
-#    try: 
-#        stoic_string = read_data(stoic_path)
-#        try: return ini_to_stoic(stoic_string)
-#        except: pass
-#        try: return atom_to_stoic(stoic_string)
-#        except: pass
-#        try: return smile_to_stoic(stoic_string)
-#        except:pass
-#        # nothing works
-#        raise Exception
-#    except: print 'could not determine stoichiometry from input file' 
-    # if all else fails
+__author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
+__copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
+                "Fritz-Haber-Institut der Max-Planck-Gessellschaft"
+__credits__ = ["Farren Curtis", "Xiayue Li", "Timothy Rose",
+               "Alvaro Vazquez-Mayagoita", "Saswata Bhattacharya",
+               "Luca M. Ghiringhelli", "Noa Marom"]
+__license__ = "BSD-3"
+__version__ = "1.0"
+__maintainer__ = "Timothy Rose"
+__email__ = "trose@andrew.cmu.edu"
+__url__ = "http://www.noamarom.com"
 
 def determine_stoic():
     list_of_stoics = [name for name in os.listdir(structure_dir) \
