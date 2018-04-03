@@ -18,7 +18,7 @@ from external_libs.filelock import FileLock
 from structures import structure_collection, structure_handling
 from structures.structure import get_geo_from_file, Structure
 from structures.structure_collection import StructureCollection
-from utilities import compute_spacegroup_pymatgen
+from utilities import space_group_utils as sgu
 from pymatgen import Lattice as LatticeP
 from pymatgen import Structure as StructureP
 from pymatgen.analysis.structure_matcher import StructureMatcher,ElementComparator,\
@@ -167,7 +167,7 @@ def return_all_user_structures(initial_list, replica, ui):
     for struct in initial_list:
         stoic = struct.get_stoic()
         struct.set_property('ID',0)
-        struct = compute_spacegroup_pymatgen.main(struct)
+        struct = sgu.identify_space_group(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
         if ui.get('selection', 'fitness_function') == 'standard_cluster':
@@ -201,7 +201,7 @@ def return_non_duplicates(initial_list, replica, ui):
         if struct_fp in remove_list:
             continue
         struct.set_property('ID',0)
-        struct = compute_spacegroup_pymatgen.main(struct)
+        struct = sgu.identify_space_group(struct)
         struct.set_property('crossover_type', '')
         struct.set_property('mutation_type', '')
         if ui.get('selection', 'fitness_function') == 'standard_cluster':
