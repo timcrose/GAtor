@@ -231,8 +231,3 @@ def print_to_file(message):
         data_file.write(str(message) + '\n')
         data_file.close()
 
-if __name__ == '__main__':
-    print cwd    
-mkdir_p(tmp_dir)
-mkdir_p(conf_tmp_dir)
-
