@@ -17,7 +17,6 @@ from structures import structure
 from core import output
 import copy
 from copy import deepcopy
-import exceptions
 from core import file_handler
 from core import user_input
 from structures.structure import Structure
@@ -108,9 +107,9 @@ def all_interatomic_distances (struct, a1, a2, a1_range=None, a2_range=None):
     geo = struct.geometry
     napm=int(len(geo)/nmpc)
     if a1_range == None:
-        a1_range = range(len(geo))
+        a1_range = list(range(len(geo)))
     if a2_range == None:
-        a2_range = range(len(geo))
+        a2_range = list(range(len(geo)))
     if a1 == a2: #Need to avoid double counting
         for i in a1_range:
             for j in a2_range:
@@ -203,61 +202,61 @@ def cell_rotation(struct,vec=None,theta_deg=None,theta_rad=None,
     if (vec==None) and (((theta_deg==None) and (theta_rad==None)) 
                        or ((phi_deg==None) and (phi_rad==None))):
         return False
-	if rad==None:
-		rad=np.deg2rad(deg)
-	if (theta_rad==None) and (theta_deg!=None):
-		theta_rad=np.deg2rad(theta_deg)
-	if (phi_rad==None) and (phi_deg!=None):
-		phi_rad=np.deg2rad(phi_deg)
-	if vec==None:
-		vec=[np.sin(phi_rad)*np.cos(theta_rad),np.sin(phi_rad)*np.sin(theta_rad),np.cos(phi_rad)]
-	else:
-		l=(vec[0]**2+vec[1]**2+vec[2]**2)**0.5
-		for j in range (3):
-			vec[j]/=l
-	c=np.cos(rad); s=np.sin(rad)
-	x,y,z=vec
-	mat=[[x*x*(1-c)+c,x*y*(1-c)-z*s,x*z*(1-c)+y*s],
-		 [x*y*(1-c)+z*s,y*y*(1-c)+c,y*z*(1-c)-x*s],
-		 [x*z*(1-c)-y*s,y*z*(1-c)+x*s,z*z*(1-c)+c]]
-	if origin!=[0,0,0]:
-		cell_translation(struct,[-j for j in origin],create_duplicate=False)
-	for i in range (len(struct.geometry)):
-		oldpos=[0,0,0]
-		for j in range (3):
-			oldpos[j]=struct.geometry[i][j]
-		newpos=np.dot(mat,oldpos)
-		for j in range(3):
-			struct.geometry[i][j]=newpos[j]
-	struct.properties["lattice_vector_a"]=np.dot(mat,struct.properties["lattice_vector_a"])
-	struct.properties["lattice_vector_b"]=np.dot(mat,struct.properties["lattice_vector_b"])
-	struct.properties["lattice_vector_c"]=np.dot(mat,struct.properties["lattice_vector_c"])
-	if origin!=[0,0,0]:
-		cell_translation(struct,origin,create_duplicate=False)
-	return struct
+    if rad == None:
+        rad=np.deg2rad(deg)
+    if (theta_rad == None) and (theta_deg != None):
+        theta_rad = np.deg2rad(theta_deg)
+    if (phi_rad == None) and (phi_deg != None):
+        phi_rad = np.deg2rad(phi_deg)
+    if vec == None:
+        vec = [np.sin(phi_rad)*np.cos(theta_rad),np.sin(phi_rad)*np.sin(theta_rad),np.cos(phi_rad)]
+    else:
+        l = (vec[0]**2+vec[1]**2+vec[2]**2)**0.5
+        for j in range (3):
+            vec[j]/=l
+            c=np.cos(rad); s=np.sin(rad)
+            x,y,z=vec
+            mat=[[x*x*(1-c)+c,x*y*(1-c)-z*s,x*z*(1-c)+y*s],
+            [x*y*(1-c)+z*s,y*y*(1-c)+c,y*z*(1-c)-x*s],
+            [x*z*(1-c)-y*s,y*z*(1-c)+x*s,z*z*(1-c)+c]]
+    if origin!=[0,0,0]:
+        cell_translation(struct,[-j for j in origin],create_duplicate=False)
+    for i in range (len(struct.geometry)):
+        oldpos=[0,0,0]
+        for j in range (3):
+            oldpos[j]=struct.geometry[i][j]
+        newpos=np.dot(mat,oldpos)
+        for j in range(3):
+            struct.geometry[i][j]=newpos[j]
+    struct.properties["lattice_vector_a"]=np.dot(mat,struct.properties["lattice_vector_a"])
+    struct.properties["lattice_vector_b"]=np.dot(mat,struct.properties["lattice_vector_b"])
+    struct.properties["lattice_vector_c"]=np.dot(mat,struct.properties["lattice_vector_c"])
+    if origin!=[0,0,0]:
+        cell_translation(struct,origin,create_duplicate=False)
+    return struct
 
 def cell_transform_mat(struct,mat,origin=[0,0,0],create_duplicate=True):
-	'''
-	Transform a structure through a matrix form.
-	Allows the input of an origin
-	'''
-	if create_duplicate:
-		struct=copy.deepcopy(struct)
-	if origin!=[0,0,0]:
-		cell_translation(struct,[-j for j in origin],create_duplicate=False)
-	for i in range (len(struct.geometry)):
-		oldpos=[0,0,0]
-		for j in range (3):
-			oldpos[j]=struct.geometry[i][j]
-		newpos=np.dot(mat,oldpos)
-		for j in range(3):
-			 struct.geometry[i][j]=newpos[j]
-	struct.properties["lattice_vector_a"]=np.dot(mat,struct.properties["lattice_vector_a"])
-	struct.properties["lattice_vector_b"]=np.dot(mat,struct.properties["lattice_vector_b"])
-	struct.properties["lattice_vector_c"]=np.dot(mat,struct.properties["lattice_vector_c"])
-	if origin!=[0,0,0]:
-		cell_translation(struct,origin,create_duplicate=False)
-	return struct
+    '''
+    Transform a structure through a matrix form.
+    Allows the input of an origin
+    '''
+    if create_duplicate:
+        struct=copy.deepcopy(struct)
+    if origin!=[0,0,0]:
+        cell_translation(struct,[-j for j in origin],create_duplicate=False)
+    for i in range (len(struct.geometry)):
+        oldpos=[0,0,0]
+        for j in range (3):
+            oldpos[j]=struct.geometry[i][j]
+        newpos=np.dot(mat,oldpos)
+        for j in range(3):
+            struct.geometry[i][j]=newpos[j]
+    struct.properties["lattice_vector_a"]=np.dot(mat,struct.properties["lattice_vector_a"])
+    struct.properties["lattice_vector_b"]=np.dot(mat,struct.properties["lattice_vector_b"])
+    struct.properties["lattice_vector_c"]=np.dot(mat,struct.properties["lattice_vector_c"])
+    if origin!=[0,0,0]:
+        cell_translation(struct,origin,create_duplicate=False)
+    return struct
 
 
 def cell_extension_2(struct, create_duplicate=True):
@@ -349,7 +348,7 @@ def lattice_parameters(struct):
 
 def mole_translation(struct,mn,napm,vec=None,frac=None,create_duplicate=True):
 	if (vec is None) and (frac is None):
-		raise exceptions.RuntimeError("Please input at least one type of translation vector into structure_handling.mole_translation")
+		raise RuntimeError("Please input at least one type of translation vector into structure_handling.mole_translation")
 	if create_duplicate:
 		struct=copy.deepcopy(struct)
 	if vec is None:
@@ -466,21 +465,20 @@ def mole_get_orientation(struct,atom_list,geo,com=None,tol=0.1,create_duplicate=
 	return False
 
 def cm_calculation (struct,atom_list):
-	'''
-	Reads in a list of atom
-	Find the center of mass
-	'''
-#    print "this is atom_list",atom_list
-	cm=[0,0,0]; tm=0;
-	ui=user_input.get_config()
-	for i in range(len(atom_list)):
-		tm+=ui.get_eval("molar_mass",struct.geometry[atom_list[i]][3])
-		for j in range (3):
-			cm[j]+=ui.get_eval("molar_mass",struct.geometry[atom_list[i]][3])*struct.geometry[atom_list[i]][j]
-	for j in range (3):
-		cm[j]/=tm
-#    print 'this is cm', cm
-	return cm
+    '''
+    Reads in a list of atom
+    Find the center of mass
+    '''
+    cm = [0,0,0]
+    tm = 0
+    ui = user_input.get_config()
+    for i in range(len(atom_list)):
+        tm += ui.get_eval("molar_mass",struct.geometry[atom_list[i]][3])
+        for j in range (3):
+            cm[j] += ui.get_eval("molar_mass",struct.geometry[atom_list[i]][3])*struct.geometry[atom_list[i]][j]
+    for j in range (3):
+        cm[j]/=tm
+    return cm
 	
 def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 	'''
@@ -492,8 +490,8 @@ def move_molecule_in (struct,nmpc=nmpc, create_duplicate=True):
 	lattice=[struct.properties["lattice_vector_a"],struct.properties["lattice_vector_b"],struct.properties["lattice_vector_c"]]
 	lattice=np.transpose(lattice)
 	latinv=np.linalg.inv(lattice)    
-	for i in range (nmpc):
-		cm=cm_calculation(struct,range(i*napm,i*napm+napm))
+	for i in range(int(nmpc)):
+		cm=cm_calculation(struct,list(range(i*napm,i*napm+napm)))
 		frac=np.dot(latinv,cm)
 		for j in range (0,3):
 			lat=lat_interp[j]
@@ -550,20 +548,20 @@ def cell_modification_test(struct,napm=None,create_duplicate=True):
     del(struct.properties["alpha"])
     del(struct.properties["beta"])
     del(struct.properties["gamma"])
-    print "reduced lats"
-    print reduced_lats
+    print("reduced lats")
+    print(reduced_lats)
 
     struct.set_lattice_vectors(reduced_lats)
     struct.set_lattice_angles()
-    print "cell_mod"
-    print struct.get_property("alpha")
+    print("cell_mod")
+    print(struct.get_property("alpha"))
     nmpc = len(struct.geometry)/napm
 
     rots = np.dot(np.transpose(reduced_lats),np.linalg.inv(np.transpose(lats)))
     cell_transform_mat(struct,rots,create_duplicate=False)
     cell_lower_triangular(struct,False)
     move_molecule_in(struct,nmpc,False)
-    print struct.get_geometry_atom_format()
+    print(struct.get_geometry_atom_format())
     return struct
 
 def cell_modification(struct,napm=None,create_duplicate=True):
@@ -581,7 +579,7 @@ def cell_modification(struct,napm=None,create_duplicate=True):
     del(struct.properties["lattice_vector_b"])
     del(struct.properties["lattice_vector_c"])
     struct.set_lattice_vectors(reduced_lats)
-    nmpc = len(struct.geometry)/napm
+    nmpc = int(len(struct.geometry)/napm)
     cell_lower_triangular(struct,False)
     move_molecule_in(struct,nmpc,False)
     #struct.set_lattice_angles()
@@ -589,14 +587,14 @@ def cell_modification(struct,napm=None,create_duplicate=True):
 
 def lattice_standard_form(lattice):
     A, B, C = lattice
-    print A
+    print(A)
     a = np.linalg.norm(A)
     b = np.linalg.norm(B)
     c = np.linalg.norm(C)
     alpha_r = angle(B,C)
     beta_r = angle(C,A)
     gamma_r = angle(A, B)
-    print alpha_r
+    print(alpha_r)
     val = (np.cos(alpha_r) * np.cos(beta_r) - np.cos(gamma_r))\
             / (np.sin(alpha_r) * np.sin(beta_r))
         # Sometimes rounding errors result in values slightly > 1.
@@ -740,7 +738,7 @@ def COM_distance_check(struct,nmpc=None,lowerbound=None):
 		nmpc=struct.properties["nmpc"]
 	napm=int(len(struct.geometry)/nmpc)
 	
-	cmlist=[cm_calculation(struct,range(napm*i,napm*i+napm)) for i in range (nmpc)] #Calculates the center of mass of all molecules
+	cmlist=[cm_calculation(struct,list(range(napm*i,napm*i+napm))) for i in range (nmpc)] #Calculates the center of mass of all molecules
 	tr=([[0,0,0],[0,0,1],[0,0,-1],[0,1,0],[0,-1,0],[0,1,1],
              	[0,1,-1],[0,-1,1],[0,-1,-1],[1,0,0],[-1,0,0],[1,0,1],
 		[1,0,-1],[-1,0,1],[-1,0,-1],[1,1,0],[1,-1,0],[-1,1,0],
@@ -795,7 +793,7 @@ def combined_distance_check(struct,replica):
 
 	
 	#First conducts atomic distance check between atom pairs from the same molecule
-	napm = struct.get_n_atoms()/nmpc
+	napm = int(struct.get_n_atoms()/nmpc)
 	for i in range (nmpc):
 		for j in range(i*napm,(i+1)*napm-1):
 			for k in range (j+1,(i+1)*napm):
@@ -846,8 +844,8 @@ def combined_distance_check(struct,replica):
 	for a1 in range (total_atoms-napm):
 		for tr_choice in tr:
 			new_apos = [struct.geometry[a1][j]+struct.properties["lattice_vector_a"][j]*tr_choice[0]+struct.properties["lattice_vector_b"][j]*tr_choice[1]+struct.properties["lattice_vector_c"][j]*tr_choice[2] for j in range (3)]
-			start = (a1/napm+1)*napm
-			for a2 in range (start,total_atoms): 
+			start = int((a1/napm+1)*napm)
+			for a2 in range (start,int(total_atoms)): 
 			#Atoms should not be compared to those from the same molecule
 				diff = [struct.geometry[a2][j]-new_apos[j] for j in range (3)]
 				dist = np.linalg.norm(diff)

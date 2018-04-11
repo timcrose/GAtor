@@ -7,7 +7,7 @@ Algorithm for Molecular Crystal Structure Prediction",
 J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
 arXiv 1802.08602 (2018)                                                        
 """   
-from __future__ import division
+
 import os
 import sys
 import random
@@ -17,7 +17,7 @@ import time
 import multiprocessing
 import numpy as np
 from core import user_input, data_tools, output, activity
-from file_handler import *
+from .file_handler import *
 from structures import structure_collection, structure_handling
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, string_to_stoic
@@ -46,7 +46,7 @@ def main(replica,stoic):
         try:
             ga.run()
             break
-        except Exception, e:
+        except Exception as e:
             output.error(e, replica)
     output.move_to_shared_output(replica)
 
@@ -267,23 +267,23 @@ class RunGA():
         return prop_list
 
     def check_global_minimum(self,struct,prop_list):
-		prop = struct.get_property(self.prop)
-		glob = prop_list[0][0] #Best current property
-		self.output("-- Structure's %s: %f eV \n-- Previous global minimum: %f eV" % 
-		(self.prop, prop, glob))
-		diff = abs(prop-glob)
-		message = ""
-		if self.op_style=="minimize" and prop<glob:
-			message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
-			'\n  Old minimum:  ' + str(glob) + \
-			'\n  New minimum:  ' + str(prop) + \
-			'\n  Difference:  ' + str(diff)
-		if self.op_style=="maximize" and prop>glob:
-			message = '*********** NEW GLOBAL MAXIMUM FOUND ************' + \
-			'\n  Old maximum:  ' + str(glob) + \
-			'\n  New maximum:  ' + str(prop) + \
-			'\n  Difference:  ' + str(diff)
-		self.output(message)
+        prop = struct.get_property(self.prop)
+        glob = prop_list[0][0] #Best current property
+        self.output("-- Structure's %s: %f eV \n-- Previous global minimum: %f eV" % 
+                   (self.prop, prop, glob))
+        diff = abs(prop-glob)
+        message = ""
+        if self.op_style=="minimize" and prop<glob:
+            message = '*********** NEW GLOBAL MINIMUM FOUND ************' + \
+            '\n  Old minimum:  ' + str(glob) + \
+            '\n  New minimum:  ' + str(prop) + \
+            '\n  Difference:  ' + str(diff)
+        if self.op_style=="maximize" and prop>glob:
+            message = '*********** NEW GLOBAL MAXIMUM FOUND ************' + \
+            '\n  Old maximum:  ' + str(glob) + \
+            '\n  New maximum:  ' + str(prop) + \
+            '\n  Difference:  ' + str(diff)
+        self.output(message)
     
     def add_to_collection(self, struct, ref_label):
         '''
@@ -351,7 +351,7 @@ class RunGA():
         if struct_added:
             # Compute current top structures
             ids_energies = []
-            for index, struct in struct_coll.structures.items():
+            for index, struct in list(struct_coll.structures.items()):
                 struct_id = struct.struct_id
                 energy = struct.get_property('energy')
                 ids_energies.append([struct_id, energy])
@@ -545,13 +545,13 @@ class RunGA():
         self.output("-- Time for structure generation: %s seconds" % (end_time-begin_time))
         return struct
 
-	def return_energy_array(self, coll):
-		e_list = np.array([])
-		for index, structure in coll:
-			energy = structure.get_property('energy')
-			e_list = np.append(energy,e_list)
-		e_list = np.sort(e_list.reshape(len(e_list),1),axis=0)
-		return e_list
+    def return_energy_array(self, coll):
+        e_list = np.array([])
+        for index, structure in coll:
+            energy = structure.get_property('energy')
+            e_list = np.append(energy,e_list)
+        e_list = np.sort(e_list.reshape(len(e_list),1),axis=0)
+        return e_list
 
     def structure_comparison(self, struct, comparison_type):
         '''
@@ -633,11 +633,11 @@ class RunGA():
         self.output('-- Total size of common pool: %i   Total number of GA-added structures: %i'
                     % (size_of_common, size_of_added))
 
-	def add_structure(self, struct, input_ref):
-		structure_collection.add_structure(struct,struct.self.replica_stoic(),"pre-evaluation")
-		self.output("--Added-- structure %s to input_ref %s"
-		% (struct.struct_id,str(input_ref)))
-
+    def add_structure(self, struct, input_ref):
+        structure_collection.add_structure(struct,struct.self.replica_stoic(),"pre-evaluation")
+        self.output("--Added-- structure %s to input_ref %s"
+            % (struct.struct_id,str(input_ref)))
+    
     def restart(self, message): output.restart_message(message)
 
 def structure_create_for_multiprocessing(args):
@@ -732,17 +732,16 @@ def structure_create_for_multiprocessing(args):
         if ui.all_geo():
             output.local_message(new_struct.get_geometry_atom_format(),
 					     replica)
-
-	#----- Cell Check -----#
-	output.local_message("\n---- Cell Checks ----",replica)
-	if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
-		return False
+    #----- Cell Check -----#
+    output.local_message("\n---- Cell Checks ----",replica)
+    if not structure_handling.cell_check(new_struct, replica): #unit cell considered not acceptable
+        return False
 
     #----- Assign ID -----#
-	output.local_message("---- Assign structure ID ----",replica)
-	new_struct.struct_id = misc.get_random_index()
-	output.local_message("-- ID assigned: "+new_struct.struct_id,replica)
-	return new_struct
+    output.local_message("---- Assign structure ID ----",replica)
+    new_struct.struct_id = misc.get_random_index()
+    output.local_message("-- ID assigned: "+new_struct.struct_id,replica)
+    return new_struct
 
 if __name__ == '__main__':
 	'''

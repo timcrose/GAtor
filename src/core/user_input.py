@@ -11,14 +11,8 @@ import sys
 import ast, os
 from core.file_handler import default_config, ui_conf
 from select import select
-try:
-        from ConfigParser import SafeConfigParser
-except ImportError:
-        from configparser import SafeConfigParser
-try:
-        from StringIO import StringIO
-except ImportError:
-        from io import StringIO
+from configparser import SafeConfigParser
+from io import StringIO
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
 __copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
@@ -36,14 +30,13 @@ DEFAULT_CONFIG_REPLICA = -1
 
 class ListSafeConfigParser(SafeConfigParser):
     '''Inherits SafeConfigParser and provides list parsing with json'''
-    
     def get_list(self, section, option,eval=False):
-		'''provides list parsing with json'''
-		if not eval:
-			return self.get(section, option).split()
-		else:
-			return [ast.literal_eval(x) for x in self.get(section,option).split()]
-
+        '''provides list parsing with json'''
+        if not eval:
+            return self.get(section, option).split()
+        else:
+            return [ast.literal_eval(x) for x in self.get(section,option).split()]
+    
     def get_eval(self, section, option):
         return ast.literal_eval(self.get(section, option))
 
@@ -58,99 +51,99 @@ class ListSafeConfigParser(SafeConfigParser):
         return False
 
     def get_list_of_booleans(self,section,option):
-		'''
+        '''
 		Allows only TRUE and FALSE in the list
 		'''
-		l = self.get_list(section,option)
-		result = []
-		for k in l:
-			if k == "TRUE":
-				result.append(True)
-			elif k == "FALSE":
-				result.append(False)
-		return result
+        l = self.get_list(section,option)
+        result = []
+        for k in l:
+            if k == "TRUE":
+                result.append(True)
+            elif k == "FALSE":
+                result.append(False)
+        return result
 
     def get_section_as_dict(self,section,eval=False):
-		'''
+        '''
 		Return all the option under a section as a dictionary
 		'''
-		dicti = {}
-		for key in self.options(section):
-			if eval:
-				try:
-					dicti[key] = self.get_eval(section,key)
-				except:
-					dicti[key] = self.get(section,key)
-			else:
-				dicti[key] = self.get(section,key)
-		return dicti
+        dicti = {}
+        for key in self.options(section):
+            if eval:
+                try:
+                    dicti[key] = self.get_eval(section,key)
+                except:
+                    dicti[key] = self.get(section,key)
+            else:
+                dicti[key] = self.get(section,key)
+        return dicti
 
     def get_atom_pair_list(self, section, option):
         return self.get(section, option).split()
 
     def get_bundled_run_info(self):
-		sname = "bundled_run_settings"
-		run_names = self.get_list(sname,"run_names")
-		runs = []
-		for sname in run_names:
-			if not self.has_section(sname):
-				message = "Bundled run missing section for "
-				message += "run: " + sname
-				raise KeyError(message)
-			d = self.get_section_as_dict(sname,eval=True)
-			d["run_name"] = sname
-			runs.append(d)
-		return runs
+        sname = "bundled_run_settings"
+        run_names = self.get_list(sname,"run_names")
+        runs = []
+        for sname in run_names:
+            if not self.has_section(sname):
+                message = "Bundled run missing section for "
+                message += "run: " + sname
+                raise KeyError(message)
+            d = self.get_section_as_dict(sname,eval=True)
+            d["run_name"] = sname
+            runs.append(d)
+        return runs
 
     def get_replica_name(self):
-		return self.get("parallel_settings","replica_name")
+        return self.get("parallel_settings","replica_name")
     
     def get_property_to_optimize(self):
-		return self.get("run_settings","property_to_optimize")
+        return self.get("run_settings","property_to_optimize")
 
     def get_nmpc(self):
-		return self.get_eval("run_settings","num_molecules")
+        return self.get_eval("run_settings","num_molecules")
 
     def get_multiprocessing_processes(self):
-		sname = "parallel_settings"
-		processes = 1
-		if self.has_option(sname,"processes_per_replica"):
-			processes = self.get_eval(sname,"processes_per_replica")
-		return processes
+        sname = "parallel_settings"
+        processes = 1
+        if self.has_option(sname,"processes_per_replica"):
+            processes = self.get_eval(sname,"processes_per_replica")
+        return processes
 
     def verbose(self):
-		return self.get_boolean("run_settings","verbose")
+        return self.get_boolean("run_settings","verbose")
 
     def all_geo(self):
-		return self.get_boolean("run_settings","output_all_geometries")
+        return self.get_boolean("run_settings","output_all_geometries")
 
     def ortho(self):
         return self.get_boolean("run_settings","orthogonalize_unit_cell")
 
     def is_master_process(self):
-		return not self.get_boolean("parallel_settings","im_not_master_process")
+        return not self.get_boolean("parallel_settings","im_not_master_process")
 
     def set_false(self,section,option):
-		if self.has_option(section,option):
-			self.remove_option(section,option)
+        if self.has_option(section,option):
+            self.remove_option(section,option)
 
     def set_true(self,section,option):
-		self.set(section,option,"TRUE")
+        self.set(section,option,"TRUE")
 
     def set_working_dir(self,wdir):
         self.set("GAtor_master","working_directory",wdir)
 
     def __deepcopy__(self,memo):
-		'''
-		Due to the inability to deepcopy a configuration file
-		Will generate a temporary config file and read it back in
-		'''
-		config_string = StringIO()
-		self.write(config_string)
-		config_string.seek(0)
-		copied = ListSafeConfigParser()
-		copied.readfp(config_string)
-		return copied
+        '''
+        Due to the inability to deepcopy a configuration file
+        Will generate a temporary config file and read it back in
+        '''
+        config_string = StringIO()
+        self.write(config_string)
+        config_string.seek(0)
+        copied = ListSafeConfigParser()
+        copied.read_file(config_string)
+        return copied
 
 def get_config():
 	'''
@@ -159,11 +152,11 @@ def get_config():
 	config = ListSafeConfigParser()
 
 	default_config_file = open(default_config, 'r')
-	config.readfp(default_config_file)
+	config.read_file(default_config_file)
 	default_config_file.close()
 
 	local_config_file = open(ui_conf, 'r')
-	config.readfp(local_config_file)
+	config.read_file(local_config_file)
 	local_config_file.close()
 	return config
 
@@ -174,11 +167,11 @@ def get_config_with_path(path):
 	config = ListSafeConfigParser()
 
 	default_config_file = open(default_config, 'r')
-	config.readfp(default_config_file)
+	config.read_file(default_config_file)
 	default_config_file.close()
 
 	local_config_file = open(path, 'r')
-	config.readfp(local_config_file)
+	config.read_file(local_config_file)
 	local_config_file.close()
 	return config
 

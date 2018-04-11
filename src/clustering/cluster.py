@@ -7,7 +7,7 @@ Algorithm for Molecular Crystal Structure Prediction",
 J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
 arXiv 1802.08602 (2018)                                                        
 """ 
-from __future__ import division
+
 import numpy as np
 from core import user_input, output
 from time import time

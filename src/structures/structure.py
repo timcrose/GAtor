@@ -45,7 +45,7 @@ class Structure(object):
         self.input_ref = None        
         self.properties = {}
         self.geometry = np.zeros(0, dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), \
-                                      ('element', 'a10'), ('spin', 'float32'), ('charge', 'float32'), ('fixed', 'bool')])
+                                      ('element', 'U13'), ('spin', 'float32'), ('charge', 'float32'), ('fixed', 'bool')])
             
     # setters
         
@@ -177,7 +177,7 @@ class Structure(object):
         return element_list
 
     def get_molecules(self, num_mols):
-        num_atoms_per_mol = self.get_n_atoms_per_mol(num_mols)
+        num_atoms_per_mol = int(self.get_n_atoms_per_mol(num_mols))
         mol_list = [self.geometry[i:i+num_atoms_per_mol]
                    for i in range(0, self.geometry.size, num_atoms_per_mol)]
         return mol_list
@@ -375,8 +375,8 @@ def convert_array(list_of_list):
     """
     takes the array stored in json format and return it to a np array with proper dtype
     """
-    geometry = np.zeros(len(list_of_list), dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), \
-                                   ('element', 'a10'), ('spin', 'float32'), ('charge', 'float32'), ('fixed', 'bool')])
+    geometry = np.zeros(len(list_of_list), dtype=[('x', 'float32'), ('y', 'float32'), ('z', 'float32'), ('element', 'U13'), 
+                                                  ('spin', 'float32'), ('charge', 'float32'), ('fixed', 'bool')])
     for i in range(len(list_of_list)): 
         geometry[i]['x'] = list_of_list[i][0]
         geometry[i]['y'] = list_of_list[i][1]

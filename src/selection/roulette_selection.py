@@ -7,7 +7,7 @@ Algorithm for Molecular Crystal Structure Prediction",
 J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
 arXiv 1802.08602 (2018)                                                        
 """    
-from __future__ import division
+
 from collections import defaultdict
 import numpy as np
 from random import choice
@@ -171,7 +171,7 @@ class StructureSelection():
         '''
         returns fitness as a sorted list of tuples.
         '''
-        sorted_fitness = sorted(fitness_dict.iteritems(), key=lambda x:x[1])
+        sorted_fitness = sorted(iter(fitness_dict.items()), key=lambda x:x[1])
         return sorted_fitness
 
     def normalized_fitness(self, sorted_fit):

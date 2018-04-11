@@ -53,10 +53,10 @@ class StructureCollection(object):
         self.update_local()
         
     # partially extend dictionary functionality. Returns iterators for structure dictionary
-    def __iter__(self): return self.structures.iteritems()
-    def iteritems(self): return self.structures.iteritems()
-    def iterkeys(self): return self.structures.iterkeys()
-    def itervalues(self): return self.structures.itervalues()
+    def __iter__(self): return iter(self.structures.items())
+    def iteritems(self): return iter(self.structures.items())
+    def iterkeys(self): return iter(self.structures.keys())
+    def itervalues(self): return iter(self.structures.values())
     def __len__(self): return self.structures.__len__()
         
     def get_struct(self, struct_index): return self.structures.get(struct_index)
@@ -76,7 +76,7 @@ class StructureCollection(object):
         # for new indicies, add information to local memory
         for sdir in dirs:
             struct_id = sdir
-            if struct_id not in self.structures.keys():
+            if struct_id not in list(self.structures.keys()):
                 counter = 0
                 while True:  # other structure may not have finished writing all of it's data. wiat for a second
                     try: 
@@ -97,7 +97,7 @@ class StructureCollection(object):
         self.structures[struct_id] = struct
 
     def get_unrelaxed_structure(self):
-        for struct in self.structures.itervalues():
+        for struct in self.structures.values():
             # check local memory
             if struct.get_property('to_be_relaxed'):
                 # update and check again

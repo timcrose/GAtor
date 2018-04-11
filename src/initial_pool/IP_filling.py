@@ -7,7 +7,7 @@ Algorithm for Molecular Crystal Structure Prediction",
 J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
 arXiv 1802.08602 (2018)                                                        
 """ 
-from __future__ import division
+
 import os
 import itertools
 import numpy as np
@@ -70,48 +70,47 @@ def main():
         output.time_log("Final initial pool count: %i" % ip_count)
         output.local_message("Final initial pool count: %i" % ip_count,replica)
     else:
-		ip_count, stoic = return_all_user_structures(initial_list, replica, ui)
-		output.time_log("Final initial pool count: %i" % ip_count)
-		output.local_message("Final initial pool count: %i" % ip_count,replica)
+        ip_count, stoic = return_all_user_structures(initial_list, replica, ui)
+        output.time_log("Final initial pool count: %i" % ip_count)
+        output.local_message("Final initial pool count: %i" % ip_count,replica)
     output.move_to_shared_output(replica="init_pool")
     write_top_struct_ids(stoic, top_count)
     if ip_count!=0 and ip_count!=None:
         with open(num_IP_structures,'w') as f:
             f.write(str(ip_count))
             f.close()
-
         return ip_count
     else:
         return 
 
-
 def file_lock_structures(user_structures_dir, added_user_structures):
-	'''
+    '''
     Args: Path to user defined structures directory, 
     path name to save filepaths of user added structures 
     Returns: List of files to add to collection
     '''
-	open(added_user_structures, 'a').close()  
-	try:files = os.listdir(user_structures_dir)
-	except:
-		raise RuntimeError('Initial pool directory defined but not found')
-	if len(files) == 0:
-		print "Empty initial pool directory"
-		return 0
-    	# copy files and add name to list of copied files to avoid duplicates
-    	files_to_add = []
-    	with FileLock(added_user_structures):
-		ffile = open(added_user_structures, 'r')
-		file_list = ffile.read()
-		ffile.close()
-		ffile = open(added_user_structures, 'a')
-		for item in files:
-			filename = os.path.join(user_structures_dir, item)
-			if not filename in file_list:
-				ffile.write(filename + '\n')
-				files_to_add.append(filename)
-		ffile.close()	
-	return files_to_add
+    open(added_user_structures, 'a').close()
+    try:
+        files = os.listdir(user_structures_dir)
+    except:
+        raise RuntimeError('Initial pool directory defined but not found')
+    if len(files) == 0:
+        print("Empty initial pool directory")
+        return 0
+    # copy files and add name to list of copied files to avoid duplicates
+    files_to_add = []
+    with FileLock(added_user_structures):
+        ffile = open(added_user_structures, 'r')
+        file_list = ffile.read()
+        ffile.close()
+        ffile = open(added_user_structures, 'a')
+        for item in files:
+            filename = os.path.join(user_structures_dir, item)
+            if not filename in file_list:
+                ffile.write(filename + '\n')
+                files_to_add.append(filename)
+        ffile.close()
+    return files_to_add
 
 def convert_to_structures(files_to_add, energy_name="energy"):
     '''
@@ -255,7 +254,7 @@ def write_top_struct_ids(stoic, top_count):
     top_iter_f = os.path.join(tmp_dir,'top_iter.dat')
     struct_coll = StructureCollection(stoic, 0)
     ids_energies = []
-    for index, struct in struct_coll.structures.items():
+    for index, struct in list(struct_coll.structures.items()):
         struct_id = struct.struct_id
         energy = struct.get_property('energy')
         ids_energies.append([struct_id, energy])

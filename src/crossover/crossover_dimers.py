@@ -8,7 +8,7 @@ J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;
 arXiv 1802.08602 (2018)                                                        
 """
 
-from __future__ import division
+
 from copy import deepcopy
 from math import cos, sin
 import math
@@ -19,6 +19,7 @@ from structures.structure import StoicDict, Structure
 from structures import structure_handling
 from pymatgen import Molecule, Lattice
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer as pga
+from functools import reduce
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
 __copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
@@ -257,7 +258,7 @@ class Crossover(object):
         #    parent_a_mol = False
 
         # Randomly permute indices of molecules paired for mating
-        n = len(orientation_info_a); a = range(n)
+        n = len(orientation_info_a); a = list(range(n))
         perm = [[a[i - j] for i in range(n)] for j in range(n)]
         p_i = np.random.choice(a)
 
@@ -459,8 +460,8 @@ class Crossover(object):
         return length
 
     def output_child_properties(self, child):
-        child_vecs = np.array(map(float, child.get_lattice_magnitudes()))
-        child_angs = np.array(map(float, child.get_lattice_angles()))
+        child_vecs = np.array(list(map(float, child.get_lattice_magnitudes())))
+        child_angs = np.array(list(map(float, child.get_lattice_angles())))
         message = ('-- Child lattice vectors: ' + str(child_vecs).strip('[').strip(']') +
                  '\n-- Child lattice angles: ' + str(child_angs).strip('[').strip(']'))
         self.output(message)
@@ -653,10 +654,10 @@ def rotation_matrix(theta, psi, phi):
                 (np.cos(phi) * np.cos(theta)))])
     return Rxyz
 def output_parent_properties(parent_a, parent_b, replica):
-    parent_a_vecs = np.array(map(float, parent_a.get_lattice_magnitudes()))
-    parent_b_vecs = np.array(map(float, parent_b.get_lattice_magnitudes()))
-    parent_a_angs = np.array(map(float, parent_a.get_lattice_angles()))
-    parent_b_angs = np.array(map(float, parent_b.get_lattice_angles()))
+    parent_a_vecs = np.array(list(map(float, parent_a.get_lattice_magnitudes())))
+    parent_b_vecs = np.array(list(map(float, parent_b.get_lattice_magnitudes())))
+    parent_a_angs = np.array(list(map(float, parent_a.get_lattice_angles())))
+    parent_b_angs = np.array(list(map(float, parent_b.get_lattice_angles())))
     message = ('-- Parent A lattice vectors: ' + str(parent_a_vecs).strip('[').strip(']') +
                '\n-- Parent A lattice angles: ' + str(parent_a_angs).strip('[').strip(']') +
                '\n-- Parent B lattice vectors: ' + str(parent_b_vecs).strip('[').strip(']') +

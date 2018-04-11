@@ -111,15 +111,14 @@ def bk_folder(fdir,folder,bk_path,naming_scheme="original",nname=get_random_inde
         elif naming_scheme=="const":
                 nname=nname
         else:
-                raise ValueError("Unknown naming_scheme in bk_folder")
-
+            raise ValueError("Unknown naming_scheme in bk_folder")
         try:
-	        copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
-		output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility")
-		return True
+            copytree(os.path.join(fdir,folder),os.path.join(bk_path,nname))
+            output.time_log("bk_folder success: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility")
+            return True
         except:
-		output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility!!!")
-		return False
+            output.time_log("bk_folder failure: from %s to %s" % (os.path.join(fdir,folder),os.path.join(bk_path,nname)),"utility!!!")
+            return False
 
 def write_active(fdir):
 	'''
@@ -156,4 +155,4 @@ def active_sleep(total_time,folder,write_active_interval=10):
                 pass
 					
 if __name__ == '__main__':
-    print cwd
+    print(cwd)

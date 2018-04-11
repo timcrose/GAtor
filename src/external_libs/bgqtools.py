@@ -122,7 +122,7 @@ def block_corner_iter(blocks, nodes_per_subblock):
 
         for c in get_corners(min_coords, max_coords, extents):
             corner = coord_functions.get_compute_node_from_global_coords(c)
-            job_nodes = nodes_iter.next()
+            job_nodes = next(nodes_iter)
             job_extents = nodes_to_extents(job_nodes)
             shape = 'x'.join(str(x) for x in job_extents)
             yield (block, corner, shape)

@@ -9,7 +9,7 @@ arXiv 1802.08602 (2018)
 """   
 import os
 import shutil
-import user_input
+from . import user_input
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
 __copyright__ = "Copyright 2018, Carnegie Mellon University and "+\

@@ -18,6 +18,7 @@ import time
 import core.file_handler as fh
 from core import user_input, output, check_conf
 from utilities import parallel_run, stoic_model, misc
+import imp
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
 __copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
@@ -135,12 +136,12 @@ def reload_modules():
 	'''
 	These modules need to be reloaded after the configuration file is changed
 	'''
-	reload(fh)
-	reload(user_input)
-	reload(output)
-	reload(stoic_model)
-	reload(misc)
-	reload(kill)
+	imp.reload(fh)
+	imp.reload(user_input)
+	imp.reload(output)
+	imp.reload(stoic_model)
+	imp.reload(misc)
+	imp.reload(kill)
 
 if __name__ == "__main__":
     main()

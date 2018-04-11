@@ -223,7 +223,7 @@ def get_and_increment_index(index_path):
 
 def get_random_index(seed=None):
     LENGTH_OF_INDEX = 10
-    return sha1(repr(time.time())+str(seed)).hexdigest()[:LENGTH_OF_INDEX]
+    return sha1((repr(time.time())+str(seed)).encode('utf-8')).hexdigest()[:LENGTH_OF_INDEX]
 
 def print_to_file(message):
     with FileLock(output_file):

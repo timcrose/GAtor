@@ -86,26 +86,26 @@ def get_energy_list(structure_coll):
     return energy_list
 
 def write_energy_hierarchy(structure_coll):
-	to_write = ''
-	ranked_energy_list = []
-	energy_list = get_energy_list(structure_coll)
-	energy_list.sort(key=lambda x: float(x[3]))
-	for count in range(len(energy_list)):
-		ranked_energy_list.append([count + 1] + energy_list[count])
-	header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 
+    to_write = ''
+    ranked_energy_list = []
+    energy_list = get_energy_list(structure_coll)
+    energy_list.sort(key=lambda x: float(x[3]))
+    for count in range(len(energy_list)):
+        ranked_energy_list.append([count + 1] + energy_list[count])
+    header = (['#Rank', 'Added', 'Replica', 'Index', 'Energy (eV)', 
                 'Volume', 'A', 'B', 'C', 'Alpha', 'Beta', 'Gamma', 
                 'SG', 'Mutation','ParentA', 'ParentB',
                 'Cluster', 'Cluster_Members', 'Total_Clusters'])
-	form = '{:<5} {:<5} {:<12} {:12} {:<12} '+\
+    form = '{:<5} {:<5} {:<12} {:12} {:<12} '+\
            '{:<7} {:<6} {:<6} {:<6} {:<6} {:<6} {:<6} '+\
            '{:<3} {:<12} {:<11} {:<11} '+\
            '{:<7} {:<7} {:9}'
-	to_write += form.format(*header) + '\n'
-	for line in ranked_energy_list:
-		to_write += form.format(*line) + '\n'
-    	stoic = structure_coll.get_stoic()
-    	input_ref = structure_coll.get_input_ref()
-    	filename = "energy_hierarchy_%s_%s.dat" % (stoic.get_string(),str(input_ref))
+    to_write += form.format(*header) + '\n'
+    for line in ranked_energy_list:
+        to_write += form.format(*line) + '\n'
+        stoic = structure_coll.get_stoic()
+        input_ref = structure_coll.get_input_ref()
+        filename = "energy_hierarchy_%s_%s.dat" % (stoic.get_string(),str(input_ref))
         f = open(os.path.join(tmp_dir,filename),"w")
         f.write(to_write)
         f.close()

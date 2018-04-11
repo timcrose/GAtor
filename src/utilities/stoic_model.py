@@ -8,8 +8,8 @@ J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;
 arXiv 1802.08602 (2018)                                                        
 """
 
-from ConfigParser import ConfigParser
-from StringIO import StringIO
+from configparser import ConfigParser
+from io import StringIO
 import time
 import os
 
@@ -66,7 +66,7 @@ def ini_to_stoic(stoic_string):
     config.readfp(stoic_string_stream)
     s_dict = dict(config.items('stoichiometry'))
     stoic_dict = StoicDict(int)
-    for element, number in s_dict.items():
+    for element, number in list(s_dict.items()):
         stoic_dict[element.capitalize()] = int(number)
     return stoic_dict    
 

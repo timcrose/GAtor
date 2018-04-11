@@ -40,7 +40,7 @@ def generate_relative_coordinate_descriptor(struct,nmpc,napm,axes,close_picks=8,
     ref_struct = create_ref_struct(struct, nmpc, napm, close_picks)
     axes_list = [_calculate_molecule_axes(ref_struct.geometry[x * napm:(x + 1) * napm],axes) 
                  for x in range(close_picks + 1)]
-    COM = [cm_calculation(ref_struct,range(x*napm,(x+1)*napm)) 
+    COM = [cm_calculation(ref_struct,list(range(x*napm,(x+1)*napm))) 
                  for x in range(close_picks + 1)]
     diff = [np.subtract(COM[x], COM[0]) 
                  for x in range(1, close_picks+1)]
@@ -71,7 +71,7 @@ def create_ref_struct(struct, nmpc, napm, close_picks=8):
     ref_struct = cell_modification(struct, napm)
 
     COM = [cm_calculation(ref_struct,
-                          range(x * napm, (x + 1) * napm))
+                          list(range(x * napm, (x + 1) * napm)))
            for x in range(nmpc)]
 
     lat_mat = np.transpose(ref_struct.get_lattice_vectors())
@@ -86,7 +86,7 @@ def create_ref_struct(struct, nmpc, napm, close_picks=8):
 
     all_geo = deepcopy(ref_struct.geometry)
     ref_struct.geometry = np.delete(ref_struct.geometry,
-                                    range(napm,nmpc*napm))
+                                    list(range(napm,nmpc*napm)))
 
     for i in range(1, close_picks+1): #Skip the 1st original molecule
         k, x, y, z, dist = COMt[i]
@@ -243,7 +243,7 @@ def _calculate_rcd_vector_difference(v1, v2, ratio=1, select_pairs=4):
     for l in range(select_pairs):
         try:
             while True:
-                k = dist_iter.next()
+                k = next(dist_iter)
                 if not s1[k[0]] and not s2[k[1]]:
                 #Avoiding selecting same molecule from cell
                     result += k[2]

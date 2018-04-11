@@ -7,7 +7,7 @@ Algorithm for Molecular Crystal Structure Prediction",
 J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;                        
 arXiv 1802.08602 (2018)                                                        
 """ 
-from __future__ import division
+
 
 from copy import deepcopy
 import numpy as np
@@ -23,6 +23,7 @@ from structures import structure_handling
 from utilities import space_group_utils as sgu
 from pymatgen import Molecule
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer as pga
+from functools import reduce
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"                      
 __copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
@@ -892,7 +893,7 @@ class PermutationReflectionMutation(object):
         reflections = [[-1, 1, 1],
                        [1, -1, 1],
                        [1, 1, -1]]
-        choice = np.random.choice(range(len(reflections)))
+        choice = np.random.choice(list(range(len(reflections))))
         self.output("-- Reflection %s" %(reflections[choice]))
         for i in range(len(mol_list)):
             mol = mol_list[i]
@@ -1353,8 +1354,8 @@ def strain_geometry(strain_lat_mat, mol_list, mol_list_COM, mol_list_COM_f):
     COM_diff = mol_list_COM - strain_list_COM
     i = 0
     for mol in mol_list:
-	xyz = []
-	for j in range(len(mol)):
+        xyz = []
+        for j in range(len(mol)):
             xyz.append((mol[j][0], mol[j][1], mol[j][2]))
         for atom in xyz:
             strained_geometry.append((atom - COM_diff[i])) 

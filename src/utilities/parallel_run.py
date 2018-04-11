@@ -53,9 +53,9 @@ def launch_parallel():
     elif spawn_method == "mira" or spawn_method == "cetus":
         launch_parallel_bgq()
     elif spawn_method == "mpirun":
-		launch_parallel_mpirun()
+        launch_parallel_mpirun()
     elif spawn_method == "srun":
-		launch_parallel_mpirun(use_srun=True)
+        launch_parallel_mpirun(use_srun=True)
     elif spawn_method == "aprun":
         launch_parallel_aprun()
     elif spawn_method == "theta":
@@ -242,7 +242,7 @@ def launch_parallel_theta():
     from Cobalt.Util import expand_num_list
 
 
-    print multiprocesssing.cpu_count()
+    print(multiprocesssing.cpu_count())
     nodelist = " ".join([str(i) for i in sorted(set(expand_num_list(",".join(sys.argv[1:]))))])
     #global nodelist
 
@@ -346,17 +346,17 @@ def launch_parallel_mpirun(use_srun=False):
     nor = 0 #Number of replicas
 
     if ui.has_option(sname,"nodes_per_replica"):
-		npr = ui.get_eval(sname,"nodes_per_replica")
-		if ui.has_option(sname,"processes_per_replica"):
-			ppr = ui.get_eval(sname,"processes_per_replica")
-		else:
-			ppr = npr*ppn
-		if ui.has_option(sname,"number_of_replicas"):
-			nor = ui.get_eval(sname,"number_of_replicas")
-		else:
-			nor = non/npr
-		npr = [npr]*nor
-		ppr = [ppr]*nor
+        npr = ui.get_eval(sname,"nodes_per_replica")
+        if ui.has_option(sname,"processes_per_replica"):
+            ppr = ui.get_eval(sname,"processes_per_replica")
+        else:
+            ppr = npr*ppn
+        if ui.has_option(sname,"number_of_replicas"):
+            nor = ui.get_eval(sname,"number_of_replicas")
+        else:
+            nor = non/npr
+        npr = [npr]*nor
+        ppr = [ppr]*nor
     elif ui.has_option(sname,"processes_per_replica"):
         ppr = ui.get_eval(sname,"processes_per_replica")
         if ppr >= ppn:
@@ -368,13 +368,13 @@ def launch_parallel_mpirun(use_srun=False):
             npr = [npr]*nor
             ppr = [ppr]*nor
         else:
-			rpn = ppn/ppr
-			if ui.has_option(sname,"number_of_replicas"):
-				nor = ui.get_eval(sname,"number_of_replicas")
-			else:
-				nor = non*rpn
-			npr = [int(0+(x%3)==0) for x in range(1,nor+1)]
-			ppr = [ppr]*nor
+            rpn = ppn/ppr
+            if ui.has_option(sname,"number_of_replicas"):
+                nor = ui.get_eval(sname,"number_of_replicas")
+            else:
+                nor = non*rpn
+            npr = [int(0+(x%3)==0) for x in range(1,nor+1)]
+            ppr = [ppr]*nor
     elif ui.has_option(sname,"number_of_replicas"):
         nor = ui.get_eval(sname,"number_of_replicas")
         if nor > non: #Multiple replicas have to share same node
@@ -388,10 +388,10 @@ def launch_parallel_mpirun(use_srun=False):
 				+[ppn/(rpn+1)]*(rpn+1-(ppn%(rpn+1))))*add
             ppr+= ([ppn/rpn+1]*(ppn%rpn)+[ppn/rpn]*(rpn-(ppn%rpn)))*(non-add)
         else:
-			npr = non / nor
-			add = non % nor
-			npr = [npr+1]*add + [npr]*(nor-add)
-			ppr = [ppn*x for x in npr]
+            npr = non / nor
+            add = non % nor
+            npr = [npr+1]*add + [npr]*(nor-add)
+            ppr = [ppn*x for x in npr]
     else:
         message = "mpirun/srun parallelization method requires the setting " 
         message += "of at least one of the following parameter within parallel_settings: "
@@ -563,10 +563,9 @@ def monitor_srun(processes):
 				    replica)
                 with FileLock(ssname,sdir,timeout=60):
 				#Record that this job is received
-					f = open(sfile,"a")
-					f.write(job_id+"\n")
-					f.close()
-
+                    f = open(sfile,"a")
+                    f.write(job_id+"\n")
+                    f.close()
                 # Run aims subprocess
                 dir = os.path.dirname(stdout)
                 if not os.path.exists(dir):
