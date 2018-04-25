@@ -40,7 +40,7 @@ def main():
     gator.initialize_MPI_communicator()
     gator.check_conf_file()
     gator.fill_initial_pool()
-    gator.spawn_ga_replicas_mpi4py()
+    gator.spawn_ga_replicas_mpi4py_color()
 #    return
 
 class GAtor():
@@ -115,76 +115,43 @@ class GAtor():
                 if os.stat(IP_dat).st_size == 0:
                     raise Exception(msg)
             print ("Initial pool already filled sucessfully")
-
-    def spawn_ga_replicas_mpi4py(self):
+    def create_ga_replicas_mpi4py(self):                                        
         """                                                                        
-        Runs parallel GA replicas using mpi4py
-        
-        The core modules such as selection, mutation, and crossover    
-        are run using the RunGA class from /src/core/run_GA_mpi4py  
-
+        Runs parallel GA replicas using mpi4py                                 
+                                                                               
+        The core modules such as selection, mutation, and crossover            
+        are run using the RunGA class from /src/core/run_GA_mpi4py             
+                                                                               
         The RunGA class inputs the random                                      
-        """  
-        from core import run_GA_dummy
+        """                                                                    
+        from core import run_GA_dummy                                          
 
         master_group = self.comm.Get_group()
 
-        # First Group
-        new_group = master_group.Range_incl([(0, 1, 1)])
-        new_comm = self.comm.Create(new_group)
-        try:
-            print ("first %s" % (new_comm.Get_size()))
-            self.newcomm = new_comm
-        except: pass
+        if self.comm.Get_rank() < self.comm.Get_size()/2:                                                                       
+            new_group = master_group.Range_incl([(0, 1, 1)])                       
+            new_comm = self.comm.Create(new_group)  
+        else:
+            new_group = master_group.Range_incl([(2, 3, 1)])
+            new_comm = self.comm.Create(new_group) 
 
-        # Second Group
-        #new_group2 = master_group.Range_incl([(2, 3, 1)])    
-        new_group2 = master_group.Range_excl([(0, 1, 1)])                   
-        new_comm2 = self.comm.Create(new_group)                                 
-        try:                                                                   
-            print ("second %s" % (new_comm2.Get_size()))
-            self.newcomm = new_comm2                         
-        except: pass 
+        if new_comm.Get_rank() == 0:                                       
+            self.check_initial_pool_filled()                               
+            replica_name = misc.get_random_index()                         
+            self.make_replica_conf_file(replica_name)                      
+        else:                                                              
+            replica_name = None                                            
 
+        replica_name = new_comm.bcast(replica_name, root=0)   
 
-        # List of communicators
-        replica_comms = [new_comm, new_comm2]
-        for comm in replica_comms:
-            try:
-                if comm.Get_rank() == 0:
-                    self.check_initial_pool_filled()
-                    stoic = stoic_model.determine_stoic()
-                    replica_name = misc.get_random_index()
-                    self.make_replica_conf_file(replica_name)
-                else:
-                    replica_name = None
-                replica_name = comm.bcast(replica_name, root=0) 
-            except: pass
+        print ("replica %s old rank %s new rank %s" %(replica_name, self.comm.Get_rank(), new_comm.Get_rank()))
 
-        self.comm.Barrier()
-        try:
-            print (replica_name)
-        except: pass
-        # NEED TO FIGURE OUT HOW TO RUN BOTH GROUPS OF COMMS AT SAME TIME
-
-#        if self.newcomm.Get_rank() == 0:                                      
-#            self.check_initial_pool_filled()                          
-#            stoic = stoic_model.determine_stoic()                     
-#            replica_name = misc.get_random_index()                    
-#            self.make_replica_conf_file(replica_name)                 
-#        else:                                                         
-#            replica_name = None                                       
-#        replica_name = self.newcomm.bcast(replica_name, root=0)               
-#        print (replica_name)  
-
-# NEED TO FIGURE OUT HOW TO RUNGA BOTH GROUPS OF COMMS AT SAME TIME ######
-        stoic = stoic_model.determine_stoic()
-        ga = run_GA_dummy.RunGA(replica_name, stoic, new_comm)
-        ga.run()
-        output.move_to_shared_output(self.ui.get_replica_name())
-
-                  
-
+        stoic = stoic_model.determine_stoic()                                  
+                                   
+        ga = run_GA_dummy.RunGA(replica_name, stoic, new_comm)         
+        ga.run()                                                       
+        output.move_to_shared_output(self.ui.get_replica_name()) 
+                                 
     def make_replica_conf_file(self, replica_name):
         self.ui.set("parallel_settings","replica_name",replica_name)
         if not os.path.isdir(fh.conf_tmp_dir):
