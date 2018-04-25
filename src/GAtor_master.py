@@ -19,7 +19,7 @@ import imp
 import core.file_handler as fh
 from core import user_input, output, check_conf
 from utilities import stoic_model, misc
-
+from mpi4py import MPI
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
 __copyright__ = "Copyright 2018, Carnegie Mellon University and "+\
@@ -41,6 +41,7 @@ def main():
     gator.check_conf_file()
     gator.fill_initial_pool()
     gator.spawn_ga_replicas_mpi4py()
+#    return
 
 class GAtor():
     """
@@ -61,9 +62,11 @@ class GAtor():
             return 
 
     def initialize_MPI_communicator(self):
-        from mpi4py import MPI
+        #from mpi4py import MPI
         self.comm = MPI.COMM_WORLD                                                      
-        size = self.comm.Get_size() 
+        size = self.comm.Get_size()
+        if self.comm.Get_rank() == 0:
+            print ("Size of MPI communicator %s" % (size)) 
 
     def check_conf_file(self):
         """                                                                        
@@ -75,7 +78,9 @@ class GAtor():
         if self.comm.Get_rank() == 0:
             CC = check_conf.ConfigurationChecker() 
             CC.run_checks()
+            print ("Done with checking conf file")
         self.comm.Barrier()
+
 
     def fill_initial_pool(self):
         """                                                                        
@@ -89,6 +94,7 @@ class GAtor():
                                  package="initial_pool")
             fh.mkdir_p(fh.out_tmp_dir)
             IP_module.main()
+            print ("Done with filling IP")
         self.comm.Barrier()
 
     def check_initial_pool_filled(self):
@@ -108,7 +114,7 @@ class GAtor():
             if os.path.isfile(IP_dat):
                 if os.stat(IP_dat).st_size == 0:
                     raise Exception(msg)
-        self.comm.Barrier()
+            print ("Initial pool already filled sucessfully")
 
     def spawn_ga_replicas_mpi4py(self):
         """                                                                        
@@ -119,26 +125,78 @@ class GAtor():
 
         The RunGA class inputs the random                                      
         """  
-        from core import run_GA_mpi
-        if self.comm.Get_rank() == 0:
-            self.check_initial_pool_filled()
-            stoic = stoic_model.determine_stoic()
-            replica_name = misc.get_random_index()
-            sname = "parallel_settings"
-            self.ui.set(sname,"replica_name", replica_name)       
-            if not os.path.isdir(fh.conf_tmp_dir):
-                os.mkdir(fh.conf_tmp_dir)   
-            conf_path = os.path.join(fh.conf_tmp_dir,                          
-            self.ui.get_replica_name()+".conf")                    
-            f = open(conf_path,"w")                                            
-            self.ui.write(f)                                                   
-            f.close()                                                          
-            sys.argv.append(conf_path)                                         
-            self.reload_modules()  
-        ga = run_GA_mpi.RunGA(replica_name, stoic, self.comm)
+        from core import run_GA_dummy
+
+        master_group = self.comm.Get_group()
+
+        # First Group
+        new_group = master_group.Range_incl([(0, 1, 1)])
+        new_comm = self.comm.Create(new_group)
+        try:
+            print ("first %s" % (new_comm.Get_size()))
+            self.newcomm = new_comm
+        except: pass
+
+        # Second Group
+        #new_group2 = master_group.Range_incl([(2, 3, 1)])    
+        new_group2 = master_group.Range_excl([(0, 1, 1)])                   
+        new_comm2 = self.comm.Create(new_group)                                 
+        try:                                                                   
+            print ("second %s" % (new_comm2.Get_size()))
+            self.newcomm = new_comm2                         
+        except: pass 
+
+
+        # List of communicators
+        replica_comms = [new_comm, new_comm2]
+        for comm in replica_comms:
+            try:
+                if comm.Get_rank() == 0:
+                    self.check_initial_pool_filled()
+                    stoic = stoic_model.determine_stoic()
+                    replica_name = misc.get_random_index()
+                    self.make_replica_conf_file(replica_name)
+                else:
+                    replica_name = None
+                replica_name = comm.bcast(replica_name, root=0) 
+            except: pass
+
+        self.comm.Barrier()
+        try:
+            print (replica_name)
+        except: pass
+        # NEED TO FIGURE OUT HOW TO RUN BOTH GROUPS OF COMMS AT SAME TIME
+
+#        if self.newcomm.Get_rank() == 0:                                      
+#            self.check_initial_pool_filled()                          
+#            stoic = stoic_model.determine_stoic()                     
+#            replica_name = misc.get_random_index()                    
+#            self.make_replica_conf_file(replica_name)                 
+#        else:                                                         
+#            replica_name = None                                       
+#        replica_name = self.newcomm.bcast(replica_name, root=0)               
+#        print (replica_name)  
+
+# NEED TO FIGURE OUT HOW TO RUNGA BOTH GROUPS OF COMMS AT SAME TIME ######
+        stoic = stoic_model.determine_stoic()
+        ga = run_GA_dummy.RunGA(replica_name, stoic, new_comm)
         ga.run()
         output.move_to_shared_output(self.ui.get_replica_name())
-	
+
+                  
+
+    def make_replica_conf_file(self, replica_name):
+        self.ui.set("parallel_settings","replica_name",replica_name)
+        if not os.path.isdir(fh.conf_tmp_dir):
+            os.mkdir(fh.conf_tmp_dir)
+        conf_path = os.path.join(fh.conf_tmp_dir, self.ui.get_replica_name()+".conf")
+        f = open(conf_path,"w")
+        self.ui.write(f)
+        f.close()
+        sys.argv.append(conf_path)
+        self.reload_modules()            
+        print ("Replica conf file created") 
+
     def testing_mode(self):
         """
         Can be used for developing test and debug features
