@@ -40,7 +40,7 @@ def main():
     gator.initialize_MPI_communicator()
     gator.check_conf_file()
     gator.fill_initial_pool()
-    gator.spawn_ga_replicas_mpi4py_color()
+    gator.run_ga_replicas_mpi4py()
 #    return
 
 class GAtor():
@@ -67,6 +67,7 @@ class GAtor():
         size = self.comm.Get_size()
         if self.comm.Get_rank() == 0:
             print ("Size of MPI communicator %s" % (size)) 
+        self.comm.Barrier()
 
     def check_conf_file(self):
         """                                                                        
@@ -115,7 +116,7 @@ class GAtor():
                 if os.stat(IP_dat).st_size == 0:
                     raise Exception(msg)
             print ("Initial pool already filled sucessfully")
-    def create_ga_replicas_mpi4py(self):                                        
+    def run_ga_replicas_mpi4py(self):                                        
         """                                                                        
         Runs parallel GA replicas using mpi4py                                 
                                                                                
@@ -124,38 +125,72 @@ class GAtor():
                                                                                
         The RunGA class inputs the random                                      
         """                                                                    
-        from core import run_GA_dummy                                          
+        #from core import run_GA_dummy                                
+        from core import run_GA_mpi
 
+        print ("Hey")
         master_group = self.comm.Get_group()
 
-        if self.comm.Get_rank() < self.comm.Get_size()/2:                                                                       
-            new_group = master_group.Range_incl([(0, 1, 1)])                       
-            new_comm = self.comm.Create(new_group)  
-        else:
-            new_group = master_group.Range_incl([(2, 3, 1)])
-            new_comm = self.comm.Create(new_group) 
+        #ppr = 32
+        test = "COLOR"
+        if test == "COLOR":
+            num_rep = 2
+            color = self.comm.Get_rank() % num_rep
+            new_comm  = self.comm.Split(color)
+            new_comm.Barrier()
+            if new_comm.Get_rank() == 0:                                       
+                self.check_initial_pool_filled()                               
+                replica_name = misc.get_random_index()                         
+                self.make_replica_conf_file(replica_name)                      
+            else:                                                              
+                replica_name = None      
+            new_comm.Barrier()                                      
+            replica_name = new_comm.bcast(replica_name, root=0) 
 
-        if new_comm.Get_rank() == 0:                                       
-            self.check_initial_pool_filled()                               
-            replica_name = misc.get_random_index()                         
-            self.make_replica_conf_file(replica_name)                      
-        else:                                                              
-            replica_name = None                                            
+        if test == "GROUP":
+            if self.comm.Get_rank() < self.comm.Get_size()/2:                                                                       
+                new_group = master_group.Range_incl([(0, (self.comm.Get_size()/2) -1, 1)])                       
+                new_comm = self.comm.Create(new_group)  
+            else:
+                new_group = master_group.Range_incl([((self.comm.Get_size()/2), self.comm.Get_size()-1, 1)])
+                new_comm = self.comm.Create(new_group) 
 
-        replica_name = new_comm.bcast(replica_name, root=0)   
+            if new_comm.Get_rank() == 0:                                       
+                self.check_initial_pool_filled()                               
+                replica_name = misc.get_random_index()                         
+                self.make_replica_conf_file(replica_name)                      
+            else:                                                              
+                replica_name = None      
+            replica_name = new_comm.bcast(replica_name, root=0)
+            self.reload_modules()                                      
+        if test == "SINGLE":
+            new_comm = self.comm
+            if new_comm.Get_rank() == 0:                                       
+                self.check_initial_pool_filled()                               
+                replica_name = misc.get_random_index()                         
+                self.make_replica_conf_file(replica_name)                      
+            else:                                                              
+                replica_name = None
+            new_comm.Barrier()
+            replica_name = new_comm.bcast(replica_name, root=0)   
 
-        print ("replica %s old rank %s new rank %s" %(replica_name, self.comm.Get_rank(), new_comm.Get_rank()))
+        stoic = stoic_model.determine_stoic()     
+        print ("replica %s old rank %s new rank %s" %(replica_name, self.comm.Get_rank(), new_comm.Get_rank()))                             
+        new_comm.Barrier()     
 
-        stoic = stoic_model.determine_stoic()                                  
-                                   
-        ga = run_GA_dummy.RunGA(replica_name, stoic, new_comm)         
-        ga.run()                                                       
-        output.move_to_shared_output(self.ui.get_replica_name()) 
+        # Run ga for every replica      
+        ga = run_GA_mpi.RunGA(replica_name, stoic, new_comm)         
+        new_comm.Barrier()
+        ga.run()         
+        new_comm.Barrier()                                              
+        #output.move_to_shared_output(self.ui.get_replica_name()) 
                                  
     def make_replica_conf_file(self, replica_name):
         self.ui.set("parallel_settings","replica_name",replica_name)
-        if not os.path.isdir(fh.conf_tmp_dir):
-            os.mkdir(fh.conf_tmp_dir)
+        try:
+            if not os.path.isdir(fh.conf_tmp_dir):
+                os.mkdir(fh.conf_tmp_dir)
+        except: pass
         conf_path = os.path.join(fh.conf_tmp_dir, self.ui.get_replica_name()+".conf")
         f = open(conf_path,"w")
         self.ui.write(f)

@@ -55,7 +55,7 @@ class RunGA():
     This class controls the main the genetic algorithm tasks 
     each replica runs
     '''
-    def __init__(self, name=replica, stoic):
+    def __init__(self, replica, stoic):
         self.replica = replica
         self.ui = user_input.get_config()
         self.replica_stoic = stoic
