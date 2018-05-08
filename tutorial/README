@@ -20,7 +20,6 @@ under
 If one just wants to create structures without
 relaxations or energy evaluations for tutorial purposes 
 uncomment [run_settings]/skip_energy_evaluations = TRUE in ui.conf.
-and
 
 The ui.conf given is intended to be basic for tutorial purposes.
 See user manual for a full list of available keywords.
