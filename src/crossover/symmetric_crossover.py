@@ -205,9 +205,9 @@ class Symmetric_Crossover(object):
 
                 message = "-- Summary of Crossover --\n"
                 if len(operations) == 0:
-                    message += "No crossover operation called"
+                    message += "-- No crossover operation called"
                 else:
-                    message += "Crossover operation(s) called: "
+                    message += "-- Crossover operation(s) called: "
                     message += " ".join(map(str,operations))
 
                 output.local_message(message,self.replica)

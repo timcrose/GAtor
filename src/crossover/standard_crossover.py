@@ -203,7 +203,7 @@ class Crossover(object):
                 new_info = rand_scale * (rand_vec[i] * lattice_info_a[i] 
                                       + (1-rand_vec[i]) * lattice_info_b[i])
                 if 88.5 <= new_info <= 91.5:
-                    self.output("--Setting angle close to 90 degrees")
+                    self.output("-- Setting angle close to 90 degrees")
                     new_info = 90.0
                 child_lattice_info.append(new_info)
         return child_lattice_info
@@ -212,8 +212,8 @@ class Crossover(object):
     def combine_orientation_info(self, orientation_info_a, orientation_info_b): 
         '''Returns child orientation info in the form
                             info = [z, y, x, COM, centered_mol]'''
-        self.output("Parent A orientation info: %s" % (orientation_info_a[0][:3]))
-        self.output("Parent B orientation info: %s" % (orientation_info_b[0][:3]))
+        self.output("-- Parent A orientation info: %s" % (orientation_info_a[0][:3]))
+        self.output("-- Parent B orientation info: %s" % (orientation_info_b[0][:3]))
     
         # Choose which Parent's COM the child will inherit
         COM_choice = random.random()

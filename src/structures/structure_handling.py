@@ -723,7 +723,7 @@ def cell_check(struct,replica):
 			output.local_message("-- Passed all atomic distance check(s)",replica)
 	else:
 		if verbose:
-			output.local_message("-- Failed atomic distance check, selecting new parents",replica)
+			output.local_message("-- Failed atomic distance check",replica)
 		return False
 
 

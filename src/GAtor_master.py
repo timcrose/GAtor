@@ -34,39 +34,43 @@ __email__ = "trose@andrew.cmu.edu"
 __url__ = "http://www.noamarom.com"
 
 def main():
-    # Check conf file, fill initial pool, then spawn
-    # parallel GA replicas
+    """
+    Initializes the initial pool
+    Checks the user configuration file for errors
+    Runs parallel GA replicas using MPI4py
+    """
     gator = GAtor()
     gator.initialize_MPI_communicator()
     gator.check_conf_file()
     gator.fill_initial_pool()
     gator.run_ga_replicas_mpi4py()
-#    return
 
 class GAtor():
     """
     This is the master class of GAtor
-    Inputs the path to the configuration file
+    Inputs the path to the user configuration file
+    and stores parameters in self.ui
     """
     def __init__(self):
-        sname = "GAtor_master"
         self.ui = user_input.get_config()
         self.src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),          
                                                           os.pardir))          
         sys.path.append(self.src_dir)
-        if self.ui.has_option(sname,"working_directory"):
-            os.chdir(self.ui.get(sname,"working_directory"))
+        if self.ui.has_option("GAtor_master","working_directory"):
+            os.chdir(self.ui.get("GAtor_master","working_directory"))
             self.reload_modules()
-        if self.ui.get_boolean(sname,"testing_mode"):
+        if self.ui.get_boolean("GAtor_master","testing_mode"):
             self.testing_mode()
             return 
 
     def initialize_MPI_communicator(self):
-        #from mpi4py import MPI
+        """
+        Initializes global MPI communicator 
+        """
         self.comm = MPI.COMM_WORLD                                                      
         size = self.comm.Get_size()
         if self.comm.Get_rank() == 0:
-            print ("Size of MPI communicator %s" % (size)) 
+            output.time_log("Size of MPI communicator %s" % (size)) 
         self.comm.Barrier()
 
     def check_conf_file(self):
@@ -79,7 +83,7 @@ class GAtor():
         if self.comm.Get_rank() == 0:
             CC = check_conf.ConfigurationChecker() 
             CC.run_checks()
-            print ("Done with checking conf file")
+            output.time_log("Done with checking conf file")
         self.comm.Barrier()
 
 
@@ -95,7 +99,6 @@ class GAtor():
                                  package="initial_pool")
             fh.mkdir_p(fh.out_tmp_dir)
             IP_module.main()
-            print ("Done with filling IP")
         self.comm.Barrier()
 
     def check_initial_pool_filled(self):
@@ -115,93 +118,71 @@ class GAtor():
             if os.path.isfile(IP_dat):
                 if os.stat(IP_dat).st_size == 0:
                     raise Exception(msg)
-            print ("Initial pool already filled sucessfully")
+ 
+
     def run_ga_replicas_mpi4py(self):                                        
         """                                                                        
         Runs parallel GA replicas using mpi4py                                 
                                                                                
         The core modules such as selection, mutation, and crossover            
         are run using the RunGA class from /src/core/run_GA_mpi4py             
-                                                                               
-        The RunGA class inputs the random                                      
+                                                                                                                  
         """                                                                    
-        #from core import run_GA_dummy                                
         from core import run_GA_mpi
 
-        print ("Hey")
-        master_group = self.comm.Get_group()
+        # Get user-defined number of GA replicas
+        num_replicas = self.ui.get_eval("run_settings","number_of_replicas")
 
-        #ppr = 32
-        test = "COLOR"
-        if test == "COLOR":
-            num_rep = 2
-            color = self.comm.Get_rank() % num_rep
-            new_comm  = self.comm.Split(color)
-            new_comm.Barrier()
-            if new_comm.Get_rank() == 0:                                       
-                self.check_initial_pool_filled()                               
-                replica_name = misc.get_random_index()                         
-                self.make_replica_conf_file(replica_name)                      
-            else:                                                              
-                replica_name = None      
-            new_comm.Barrier()                                      
-            replica_name = new_comm.bcast(replica_name, root=0) 
+        # Assign MPI color for every replica
+        color = self.comm.Get_rank() % num_replicas
 
-        if test == "GROUP":
-            if self.comm.Get_rank() < self.comm.Get_size()/2:                                                                       
-                new_group = master_group.Range_incl([(0, (self.comm.Get_size()/2) -1, 1)])                       
-                new_comm = self.comm.Create(new_group)  
-            else:
-                new_group = master_group.Range_incl([((self.comm.Get_size()/2), self.comm.Get_size()-1, 1)])
-                new_comm = self.comm.Create(new_group) 
+        # Split MPI communicator for each replica
+        replica_comm  = self.comm.Split(color)
+        replica_comm.Barrier()
 
-            if new_comm.Get_rank() == 0:                                       
-                self.check_initial_pool_filled()                               
-                replica_name = misc.get_random_index()                         
-                self.make_replica_conf_file(replica_name)                      
-            else:                                                              
-                replica_name = None      
-            replica_name = new_comm.bcast(replica_name, root=0)
-            self.reload_modules()                                      
-        if test == "SINGLE":
-            new_comm = self.comm
-            if new_comm.Get_rank() == 0:                                       
-                self.check_initial_pool_filled()                               
-                replica_name = misc.get_random_index()                         
-                self.make_replica_conf_file(replica_name)                      
-            else:                                                              
-                replica_name = None
-            new_comm.Barrier()
-            replica_name = new_comm.bcast(replica_name, root=0)   
+        # Check initial pool, broadcast replica name to all ranks
+        if replica_comm.Get_rank() == 0:                                       
+            self.check_initial_pool_filled()                               
+            replica_name = misc.get_random_index()                         
+            self.make_replica_conf_file(replica_name)                      
+        else:                                                              
+            replica_name = None      
+        replica_comm.Barrier()                                      
+        replica_name = replica_comm.bcast(replica_name, root=0) 
 
-        stoic = stoic_model.determine_stoic()     
-        print ("replica %s old rank %s new rank %s" %(replica_name, self.comm.Get_rank(), new_comm.Get_rank()))                             
-        new_comm.Barrier()     
+        # Output parallelization info to GAtor.log
+        output.time_log("Replica %s_%i reporting from %s" %(replica_name, 
+                                            replica_comm.Get_rank(), 
+                                            MPI.Get_processor_name()))                             
+        replica_comm.Barrier()          
 
-        # Run ga for every replica      
-        ga = run_GA_mpi.RunGA(replica_name, stoic, new_comm)         
-        new_comm.Barrier()
+        # Run Run_GA module for every replica
+        stoic = stoic_model.determine_stoic()
+        ga = run_GA_mpi.RunGA(replica_name, stoic, replica_comm)         
+        replica_comm.Barrier()
         ga.run()         
-        new_comm.Barrier()                                              
-        #output.move_to_shared_output(self.ui.get_replica_name()) 
-                                 
+        replica_comm.Barrier()
+                      
     def make_replica_conf_file(self, replica_name):
+        """
+        Generates replica-specific conf file for every replica
+        """
         self.ui.set("parallel_settings","replica_name",replica_name)
         try:
             if not os.path.isdir(fh.conf_tmp_dir):
                 os.mkdir(fh.conf_tmp_dir)
         except: pass
-        conf_path = os.path.join(fh.conf_tmp_dir, self.ui.get_replica_name()+".conf")
+        conf_path = os.path.join(fh.conf_tmp_dir, 
+                                 self.ui.get_replica_name()+".conf")
         f = open(conf_path,"w")
         self.ui.write(f)
         f.close()
         sys.argv.append(conf_path)
         self.reload_modules()            
-        print ("Replica conf file created") 
 
     def testing_mode(self):
         """
-        Can be used for developing test and debug features
+        TODO: Can be used for developing test and debug features
         """
         from utilities import test_and_debug
         test_procedure = self.ui.get("test_and_debug","testing_procedure")
@@ -212,7 +193,7 @@ class GAtor():
 
     def reload_modules(self):
         '''
-        These modules need to be reloaded if the configuration file is changed
+        These modules are reloaded if the configuration file is modified
         '''
         imp.reload(fh)
         imp.reload(user_input)

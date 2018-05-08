@@ -28,7 +28,7 @@ class ConfigurationChecker():
         self.ui = user_input.get_config()
         self.control_dir = self.ui.get("FHI-aims","control_in_directory")
         self.control_files = self.ui.get_list("FHI-aims","control_in_filelist")
-        self.aims_x = self.ui.get("FHI-aims","path_to_aims_executable")
+        #self.aims_x = self.ui.get("FHI-aims","path_to_aims_executable")
         self.initial_pool_dir = self.ui.get("initial_pool","user_structures_dir")
         self.selection_module = self.ui.get("modules","selection_module")
         self.skip_energies = self.ui.get_boolean("run_settings", "skip_energy_evaluations")
@@ -36,7 +36,7 @@ class ConfigurationChecker():
     def run_checks(self):
         self.check_init_pool_paths()
         self.check_control_paths()
-        self.check_aims_executable()
+        #self.check_aims_executable()
         self.check_selection_parameters()
 
     def check_init_pool_paths(self):

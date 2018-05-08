@@ -46,7 +46,7 @@ def main(struct, replica, mut_choice):
     '''
     input_struct = deepcopy(struct)
     vol = struct.get_unit_cell_volume()
-    output.local_message("Input Structure's Volume: %s" % (vol), replica)
+    output.local_message("-- Input Structure's Volume: %s" % (vol), replica)
     ui = user_input.get_config()
     num_mols = ui.get_eval('run_settings', 'num_molecules')
 
