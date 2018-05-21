@@ -86,7 +86,11 @@ def compute_RDF_vector(original_struct):
                         if original_struct.geometry[i]["element"] == ref_atom_type]
         a2_range = [i for i in range(original_struct.get_n_atoms()) 
                         if original_struct.geometry[i]["element"] == target_atom_type]
-        rs = all_interatomic_distances(ex_struct, ref_atom_type, target_atom_type, a1_range)
+        rs = all_interatomic_distances(ex_struct, 
+                                       ref_atom_type, 
+                                       target_atom_type, 
+                                       a1_range, 
+                                       a2_range)
         distances = [i[2] for i in rs]
         g = [sum([math.exp(-smoothing_parameter*(r-r_ij)**2) 
             for r_ij in distances])/len(a1_range) for r in dist]
