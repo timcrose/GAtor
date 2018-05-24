@@ -63,7 +63,8 @@ def request_folder_to_check():
 	Updates folder.info if the time has exceeded user defined
     '''
     ui = user_input.get_config()
-    time_wait = 60
+    time_wait = 45
+    restart_wait = 20
     result = False
     with FileLock("folder.info",tmp_dir,3600):
         need_update = False
@@ -77,7 +78,6 @@ def request_folder_to_check():
             f.close()
         if need_update:
             folder_list = [str(time.time())] #Time stamp comes first
-            restart_wait = 30
             list_of_folders = ([name for name in os.listdir(tmp_dir) if 
                                 os.path.isdir(os.path.join(tmp_dir,name)) and 
                                 os.path.exists(os.path.join(tmp_dir,name,"active.info"))])
@@ -86,7 +86,6 @@ def request_folder_to_check():
                 if time_stamp != False and time.time()-time_stamp>restart_wait:
                     folder_list.append(folder)
         f = open(os.path.join(tmp_dir,"folder.info"),"w")
-        restart_wait = 30
         while len(folder_list)>1 and result==False: #Take the last on the list
             result=folder_list.pop()
             if (result=="") or not os.path.exists(os.path.join(tmp_dir,result,"active.info")):
