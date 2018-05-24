@@ -12,8 +12,8 @@ J. Chem. Theory Comput., DOI: 10.1021/acs.jctc.7b01152;
 arXiv 1802.08602 (2018)                                                        
 """
 
-import os, subprocess, shutil
-import sys,socket
+import os, shutil
+import sys
 import time
 import imp
 import core.file_handler as fh
@@ -78,7 +78,7 @@ class GAtor():
         Runs ui.conf consistency checks
         (e.g. make sure paths exist, etc)
 
-        Will be replaced by full test suite                               
+        TODO: Will be replaced by full test suite                               
         """ 
         if self.comm.Get_rank() == 0:
             CC = check_conf.ConfigurationChecker() 
