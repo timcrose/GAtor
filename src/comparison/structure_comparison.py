@@ -136,37 +136,6 @@ class Comparison:
                                                                                
         return is_dup 
 
-    def check_if_duplicate2(self, struct, comp_list, comparison_type):
-        processes = self.comm.Get_size()
-        if self.comm.Get_rank() == 0:
-            self.output("-- Comparison done with %i parallel processes" % processes)
-
-        i = 0 
-        while True:
-            compare = comp_list[i:self.comm.Get_size()+i]
-            if len(compare) < self.comm.Get_size():
-                while len(compare) < self.comm.Get_size():
-                    compare.append(comp_list[0])
-
-            ID, structc = self.comm.scatter(compare, root=0)
-            fit = self.compute_pymatgen_fit(struct, structc) 
-            fit_list = self.comm.gather(fit, root=0)
-            if True in fit_list:
-                return
-            i += self.comm.Get_size()
-            if i > len(comp_list):
-                return False
-            self.comm.Barrier()
-
-
-        self.output("-- Structure is a duplicate of another in common pool")
-        self.output("-- Structure ID in Common pool is: %s" % ID)
-        index = structure_collection.add_structure(struct, struct.get_stoic() , 'duplicates')
-        self.output("-- Duplicate Structure ID in duplicates pool is: %s" % index)
-        pair = ("0/"+ str(is_dup),"duplicates/"+str(index)) 
-        dup_output = open(os.path.join(tmp_dir, "GA_duplicates.dat"),'a')
-        dup_output.write('\t'.join(str(s) for s in pair) + '\n')
-        return False
     def set_comp_structure_matcher(self, comparison_type):                     
         '''                                                                    
         Args: self                                                             
@@ -177,8 +146,13 @@ class Comparison:
         S_tol = ui.get_eval(self.comparison_type, 'stol')                           
         Angle_tol = ui.get_eval(self.comparison_type, 'angle_tol')                  
         Scale = ui.get_boolean(self.comparison_type, 'scale_vol')                   
-        sm = (StructureMatcher(ltol=L_tol, stol=S_tol, angle_tol=Angle_tol, primitive_cell=True,
-                          scale=Scale, attempt_supercell=False, comparator=SpeciesComparator()))
+        sm = (StructureMatcher(ltol=L_tol, 
+                               stol=S_tol, 
+                               angle_tol=Angle_tol, 
+                               primitive_cell=True,
+                               scale=Scale, 
+                               attempt_supercell=False, 
+                               comparator=SpeciesComparator()))
         return sm                                                              
                                                                                
     def compute_pymatgen_fit(self, s1, s2):                             
