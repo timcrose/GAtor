@@ -102,18 +102,8 @@ class RunGA():
         # Report Replica to Common Output 
         self.output("----Replica %s running GA on common pool----" %(self.replica))
 
- 
-        # Restart Boolean
-        restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
-
         # Optionally Cluster Input Collection
-        if self.ui.get('selection', 'fitness_function') == 'standard_cluster':
-            struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
-            self.clustering_module.main(struct_coll, self.replica)
-            data_tools.write_energy_hierarchy(struct_coll)
-
-        # Update Supercollection of Structures
-        structure_collection.update_supercollection(self.structure_supercoll)
+        self.run_clustering()
 
         # Main loop of GA
         while True:
@@ -121,17 +111,13 @@ class RunGA():
             begin_time = self.beginning_tasks()
         
             #----- Restart Scheme -----#
-            #struct = self.restart_scheme(restart_replica)
-            #if struct == False:
-                #-----Generate Trial Structure -----#
-            struct = self.generate_child_structure()
-            if struct is False:
-                continue
+            struct = self.run_restart_scheme()
 
-            # --- REMOVE LATER: For testing paralel replicas --- "
-            #dumy_json = "/lus/theta-fs0/projects/HybridPV_tesp/fcurtis/test_mpi/gator/tutorial/initial_pool/init_0103.json"
-            #struct = Structure()
-            #struct.build_geo_from_json_file(dumy_json)
+            #-----Generate Child Structure -----#
+            if struct == False:
+                struct = self.generate_child_structure()
+                if struct is False:
+                    continue
 
             #----- Compare Pre-relaxed Structure to Collection -----#
             is_dup = self.structure_comparison(struct, "pre_relaxation_comparison")
@@ -170,7 +156,8 @@ class RunGA():
             #---- Compute Spacegroup of Relaxed Structure ----#
             struct = sgu.identify_space_group(struct)
             if self.comm.Get_rank() == 0:
-                self.output("-- Structure's space group: %s" % (struct.get_property('space_group')))
+                self.output("-- Structure's space group: %s" 
+                            % (struct.get_property('space_group')))
 
             #---- Check If Energy is Global Minimum -----#
             ref_label = 0
@@ -282,6 +269,19 @@ class RunGA():
         self.comm.Barrier() 
         begin_time = self.comm.bcast(begin_time, root=0)
         return begin_time
+
+    def run_clustering(self):
+        '''
+        Runs user-defined clustering module in specified in ui.conf and
+        located in /src/clustering
+        '''
+        if self.ui.get('selection', 'fitness_function') == 'standard_cluster': 
+            struct_coll = self.structure_supercoll.get((self.replica_stoic, 0))
+            self.clustering_module.main(struct_coll, self.replica)             
+            data_tools.write_energy_hierarchy(struct_coll)                     
+        # Update Supercollection of Structures                                 
+        structure_collection.update_supercollection(self.structure_supercoll)  
+        return 
 
     def return_property_array(self, coll):
         prop_list = np.array([])
@@ -419,16 +419,27 @@ class RunGA():
                 end = True
         return end
 
-    def restart_scheme(self, restart_replica):
-        self.output("-- Restart of replicas has been requested")
-        structures_to_add = {}
+    def run_restart_scheme(self):
+        '''
+        Checks if there are any leftover FHI-aims calculations
+        in the /tmp/<replica> folder from a previous run
+
+        If there are unfinished calculations, the unfinished
+        structure is re-evaluated  instead of performing a new selection
+
+        Returns: Structure() object of unifinshed calculation or False
+        '''
+        restart_replica = self.ui.get_boolean("run_settings","restart_replicas")
         struct = False
-        if struct == False and restart_replica:
-            folder_to_scavenge = activity.request_folder_to_check()
-            while struct == False and folder_to_scavenge!= False:
-                struct = self.structure_scavenge(os.path.join(tmp_dir,folder_to_scavenge))
-                if struct == False:
-                    folder_to_scavenge = activity.request_folder_to_check()
+        if self.comm.Get_rank() == 0:
+            structures_to_add = {}
+            if struct == False and restart_replica:
+                folder_to_scavenge = activity.request_folder_to_check()
+                if folder_to_scavenge!= False:
+                    struct = self.structure_scavenge(os.path.join(tmp_dir,
+                                                     folder_to_scavenge))
+        self.comm.Barrier()
+        struct = self.comm.bcast(struct, root=0)
         return struct
 
     def structure_scavenge(self,folder,next_step=False,cleanup=True):
@@ -446,7 +457,7 @@ class RunGA():
         json_dat = os.path.join(folder,"struct.json")
 
         #Check for geometry.in.next_step
-        self.output("--Scavenging folder %s--" % folder)
+        self.output("-- Scavenging folder %s " % folder)
         if next_step and not os.path.isfile(geometry_step):
             self.output("next_step=True, but no geometry.in.next_step found")
             return False
@@ -741,9 +752,6 @@ class RunGA():
         if self.comm.Get_rank() == 0:                    
             mkdir_p_clean(self.working_dir) # make relaxation directory in tmp
         self.comm.Barrier()
-        sname = "save_structures"
-        if self.ui.get_boolean(sname,"pre-evaluation"):
-            self.add_structure(struct,"pre-evaluation")
 
         mut = struct.get_property('mutation_type')
         crosstype = struct.get_property('crossover_type')
