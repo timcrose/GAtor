@@ -138,7 +138,7 @@ class Structure(object):
         lines_iter = iter(atom_string.split('\n'))
         atom = {} 
         while True:
-            try: line = lines_iter.next().split()  # read each line
+            try: line = lines_iter.__next__().split()  # read each line
             except: add_previous_atom(atom); return self.geometry
             if len(line) == 0: continue
             if '#' in line[0]: continue  # skip commented lines
