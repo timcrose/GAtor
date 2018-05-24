@@ -253,7 +253,7 @@ class Crossover(object):
             orientation_info_child.append([child_z, child_y, child_x, COM, centered_mol])   
 
         # Return Childs orientation info 
-        self.output("Child orientation info: %s" % (orientation_info_child[0][:3]))
+        self.output("-- Child orientation info: %s" % (orientation_info_child[0][:3]))
         return orientation_info_child
 
     def combine_orientation_info_dimers(self, orientation_info_a, orientation_info_b):
