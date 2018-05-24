@@ -17,10 +17,10 @@ from copy import deepcopy
 import core.file_handler as fh
 from core import user_input, output
 from core.activity import *
-from utilities import misc, parallel_run
+from utilities import misc
 from structures.structure import Structure
 from structures.structure_collection import StructureCollection, get_collection
-from utilities.parse_aims_output import ParseOutput
+
 from mpi4py import MPI
 from external_libs import aims_w
 
@@ -83,6 +83,7 @@ def main(input_struct, replica, comm):
         current_control_string = fh.read_data(current_control_path)
  
         comm.Barrier()
+
         # Construct FHI instance
         FHI = FHIAimsEvaluation(i,
                                 input_struct, 
@@ -96,7 +97,8 @@ def main(input_struct, replica, comm):
         # Launch and run aims job
         FHI.execute()
         comm.Barrier()
-        # Check if aims calculation was successful
+
+        # Check if aims job was sucessful
         if not FHI.check_if_successful():
             FHI.save_failed_calculation()
             return input_struct, "failed"
@@ -125,14 +127,11 @@ def main(input_struct, replica, comm):
                                  "|------------------------ " +
                                  "End of FHI-aims evaluation" + 
                                  "------------------------|", replica)
-        #input_struct = deepcopy(result_struct) 
-        input_struct = result_struct
+        input_struct = result_struct 
         comm.Barrier()
     
     comm.Barrier()
     return input_struct, "accepted" 
-
-
 
 
 class FHIAimsEvaluation():
@@ -154,6 +153,7 @@ class FHIAimsEvaluation():
                  comm):
         self.iter = i
         self.comm = comm
+        self.commf = comm.py2f()
         self.working_dir = working_dir
         self.ui = user_input.get_config()   
         self.replica = replica
@@ -161,7 +161,6 @@ class FHIAimsEvaluation():
         self.control_in_string = current_control_string
         self.control_len = num_control_files
         self.control_name = current_control_name
-        self.set_monitor_execution()
         self.set_energy_thresholds()
         self.output_beginning_messages()
         self.create_geometry_in()
@@ -182,15 +181,14 @@ class FHIAimsEvaluation():
                                  % (self.control_name))
             self.output("-- Rejection energy threshold: %s eV"
                                  % (self.energy_threshold))
-        
+        self.comm.Barrier() 
+
     def create_geometry_in(self):
         '''
         Writes the geometry.in file called by FHI-aims. 
         Calls from FHI-aims control settings found in res directory.
         Returns: None
         '''
-        #if not os.path.isdir(self.working_dir):
-        #    os.makedirs(self.working_dir)
         geometry_file = open(os.path.join(self.working_dir, 'geometry.in'), 'w')
         geometry_file.write(self.input_struct.get_geometry_atom_format())
         geometry_file.close()
@@ -237,12 +235,12 @@ class FHIAimsEvaluation():
         # Change into the directory where aims output is produced
         os.chdir(self.working_dir)
 
+        # Write folder is active (used for restarts)
+        write_active(self.working_dir)
+
         # Run aims job with fortran communicator commf
         self.comm.Barrier()
-        #comm_clone = self.comm.Clone()
-        commf = self.comm.py2f()
-        aims_w.aims_w(commf)
-        #comm_clone.Free()
+        aims_w.aims_w(self.commf)
         self.comm.Barrier()
 
         # End tasks
@@ -252,13 +250,12 @@ class FHIAimsEvaluation():
                                 % str(end_time-begin_time))
             self.output_time_log("Job execution time: %s seconds"
                                 % str(end_time-begin_time))
-        return
 
     def check_if_successful(self):
         """
         Looks for "Leaving FHI-aims" in aims.out
         """
-        aims_path = os.path.join(self.working_dir, 'aims.out')
+        aims_path = os.path.join(tmp_dir, self.replica, 'aims.out')
         try:
             aims_out = open(aims_path,"r")
         except:
@@ -329,7 +326,6 @@ class FHIAimsEvaluation():
         self.result_struct.set_property('c',c)
         self.result_struct.set_property('relax_time', wall_time)
         return self.result_struct
-
 
     def extract_energy(self):
         '''
@@ -427,105 +423,20 @@ class FHIAimsEvaluation():
                 return time
 
     def angle(self, v1, v2):
+        '''
+        Computes unit cell angles from lattice vectors
+        '''
         numdot = np.dot(v1, v2)
         anglerad = np.arccos(numdot/(np.linalg.norm(v1)*np.linalg.norm(v2)))
         angledeg = anglerad*180/np.pi
         return angledeg
 
-    def return_execution_arglist(self):
-        '''
-        Returns the system-specific commands for running the aims executable
-        '''
-        sname = "parallel_settings"
-        ui = self.ui
-        original_dir = os.getcwd()
-
-        if self.execute_command == "mpirun":
-            arglist = ["mpirun","-wdir",self.working_dir]
-            if ui.has_option("parallel_settings","allocated_nodes"):
-                arglist += ["-host",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-            if ui.has_option("parallel_settings","aims_processes_per_replica"):
-                arglist += ["-n",ui.get("parallel_settings","aims_processes_per_replica")]
-            if ui.has_option("FHI-aims","additional_arguments"):
-                arglist += ui.get_eval("FHI-aims","additional_arguments")
-            arglist += [self.bin]
-
-        elif self.execute_command == "srun":
-            arglist = ["srun","-D",self.working_dir]
-            if ui.has_option("parallel_settings","allocated_nodes"):
-                arglist += ["-w",",".join(map(str,ui.get_eval("parallel_settings","allocated_nodes")))]
-                #arglist += ["-N",str(len(ui.get_eval("parallel_settings","allocated_nodes")))]
-            if ui.has_option("parallel_settings","aims_processes_per_replica"):
-                np = ui.get("parallel_settings","aims_processes_per_replica")
-                arglist += ["-n",np]
-                mem = int(np)*ui.get_eval(sname,"srun_memory_per_core")
-                arglist += ["--mem",str(mem)]
-            arglist += ["--gres",ui.get(sname,"srun_gres_name")+":1"]
-            if ui.has_option("FHI-aims","additional_arguments"):
-                arglist += ui.get_eval("FHI-aims","additional_arguments")
-            arglist += [self.bin]
-
-        elif self.execute_command == "aprun":
-            arglist = ["aprun"]
-            if ui.has_option("parallel_settings","aims_processes_per_replica"):
-                    arglist += ["-n",ui.get("parallel_settings","aims_processes_per_replica")]
-            arglist+=["-e","OMP_NUM_THREADS=1"]
-            if ui.has_option("FHI-aims","additional_arguments"):
-                    arglist += ui.get_eval("FHI-aims","additional_arguments")
-            arglist += [self.bin]
-
-        elif self.execute_command == "runjob":
-            block_size=ui.get_eval('parallel_settings','nodes_per_replica')
-            modes = ui.get_eval("parallel_settings","runjob_processes_per_node")
-            arglist = ["runjob","--np",str(modes*block_size),"-p",str(modes),"--cwd",self.working_dir,"--exe",self.bin]
-            if ui.has_option("parallel_settings","runjob_block"):
-                arglist += ["--block",ui.get("parallel_settings","runjob_block")]
-            if ui.has_option("parallel_settings","runjob_corner"):
-                arglist += ["--corner",ui.get("parallel_settings","runjob_corner")]
-            if ui.has_option("parallel_settings","runjob_shape"):
-                arglist += ["--shape",ui.get("parallel_settings","runjob_shape")]
-            if ui.has_option("FHI-aims","additional_arguments"):
-                arglist += ui.get_eval("FHI-aims","additional_arguments")
-
-        elif self.execute_command == "shell":
-            os.chdir(self.working_dir)
-            arglist = [self.bin]
-
-        else:
-            raise ValueError("Unknown execute command: %s; supporting mpirun,"+
-                                 " srun, runjob, and shell" % execute_command)
-        return arglist
-
-    def set_monitor_execution(self):
-        sname = "FHI-aims"
-        if self.ui.get_boolean(sname,"monitor_execution"):
-            self.enable_monitor = True
-            # Check monitor parameters match number of control files
-            try:
-                self.update_poll_times = self.ui.get_list(sname,"update_poll_times",eval=True)
-            except: 
-                self.update_poll_times = [60] * int(self.control_len)
-            if len(self.update_poll_times)!=self.control_len:
-                raise ValueError("Number of specified update poll times" + 
-                                 "must match that of control.in files")
-            try:
-                self.update_poll_intervals = self.ui.get_list(sname,"update_poll_intervals",eval=True)
-            except:
-                self.update_poll_intervals = [10] * int(self.control_len) 
-            if len(self.update_poll_intervals)!=self.control_len:
-                raise ValueError("Number of specified update poll intervals" + 
-                                 "must match that of control.in files")
-            # Set monitor parameters for current control file
-            self.update_poll_time = self.update_poll_times[self.iter]
-            self.update_poll_interval = self.update_poll_intervals[self.iter]
-
-        else:
-            self.enable_monitor = False
-            self.update_poll_time = None
-            self.update_poll_interval = None
-
     def set_energy_thresholds(self):
-        # Read Cutoff information from control file
+        '''
+        Set energy cutoffs for different control files
+        as specified by the user in ui.conf
+        '''
+        # Read info from ui.conf 
         sname = "FHI-aims"
         if self.ui.has_option(sname,"store_energy_names"):
             self.sen = self.ui.get_list(sname,"store_energy_names")
@@ -596,92 +507,23 @@ class FHIAimsEvaluation():
             else:
                 self.energy_threshold = min(self.energy_threshold, max(energies))
 
-    def monitor_launch(self, p):
-        '''
-        Monitors the job launching process 
-        Checks for aims output and/or failures
-        '''
-        # Allow 10 attempts for aims to start outputting
-        for i in range (10):
-            time.sleep(1)
-
-            # Check subprocess exists
-            try:
-                status=p.poll()
-            except: #OSError Errno 3 Process does not exist
-                self.output_time_log("Nodes failure; replica will sleep from now on")
-                time.sleep(86400)
-                os.chdir(original_dir)
-                return False
-            
-            #Allow 90 seconds for aims to start outputting
-            time_limit = 90
-            for j in range (time_limit): 
-                if (p.poll()!=None) or (os.stat(self.aimsout).st_size>512):
-                    break
-                write_active(self.working_dir)
-                time.sleep(1)
-            if (os.stat(self.aimsout).st_size>512):
-                self.output_time_log("aims.out begins output")
-                break
-
-            # If aims hasn't output anything, kill process and call failure
-            self.output_time_log("aims job launch failure")
-            try:
-                p.send_signal(2)
-            except:
-                output.time_log("Unable to kill process; possible node failures")
-                time.sleep(86400)
-            active_sleep(60,self.working_dir)
-
-            # If launch failure keeps happening, kill jobs
-            if i==9:
-                self.output_time_log("WARNING: Repeated launch failure; exiting")
-                os.chdir(self.original_dir)
-                return False
-
-    def monitor_aims_output(self, p):
-        ''' 
-        Monitors the aims job as it runs
-        Makes sure job doesn't get hung
-        '''
-        counter = 0
-        last = os.stat(self.aimsout).st_size
-
-        #The output file needs to update at least once in every update_poll_time
-        while counter < self.update_poll_times and p.poll() == None: 
-            write_active(self.working_dir)
-            time.sleep(self.update_poll_interval)
-            if os.stat(self.aimsout).st_size>last:
-                last=os.stat(self.aimsout).st_size
-                counter=0
-            else:
-                counter+=1
-        #If hasn't updated in a while, consider job hung
-        if counter == 60:
-            output.time_log("aims job hung",self.replica)
-            try:
-                p.send_signal(2)
-            except:
-                output.time_log("Unable to kill process; possible node failures")
-                time.sleep(86400)
-            active_sleep(60, self.working_dir)
-
-
     def save_failed_calculation(self):
         '''
         Checks if aims calculation failed and optionally
         saves failed realxation folder
         '''
-        self.output_time_log("FHI-aims execution using control file" + 
-                            "failed to launch, hung, or failed")
-        self.output("-- Job failed to launch, hung, or failed")
-        if self.ui.get_boolean("FHI-aims","save_failed_calc"):
-            path = os.path.abspath(os.path.join(fh.fail_dir,
-                   misc.get_random_index()))
-            shutil.copytree(self.working_dir,path)
-            self.output_time_log("Failed calc folder saved to %s" % (path))
-            self.output("-- Failed calc folder saved to %s" % (path))
+        self.output_time_log("%s FHI-aims execution using control file" + 
+                            "failed to launch, hung, or failed" %(self.comm.Get_rank()))
+        self.output_time_log("-- Job failed to launch, hung, or failed")
+        try:
+            if self.ui.get_boolean("FHI-aims","save_failed_calc"):
+                path = os.path.abspath(os.path.join(fh.fail_dir,
+                       misc.get_random_index()))
+        
+                shutil.copytree(self.working_dir,path)
+                self.output_time_log("Failed calc folder saved to %s" % (path))
+                self.output("-- Failed calc folder saved to %s" % (path))
+        except: pass
 
     def end_of_execution_outputs(self, status):                                
         output.local_message("-- aims job exit status: "                       
