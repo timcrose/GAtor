@@ -41,10 +41,7 @@ def identify_space_group(struct,key="space_group"):
 	return struct
 
 def return_spacegroup(structp):
-    #try: #newer pymatgen
     spacegroup = SGA(structp, symprec= 1.0).get_space_group_number()
-    #except: #older pymatgen
-    #    spacegroup = SGA(structp, symprec= 1.0).get_spacegroup_number()
     return spacegroup
 
 
