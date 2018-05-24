@@ -9,7 +9,6 @@ arXiv 1802.08602 (2018)
 """
 
 from core import user_input,output
-from utilities import parallel_run
 import socket
 
 __author__ = "Farren Curtis, Xiayue Li, and Timothy Rose"
@@ -41,5 +40,5 @@ def test_parallelism():
 		return
 	message = "test_parallelism launched to test parallelization method: "+ui.get(sname,"parallelization_method")
 	output.time_log(message)
-	parallel_run.launch_parallel()
+
 
