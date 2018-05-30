@@ -50,7 +50,7 @@ def main(input_struct, replica, comm):
     # Get user-defined settings and replica name
     ui = user_input.get_config()
 
-    # Set paths for DFT bin, control files, command
+    # Set paths for DFT control files
     control_dir = ui.get("FHI-aims","control_in_directory")
     control_list = ui.get_list("FHI-aims","control_in_filelist")
     num_control_files = len(control_list)
